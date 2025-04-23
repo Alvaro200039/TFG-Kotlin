@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -34,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     // 🔥 Inflar el menú de la Toolbar
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_drag, menu)
+        Log.d("MainActivity", "Menú inflado correctamente")
         return true
     }
 
