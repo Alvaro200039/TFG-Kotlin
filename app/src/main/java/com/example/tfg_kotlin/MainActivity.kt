@@ -225,7 +225,7 @@ class MainActivity : AppCompatActivity() {
             addView(checkPizarra)
         }
 
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
         builder.setTitle("Editar sala")
         builder.setView(layout)
         builder.setPositiveButton("Guardar") { dialog, _ ->
@@ -282,16 +282,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
         button.text = builder.toString()
-
         val params = button.layoutParams as ConstraintLayout.LayoutParams
         if (sala.tamaño == "Grande") {
             button.textSize = 22f
+            button.setPadding(48, 32, 48, 32)
             params.width = ConstraintLayout.LayoutParams.WRAP_CONTENT
             params.height = ConstraintLayout.LayoutParams.WRAP_CONTENT
         } else {
             button.textSize = 14f
+            button.setPadding(32, 16, 32, 16)
             params.width = ConstraintLayout.LayoutParams.WRAP_CONTENT
             params.height = ConstraintLayout.LayoutParams.WRAP_CONTENT
         }

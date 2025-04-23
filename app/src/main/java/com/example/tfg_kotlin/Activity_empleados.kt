@@ -74,7 +74,7 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         // Inicializar el contenedor de botones (salas)
-        container = findViewById(R.id.container)
+        container = findViewById(R.id.contentLayout)
         cargarSalas()
 
         // Cargar la imagen de fondo
@@ -115,10 +115,13 @@ class Activity_empleados : AppCompatActivity() {
                     topToTop = ConstraintLayout.LayoutParams.PARENT_ID
                     setMargins(salaGuardada.x.toInt(), salaGuardada.y.toInt(), 0, 0)
                 }
-
-                setPadding(32, 16, 32, 16)
-
-                textSize = if (sala.tamaño == "Grande") 22f else 14f
+                if (sala.tamaño == "Grande") {
+                    textSize = 22f
+                    setPadding(48, 32, 48, 32)
+                } else {
+                    textSize = 14f
+                    setPadding(32, 16, 32, 16)
+                }
             }
             container.addView(salaButton)
         }
