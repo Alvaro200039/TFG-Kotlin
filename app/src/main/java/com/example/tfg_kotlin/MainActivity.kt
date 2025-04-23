@@ -15,37 +15,44 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
+        // Ajustes de padding para las barras del sistema
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // 🔥 Configurar la Toolbar
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
 
+        // 🔥 Activar el botón de volver atrás (flecha)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
+    // 🔥 Inflar el menú de la Toolbar
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_drag, menu)
         return true
     }
 
+    // 🔥 Manejar las acciones de los botones de la Toolbar
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
-                return true
+                true
             }
             R.id.action_add_image -> {
                 Toast.makeText(this, "Añadir imagen pulsado", Toast.LENGTH_SHORT).show()
-                return true
+                true
             }
             R.id.action_add -> {
                 Toast.makeText(this, "Añadir elemento pulsado", Toast.LENGTH_SHORT).show()
-                return true
+                true
             }
+            else -> super.onOptionsItemSelected(item)
         }
-        return super.onOptionsItemSelected(item)
     }
 }
