@@ -1,16 +1,17 @@
 package com.example.tfg_kotlin
 
+import android.app.DatePickerDialog
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.Gravity
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.Spinner
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -22,63 +23,100 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.util.Calendar
 
-data class Reserva(val nombreSala: String, val hora: String)
+data class Reserva(val nombreSala: String, val fechaHora: String)
 
 class Activity_empleados : AppCompatActivity() {
 
     private lateinit var container: ConstraintLayout
-    private lateinit var spinnerHora: Spinner
+    private var fechaSeleccionada: String = ""
+    private var horaSeleccionada: String = ""
+    private lateinit var textViewFecha: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_empleados)
-
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.container)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        container = findViewById(R.id.contentLayout)
 
-        // Configurar la Toolbar con el Spinner
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        spinnerHora = findViewById(R.id.spinnerHora)
+        // Recuperar el nombre de la empresa desde SharedPreferences
+        val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val nombreEmpresa = sharedPreferences.getString("nombre_empresa", "Nombre Empresa Predeterminado")
+        supportActionBar?.title = nombreEmpresa // Actualizar el título de la Toolbar con el nombre guardado
+        // Crear un TextView para mostrar la fecha seleccionada
+            textViewFecha = TextView(this).apply {
+            id = View.generateViewId()
+            setTextColor(Color.BLACK)
+            textSize = 16f
+            layoutParams = Toolbar.LayoutParams(
+                Toolbar.LayoutParams.WRAP_CONTENT,
+                Toolbar.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.NO_GRAVITY // Alinearlo a la derecha
+                marginStart = 400 // Ajustar la separación entre la fecha y el botón
+            }
+        }
+        // Agregar el TextView a la Toolbar
+        toolbar.addView(textViewFecha)
 
-        // Crear lista de horas
+        // Botón para abrir selector de fecha y hora
+        val botonSeleccionarFechaHora = ImageButton(this).apply {
+            id = View.generateViewId()
+            setImageResource(R.drawable.time) // Reemplaza con tu ícono
+            setBackgroundColor(Color.TRANSPARENT)
+            layoutParams = Toolbar.LayoutParams(
+                Toolbar.LayoutParams.WRAP_CONTENT,
+                Toolbar.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.END // Alinearlo a la derecha
+                marginEnd = 25
+            }
+            setOnClickListener { mostrarDialogoFecha() }
+        }
+        toolbar.addView(botonSeleccionarFechaHora)
+
+        cargarSalas()
+        cargarImagenFondo()
+    }
+
+    private fun mostrarDialogoFecha() {
+        val calendario = Calendar.getInstance()
+        val datePicker = DatePickerDialog(this,
+            { _, year, month, dayOfMonth ->
+                fechaSeleccionada = String.format("%02d/%02d/%d", dayOfMonth, month + 1, year)
+                textViewFecha.text = "Fecha: $fechaSeleccionada"
+                mostrarDialogoHoras()
+            },
+            calendario.get(Calendar.YEAR),
+            calendario.get(Calendar.MONTH),
+            calendario.get(Calendar.DAY_OF_MONTH)
+        )
+        datePicker.show()
+    }
+
+    private fun mostrarDialogoHoras() {
         val horasDisponibles = arrayOf(
-            "09:00 - 10:00",
-            "10:00 - 11:00",
-            "11:00 - 12:00",
-            "12:00 - 13:00",
-            "13:00 - 14:00",
-            "16:00 - 17:00",
-            "17:00 - 18:00"
+            "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
+            "12:00 - 13:00", "13:00 - 14:00", "16:00 - 17:00", "17:00 - 18:00"
         )
 
-        // Adaptador para el Spinner
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, horasDisponibles)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerHora.adapter = adapter
-
-        // Configurar el Listener para el Spinner
-        spinnerHora.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parentView: AdapterView<*>, view: View?, position: Int, id: Long) {
-                val horaSeleccionada = horasDisponibles[position]
-                verificarDisponibilidad(horaSeleccionada)
+        AlertDialog.Builder(this)
+            .setTitle("Selecciona una franja horaria para $fechaSeleccionada")
+            .setItems(horasDisponibles) { _, which ->
+                horaSeleccionada = horasDisponibles[which]
+                verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
             }
-
-            override fun onNothingSelected(parentView: AdapterView<*>) {}
-        }
-
-        // Inicializar el contenedor de botones (salas)
-        container = findViewById(R.id.contentLayout)
-        cargarSalas()
-
-        // Cargar la imagen de fondo
-        cargarImagenFondo()
+            .create()
+            .show()
     }
 
     private fun cargarSalas() {
@@ -98,12 +136,15 @@ class Activity_empleados : AppCompatActivity() {
                 text = formatearTextoSala(sala)
                 tag = sala
                 setOnClickListener {
-                    reservarSala(sala.nombre)
+                    if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
+                        Toast.makeText(context, "Selecciona fecha y hora primero", Toast.LENGTH_SHORT).show()
+                    } else {
+                        reservarSala(sala.nombre)
+                    }
                 }
 
-                // Fondo con esquinas redondeadas y color verde (disponible)
                 background = GradientDrawable().apply {
-                    setColor(Color.GREEN) // Verde para disponible
+                    setColor(Color.GREEN)
                     cornerRadius = 50f
                 }
 
@@ -115,6 +156,7 @@ class Activity_empleados : AppCompatActivity() {
                     topToTop = ConstraintLayout.LayoutParams.PARENT_ID
                     setMargins(salaGuardada.x.toInt(), salaGuardada.y.toInt(), 0, 0)
                 }
+
                 if (sala.tamaño == "Grande") {
                     textSize = 22f
                     setPadding(48, 32, 48, 32)
@@ -127,119 +169,97 @@ class Activity_empleados : AppCompatActivity() {
         }
     }
 
-    // Formatear texto con nombre y extras
     private fun formatearTextoSala(sala: Sala): String {
-        val builder = StringBuilder()
-        builder.append(sala.nombre)
+        val builder = StringBuilder().append(sala.nombre)
         if (sala.opcionesExtra.isNotEmpty()) {
             builder.append("\n")
-            sala.opcionesExtra.forEach { extra ->
-                when (extra) {
-                    "WiFi" -> builder.append("📶 ")
-                    "Proyector" -> builder.append("📽️ ")
-                    "Pizarra" -> builder.append("🖍️ ")
-                }
+            sala.opcionesExtra.forEach {
+                builder.append(
+                    when (it) {
+                        "WiFi" -> "📶 "
+                        "Proyector" -> "📽️ "
+                        "Pizarra" -> "🖍️ "
+                        else -> ""
+                    }
+                )
             }
         }
         return builder.toString()
     }
 
-    // Función para cargar la imagen de fondo
     private fun cargarImagenFondo() {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val fondoUriString = sharedPref.getString("fondo_uri", null)
 
         fondoUriString?.let {
-            val uri = Uri.parse(it)
             try {
-                val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, uri)
-                val contentLayout = findViewById<ConstraintLayout>(R.id.contentLayout)
-                contentLayout.background = BitmapDrawable(resources, bitmap)
+                val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(it))
+                findViewById<ConstraintLayout>(R.id.contentLayout).background = BitmapDrawable(resources, bitmap)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
 
-    // Función para verificar la disponibilidad
-    private fun verificarDisponibilidad(horaSeleccionada: String) {
+    private fun verificarDisponibilidad(fechaHora: String) {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
-        val jsonReservas = sharedPref.getString("reservas", "[]")
-        val reservas: List<Reserva> = gson.fromJson(jsonReservas, object : TypeToken<List<Reserva>>() {}.type)
+        val reservas: List<Reserva> = gson.fromJson(
+            sharedPref.getString("reservas", "[]"),
+            object : TypeToken<List<Reserva>>() {}.type
+        )
 
         for (i in 0 until container.childCount) {
             val view = container.getChildAt(i)
             if (view is Button) {
-                val sala = (view.tag as? Sala) ?: continue
-
-                val ocupada = reservas.any { it.nombreSala == sala.nombre && it.hora == horaSeleccionada }
-
+                val sala = view.tag as? Sala ?: continue
+                val ocupada = reservas.any { it.nombreSala == sala.nombre && it.fechaHora == fechaHora }
                 val color = if (ocupada) Color.RED else Color.GREEN
-
-                val fondo = GradientDrawable().apply {
+                view.background = GradientDrawable().apply {
                     setColor(color)
                     cornerRadius = 50f
                 }
-                view.background = fondo
             }
         }
     }
 
-    // Función para reservar una sala
     private fun reservarSala(nombreSala: String) {
-        val horaSeleccionada = spinnerHora.selectedItem as String
+        val fechaHora = "$fechaSeleccionada $horaSeleccionada"
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
-        val jsonReservas = sharedPref.getString("reservas", "[]")
-        val reservas: MutableList<Reserva> = gson.fromJson(jsonReservas, object : TypeToken<MutableList<Reserva>>() {}.type)
+        val reservas: MutableList<Reserva> = gson.fromJson(
+            sharedPref.getString("reservas", "[]"),
+            object : TypeToken<MutableList<Reserva>>() {}.type
+        )
 
-        // Verificar si ya está reservada
-        if (reservas.any { it.nombreSala == nombreSala && it.hora == horaSeleccionada }) {
+        if (reservas.any { it.nombreSala == nombreSala && it.fechaHora == fechaHora }) {
             Toast.makeText(this, "La sala ya está reservada en ese horario", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Mostrar AlertDialog de confirmación
-        val mensaje = "¿Deseas reservar la sala '$nombreSala' para la hora '$horaSeleccionada'?"
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
             .setTitle("Confirmar reserva")
-            .setMessage(mensaje)
+            .setMessage("¿Deseas reservar la sala '$nombreSala' para '$fechaHora'?")
             .setPositiveButton("Sí") { _, _ ->
-                // Confirmación: guardar reserva
-                val nuevaReserva = Reserva(nombreSala, horaSeleccionada)
-                reservas.add(nuevaReserva)
-
-                val editor = sharedPref.edit()
-                editor.putString("reservas", gson.toJson(reservas))
-                editor.apply()
-
-                verificarDisponibilidad(horaSeleccionada)
-                Toast.makeText(this, "Reserva realizada para $nombreSala a las $horaSeleccionada", Toast.LENGTH_SHORT).show()
+                reservas.add(Reserva(nombreSala, fechaHora))
+                sharedPref.edit().putString("reservas", gson.toJson(reservas)).apply()
+                verificarDisponibilidad(fechaHora)
+                Toast.makeText(this, "Reserva realizada para $nombreSala", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("No", null)
 
-        // Crear el AlertDialog
         val dialog = builder.create()
-
-        // Cambiar fondo del AlertDialog
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-
-        // Cambiar los botones cuando el diálogo se muestre
         dialog.setOnShowListener {
-            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-            // Cambiar color de fondo de los botones
-            positiveButton.setBackgroundColor("#008000".toColorInt())  // Botón verde
-            negativeButton.setBackgroundColor("#B22222".toColorInt())  // Botón rojo
-
-            // Cambiar color de texto de los botones
-            positiveButton.setTextColor("#FFFFFF".toColorInt())  // Texto en blanco para el botón "Sí"
-            negativeButton.setTextColor("#FFFFFF".toColorInt())  // Texto en blanco para el botón "No"
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+                setBackgroundColor("#008000".toColorInt())
+                setTextColor(Color.WHITE)
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+                setBackgroundColor("#B22222".toColorInt())
+                setTextColor(Color.WHITE)
+            }
         }
-
-        // Mostrar el diálogo
         dialog.show()
     }
 }

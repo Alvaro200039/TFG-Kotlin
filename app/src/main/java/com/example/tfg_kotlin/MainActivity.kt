@@ -64,7 +64,13 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
+        supportActionBar?.title = "\"Cambiar nombre\""
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        // Agregar el listener de clic al título de la Toolbar
+        toolbar.setOnClickListener {
+            showChangeTitleDialog()
+        }
 
         container = findViewById(R.id.container)
     }
@@ -76,6 +82,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
                 true
@@ -129,6 +136,44 @@ class MainActivity : AppCompatActivity() {
         layoutParams.topMargin = 100
         layoutParams.leftMargin = 100
         button.layoutParams = layoutParams
+    }
+
+    // Función para cambiar el título de la Toolbar con un EditText
+    private fun showChangeTitleDialog() {
+        // Crear un EditText para que el usuario ingrese el nuevo título
+        val editText = EditText(this).apply {
+            hint = "Nombre empresa"  // El texto del hint
+            setText("")  // Mostrar el título actual en el EditText
+        }
+
+        // Crear el layout del diálogo
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+            addView(editText)
+        }
+
+        // Crear el builder para el AlertDialog
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Cambiar Nombre")
+            .setView(layout)
+            .setPositiveButton("Guardar") { dialog, _ ->
+                // Cuando el usuario presiona "Guardar"
+                val nuevoTitulo = editText.text.toString()
+                if (nuevoTitulo.isNotBlank()) {
+                    // Guardar el nuevo título en SharedPreferences
+                    val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+                    val editor = sharedPreferences.edit()
+                    editor.putString("nombre_empresa", nuevoTitulo)
+                    editor.apply()
+
+                    supportActionBar?.title = nuevoTitulo  // Actualizar el título de la Toolbar
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+
+        // Mostrar el diálogo
+        builder.create().show()
     }
 
     private fun showButtonOptions(button: Button) {
