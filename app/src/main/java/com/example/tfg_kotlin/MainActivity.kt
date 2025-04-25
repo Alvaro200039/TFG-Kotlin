@@ -1,15 +1,14 @@
 package com.example.tfg_kotlin
 
-import android.app.Activity
 import android.content.Intent
+import android.content.res.Resources
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -19,10 +18,12 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -30,7 +31,11 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.graphics.toColorInt
+import com.bumptech.glide.Glide
+import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import androidx.core.content.edit
 
 data class Sala(
     var nombre: String,
@@ -43,13 +48,14 @@ data class SalaGuardada(
     val x: Float,
     val y: Float,
     val tamaño: String,
+    var ancho: Float = 0f,
+    var alto: Float = 0f,
     val extras: List<String>
 )
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var container: ConstraintLayout
-    private val PICK_IMAGE_REQUEST = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +67,9 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+//Solo usar en modo desarrollo
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        sharedPref.edit() { clear() }  // Borra todos los datos guardados
 
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
@@ -71,7 +80,6 @@ class MainActivity : AppCompatActivity() {
         toolbar.setOnClickListener {
             showChangeTitleDialog()
         }
-
         container = findViewById(R.id.container)
     }
 
@@ -110,9 +118,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openGallery() {
-        // Este código está obsoleto, pero sigue funcionando en versiones antiguas de Android.
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(intent, PICK_IMAGE_REQUEST)
+        getImage.launch("image/*")
     }
 
     private fun addMovableButton() {
@@ -130,7 +136,6 @@ class MainActivity : AppCompatActivity() {
                 showButtonOptions(this)
             }
         }
-
         container.addView(button)
         val layoutParams = button.layoutParams as ConstraintLayout.LayoutParams
         layoutParams.topMargin = 100
@@ -163,22 +168,23 @@ class MainActivity : AppCompatActivity() {
                 if (nuevoTitulo.isNotBlank()) {
                     // Guardar el nuevo título en SharedPreferences
                     val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-                    val editor = sharedPreferences.edit()
-                    editor.putString("nombre_empresa", nuevoTitulo)
-                    editor.apply()
+                    sharedPreferences.edit() {
+                        putString("nombre_empresa", nuevoTitulo)
+                    }
 
                     supportActionBar?.title = nuevoTitulo  // Actualizar el título de la Toolbar
                 }
             }
             .setNegativeButton("Cancelar", null)
-
-        // Mostrar el diálogo
-        builder.create().show()
+            .create()
+        builder.setOnShowListener {
+            builder.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        }
+        builder.show()
     }
 
     private fun showButtonOptions(button: Button) {
-        val editText = EditText(this)
-        val options = arrayOf("Editar", "Eliminar")
+        val options = arrayOf("Editar", "Eliminar", "Cambiar tamaño")
 
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Opciones de la sala")
@@ -187,6 +193,14 @@ class MainActivity : AppCompatActivity() {
             when (which) {
                 0 -> showEditButtonDialog(button) // Editar texto
                 1 -> container.removeView(button) // Eliminar botón
+                2 -> {
+                    val sala = button.tag as? Sala
+                    if (sala != null) {
+                        mostrarDialogoCambiarTamaño(button, sala)
+                    } else {
+                        Toast.makeText(this, "Modifica priemero la sala", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
 
@@ -207,6 +221,109 @@ class MainActivity : AppCompatActivity() {
             }
         }
         dialog.show()
+    }
+
+
+    private fun mostrarDialogoCambiarTamaño(salaButton: Button, sala: Sala) {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+        }
+
+        val anchoSeekBar = SeekBar(this).apply {
+            max = 1000
+            progress = salaButton.width
+        }
+
+        val anchoValue = TextView(this).apply {
+            text = "Ancho: ${anchoSeekBar.progress}px"
+        }
+
+        val altoSeekBar = SeekBar(this).apply {
+            max = 1000
+            progress = salaButton.height
+        }
+
+        val altoValue = TextView(this).apply {
+            text = "Alto: ${altoSeekBar.progress}px"
+        }
+
+        anchoSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                anchoValue.text = "Ancho: ${seekBar?.progress}px"
+                val params = salaButton.layoutParams
+                params.width = seekBar?.progress ?: salaButton.width
+                salaButton.layoutParams = params
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        altoSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                altoValue.text = "Alto: ${seekBar?.progress}px"
+                val params = salaButton.layoutParams
+                params.height = seekBar?.progress ?: salaButton.height
+                salaButton.layoutParams = params
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        layout.addView(anchoValue)
+        layout.addView(anchoSeekBar)
+        layout.addView(altoValue)
+        layout.addView(altoSeekBar)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Cambiar tamaño de ${sala.nombre}")
+            .setView(layout)
+            .setPositiveButton("Aplicar") { _, _ ->
+                val nuevoAncho = anchoSeekBar.progress
+                val nuevoAlto = altoSeekBar.progress
+                val params = salaButton.layoutParams
+                params.width = nuevoAncho
+                params.height = nuevoAlto
+                salaButton.layoutParams = params
+                actualizarTamañoSalaGuardada(sala.nombre, nuevoAncho, nuevoAlto)
+            }
+            .setNegativeButton("Cancelar", null)
+            .create()
+
+        dialog.setOnShowListener {
+            // Calculamos posición del botón
+            val location = IntArray(2)
+            salaButton.getLocationOnScreen(location)
+            val botonY = location[1]
+            val screenHeight = Resources.getSystem().displayMetrics.heightPixels
+
+            val layoutParams = dialog.window?.attributes
+            layoutParams?.gravity = if (botonY > screenHeight / 2) Gravity.TOP else Gravity.BOTTOM
+            dialog.window?.attributes = layoutParams
+
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        }
+
+        dialog.show()
+    }
+
+    private fun actualizarTamañoSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val gson = Gson()
+        val json = sharedPref.getString("salas", "[]")
+        val lista: MutableList<SalaGuardada> = gson.fromJson(json, object : TypeToken<MutableList<SalaGuardada>>() {}.type)
+
+        // Buscar la sala y actualizar su tamaño solo si ha cambiado
+        val sala = lista.find { it.nombre == nombreSala }
+        if (sala != null && (sala.ancho != nuevoAncho.toFloat() || sala.alto != nuevoAlto.toFloat())) {
+            sala.ancho = nuevoAncho.toFloat()
+            sala.alto = nuevoAlto.toFloat()
+
+            // Guardar los cambios si hubo una actualización
+            sharedPref.edit() { putString("salas", gson.toJson(lista)) }
+        }
     }
 
     private fun showEditButtonDialog(button: Button) {
@@ -328,32 +445,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
         button.text = builder.toString()
-        val params = button.layoutParams as ConstraintLayout.LayoutParams
-        if (sala.tamaño == "Grande") {
-            button.textSize = 22f
-            button.setPadding(48, 32, 48, 32)
-            params.width = ConstraintLayout.LayoutParams.WRAP_CONTENT
-            params.height = ConstraintLayout.LayoutParams.WRAP_CONTENT
-        } else {
-            button.textSize = 14f
-            button.setPadding(32, 16, 32, 16)
-            params.width = ConstraintLayout.LayoutParams.WRAP_CONTENT
-            params.height = ConstraintLayout.LayoutParams.WRAP_CONTENT
-        }
-        button.layoutParams = params
     }
+
     private var fondoUri: Uri? = null
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
-            val selectedImage: Uri? = data?.data
-            selectedImage?.let {
-                fondoUri = it
-                val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, it)
-                container.background = BitmapDrawable(resources, bitmap)
-            }
-        }
-    }
+
 
     private fun guardarDistribucion() {
         val salasGuardadas = mutableListOf<SalaGuardada>()
@@ -362,11 +457,14 @@ class MainActivity : AppCompatActivity() {
             val view = container.getChildAt(i)
             if (view is Button) {
                 val sala = view.tag as? Sala ?: continue
+
                 salasGuardadas.add(
                     SalaGuardada(
                         nombre = sala.nombre,
                         x = view.x,
                         y = view.y,
+                        ancho = view.width.toFloat(),
+                        alto = view.height.toFloat(),
                         tamaño = sala.tamaño,
                         extras = sala.opcionesExtra
                     )
@@ -374,20 +472,30 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val editor = getSharedPreferences("DistribucionSalas", MODE_PRIVATE).edit()
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val gson = Gson()
 
-        // Guarda la URI del fondo si la tienes
-        fondoUri?.let {
-            editor.putString("fondo_uri", it.toString())
+        val fondoUriString = fondoUri?.toString()
+
+        sharedPref.edit().apply {
+            putString("salas", gson.toJson(salasGuardadas))
+            fondoUriString?.let { putString("fondo_uri", it) }
+            putBoolean("distribucion_guardada", true) // Solo aquí se activa
+            apply()
         }
 
-        val gson = Gson()
-        val jsonSalas = gson.toJson(salasGuardadas)
-        editor.putString("salas", jsonSalas)
+        Snackbar.make(container, "Distribución guardada", Snackbar.LENGTH_SHORT).show()
+    }
 
-        editor.apply()
-
-        Toast.makeText(this, "Distribución guardada", Toast.LENGTH_SHORT).show()
+    // Aquí es donde gestionas la selección de imagen de fondo
+    private val getImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            fondoUri = uri // Guarda la URI seleccionada
+            Glide.with(this)
+                .load(uri)
+                .fitCenter()
+                .into(findViewById(R.id.image_fondo))
+        }
     }
 
     inner class MovableTouchListener : View.OnTouchListener {
