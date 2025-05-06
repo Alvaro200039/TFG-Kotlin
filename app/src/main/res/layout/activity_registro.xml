@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/etNombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre"
+            android:inputType="textPersonName"
+            android:marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etApellidos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Apellidos"
+            android:inputType="textPersonName"
+            android:marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etSeccion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Sección"
+            android:inputType="text"
+            android:marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etContrasena"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Contraseña"
+            android:inputType="textPassword"
+            android:marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etRepetirContrasena"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Repetir Contraseña"
+            android:inputType="textPassword"
+            android:marginBottom="12dp" />
+
+        <CheckBox
+            android:id="@+id/checkEsJefe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¿Es jefe?"
+            android:marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btnRegistrar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Crear Cuenta" />
+    </LinearLayout>
+</ScrollView>
