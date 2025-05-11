@@ -13,6 +13,18 @@
         android:theme="@style/Theme.TFGKotlin"
         tools:targetApi="31">
         <activity
+            android:name=".RegistroEmpresaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RegistroPersonaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LoginEmpresaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LoginPersonaActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
