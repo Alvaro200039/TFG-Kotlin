@@ -13,6 +13,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
@@ -36,11 +37,13 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.core.content.edit
+import androidx.core.view.children
 
 data class Sala(
     var nombre: String,
     var tamaño: String = "Pequeño",
-    var opcionesExtra: List<String> = emptyList()
+    var opcionesExtra: List<String> = emptyList(),
+    var piso: String
 )
 
 data class SalaGuardada(
@@ -50,7 +53,8 @@ data class SalaGuardada(
     val tamaño: String,
     var ancho: Float = 0f,
     var alto: Float = 0f,
-    val extras: List<String>
+    val extras: List<String>,
+    var piso: String
 )
 
 class MainActivity : AppCompatActivity() {
@@ -73,7 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar?.title = "\"Cambiar nombre\""
+        supportActionBar?.title = "\"Piso nº...\""
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // Agregar el listener de clic al título de la Toolbar
@@ -122,7 +126,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addMovableButton() {
-
+        val sharedPrefsTitulo = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val nombrePiso = sharedPrefsTitulo.getString("numero_piso", "Piso 1") ?: "Piso 1"
+        val sala = Sala(nombre = "Sala", piso = nombrePiso)
         val button = Button(this).apply {
             text = "Sala"
             // Crear un fondo
@@ -135,6 +141,7 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener {
                 showButtonOptions(this)
             }
+            tag = sala
         }
         container.addView(button)
         val layoutParams = button.layoutParams as ConstraintLayout.LayoutParams
@@ -147,36 +154,38 @@ class MainActivity : AppCompatActivity() {
     private fun showChangeTitleDialog() {
         // Crear un EditText para que el usuario ingrese el nuevo título
         val editText = EditText(this).apply {
-            hint = "Nombre empresa"  // El texto del hint
-            setText("")  // Mostrar el título actual en el EditText
+            hint = "Piso nº"  // El texto del hint
+            setText("Piso nº ")  // Mostrar el título actual en el EditText
         }
 
-        // Crear el layout del diálogo
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(50, 40, 50, 10)
             addView(editText)
         }
 
-        // Crear el builder para el AlertDialog
         val builder = AlertDialog.Builder(this)
-            .setTitle("Cambiar Nombre")
+            .setTitle("Edite el piso al que pertenece")
             .setView(layout)
             .setPositiveButton("Guardar") { dialog, _ ->
-                // Cuando el usuario presiona "Guardar"
-                val nuevoTitulo = editText.text.toString()
+                val nuevoTitulo = editText.text.toString().trim()
                 if (nuevoTitulo.isNotBlank()) {
-                    // Guardar el nuevo título en SharedPreferences
+                    // Guardar el nuevo título actual en mi_preferencia (si quieres que se muestre en la toolbar)
                     val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-                    sharedPreferences.edit() {
-                        putString("nombre_empresa", nuevoTitulo)
-                    }
+                    sharedPreferences.edit().putString("numero_piso", nuevoTitulo).apply()
+                    supportActionBar?.title = nuevoTitulo
 
-                    supportActionBar?.title = nuevoTitulo  // Actualizar el título de la Toolbar
+                    // Ahora guardar el nuevo piso dentro del conjunto de pisos
+                    val distPrefs = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+                    val pisosActuales = distPrefs.getStringSet("pisos", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+                    pisosActuales.add(nuevoTitulo)  // Añadir el nuevo piso al conjunto
+
+                    distPrefs.edit().putStringSet("pisos", pisosActuales).apply()
                 }
             }
             .setNegativeButton("Cancelar", null)
             .create()
+
         builder.setOnShowListener {
             builder.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         }
@@ -327,7 +336,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showEditButtonDialog(button: Button) {
-        val sala = button.tag as? Sala ?: Sala(nombre = button.text.toString())
+        val sala = button.tag as? Sala ?: Sala(nombre = button.text.toString(), piso = "Piso_default")
 
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -337,25 +346,22 @@ class MainActivity : AppCompatActivity() {
         val editTextNombre = EditText(this).apply {
             hint = "Nuevo nombre"
             setText(sala.nombre)
-            // Limitar el número de caracteres (por ejemplo, 10 caracteres)
             val maxLength = 20
             val filter = InputFilter.LengthFilter(maxLength)
             filters = arrayOf(filter)
         }
 
-        // Añadir un TextView para mostrar el contador de caracteres
         val charCountTextView = TextView(this).apply {
-            text = "0/${20}"  // Inicialmente, 0 caracteres de 10
+            text = "${sala.nombre.length}/20"
             setTextColor("#000000".toColorInt())
         }
 
-        // Actualizar el contador cada vez que el texto cambia
         editTextNombre.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(editable: Editable?) {
-                val currentLength = editable?.length ?: 0
-                charCountTextView.text = "$currentLength/20"  // Actualiza el contador
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val currentLength = s?.length ?: 0
+                charCountTextView.text = "$currentLength/20"
             }
         })
 
@@ -390,44 +396,63 @@ class MainActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Editar sala")
         builder.setView(layout)
-        builder.setPositiveButton("Guardar") { dialog, _ ->
-            sala.nombre = editTextNombre.text.toString()
-            sala.tamaño = spinnerTamaño.selectedItem as String
-
-            val opciones = mutableListOf<String>()
-            if (checkWifi.isChecked) opciones.add("WiFi")
-            if (checkProyector.isChecked) opciones.add("Proyector")
-            if (checkPizarra.isChecked) opciones.add("Pizarra")
-            sala.opcionesExtra = opciones
-
-            // Actualizar botón visualmente
-            actualizarBotonConSala(button, sala)
-
-            button.tag = sala
-        }
+        builder.setPositiveButton("Guardar", null) // Controlamos el click nosotros
         builder.setNegativeButton("Cancelar", null)
 
-        // Cambiar fondo del AlertDialog
         val dialog = builder.create()
-
-        // Cambiar fondo
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background) // Aquí se aplica el fondo
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
 
         dialog.setOnShowListener {
-            // Opcionalmente puedes personalizar los botones
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
-            // Cambiar color de fondo de los botones
-            positiveButton.setBackgroundColor("#008000".toColorInt())  // Botón verde
-            negativeButton.setBackgroundColor("#B22222".toColorInt())  // Botón rojo
+            positiveButton.setBackgroundColor("#008000".toColorInt())
+            positiveButton.setTextColor("#FFFFFF".toColorInt())
+            negativeButton.setBackgroundColor("#B22222".toColorInt())
+            negativeButton.setTextColor("#FFFFFF".toColorInt())
 
-            // Cambiar color de texto de los botones
-            positiveButton.setTextColor("#FFFFFF".toColorInt())  // Texto en blanco para el botón "Guardar"
-            negativeButton.setTextColor("#FFFFFF".toColorInt())  // Texto en blanco para el botón "Cancelar"
+            positiveButton.setOnClickListener {
+                val nuevoNombre = editTextNombre.text.toString().trim()
+
+                if (nuevoNombre.isEmpty()) {
+                    editTextNombre.error = "El nombre no puede estar vacío"
+                    return@setOnClickListener
+                }
+
+                // Obtener nombres ya usados en otros botones
+                val nombreRepetido = container.children
+                    .filterIsInstance<Button>()
+                    .filter { it != button }
+                    .mapNotNull { (it.tag as? Sala)?.nombre }
+                    .any { it.equals(nuevoNombre, ignoreCase = true) }
+
+                if (nombreRepetido) {
+                    editTextNombre.error = "Ese nombre ya está en uso"
+                    return@setOnClickListener
+                }
+
+                // Guardar cambios
+                sala.nombre = nuevoNombre
+                sala.tamaño = spinnerTamaño.selectedItem as String
+
+                val opciones = mutableListOf<String>()
+                if (checkWifi.isChecked) opciones.add("WiFi")
+                if (checkProyector.isChecked) opciones.add("Proyector")
+                if (checkPizarra.isChecked) opciones.add("Pizarra")
+                sala.opcionesExtra = opciones
+
+                actualizarBotonConSala(button, sala)
+                button.tag = sala
+
+                dialog.dismiss()
+            }
         }
-
         dialog.show()
+    }
+
+
+    private fun obtenerTodosLosBotones(): List<Button> {
+        return container.children.filterIsInstance<Button>().toList()
     }
 
     private fun actualizarBotonConSala(button: Button, sala: Sala) {
@@ -466,7 +491,8 @@ class MainActivity : AppCompatActivity() {
                         ancho = view.width.toFloat(),
                         alto = view.height.toFloat(),
                         tamaño = sala.tamaño,
-                        extras = sala.opcionesExtra
+                        extras = sala.opcionesExtra,
+                        piso= sala.piso
                     )
                 )
             }
@@ -478,14 +504,19 @@ class MainActivity : AppCompatActivity() {
         val fondoUriString = fondoUri?.toString()
 
         sharedPref.edit().apply {
-            putString("salas", gson.toJson(salasGuardadas))
-            fondoUriString?.let { putString("fondo_uri", it) }
-            putBoolean("distribucion_guardada", true) // Solo aquí se activa
+            val sharedPrefsTitulo = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+            val nombrePiso = sharedPrefsTitulo.getString("numero_piso", "Piso 1") ?: "Piso 1"
+
+            putString("salas_$nombrePiso", gson.toJson(salasGuardadas))
+            // Guardar el URI del fondo específico para ese piso
+            fondoUriString?.let { putString("fondo_uri_$nombrePiso", it) }
+            putBoolean("distribucion_guardada", true)
             apply()
         }
 
         Snackbar.make(container, "Distribución guardada", Snackbar.LENGTH_SHORT).show()
     }
+
 
     // Aquí es donde gestionas la selección de imagen de fondo
     private val getImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
