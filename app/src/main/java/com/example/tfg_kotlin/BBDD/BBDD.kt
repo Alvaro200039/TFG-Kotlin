@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Empleados::class],
-    version = 1
+    version = 2
 )
 abstract class BBDD : RoomDatabase() {
     abstract fun appDao(): Operaciones
