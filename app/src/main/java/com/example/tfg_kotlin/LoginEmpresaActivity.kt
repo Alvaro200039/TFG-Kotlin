@@ -1,12 +1,16 @@
 package com.example.tfg_kotlin
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import com.example.tfg_kotlin.Validaciones
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.room.Room
+import com.example.tfg_kotlin.BBDD.BBDD
 import com.example.tfg_kotlin.databinding.ActivityLoginEmpresaBinding
 
 class LoginEmpresaActivity : AppCompatActivity() {
@@ -28,6 +32,7 @@ class LoginEmpresaActivity : AppCompatActivity() {
         //Fin Flecha TOOLBAR "ATRAS"
 
         binding.btnFinalizarLogin.setOnClickListener {
+            //----------Validaciones editText-----------
             if (Validaciones.validarLoginEmpresa(
                     binding.tilCorreo, binding.etCorreo,
                     binding.tilContrasena, binding.etContrasena,
@@ -35,9 +40,29 @@ class LoginEmpresaActivity : AppCompatActivity() {
 
                 )
             ) {
-                // Login válido → continúa
+                // Login válido, continúa
             }
+            //----------------------------------------
+            // ----LOGIN EMPRESA, COMPRUEBA SI LOS DATOS DE LA EMPRESA COINCIDEN CON LOS REGISTRADOS EN LA BBDD
+            val db = Room.databaseBuilder(
+                applicationContext,
+                BBDD::class.java,
+                "reservas_db"
+            ).allowMainThreadQueries().build()
 
+            val correo = binding.etCorreo.text.toString()
+            val contrasena = binding.etContrasena.text.toString()
+            val nifEmpresa = binding.etNumEmpresa.text.toString()
+
+            val jefe = db.appDao().loginJefe(correo, contrasena, nifEmpresa)
+
+            if (jefe != null){
+                // Inicio de sesión correcto, la empresa existe
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }else {
+                Toast.makeText(this, "Datos incorrectos", Toast.LENGTH_SHORT).show()
+            }
         }
     }//Fin onCreate
 

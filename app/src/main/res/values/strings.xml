@@ -11,6 +11,5 @@
     <string name="contraseña">Introduce una contraseña</string>
     <string name="repetir_contraseña">Vuelve a introducir la contraseña</string>
     <string name="num_empresa">NIF (Número de Identificación Fiscal)</string>
-
-
+    <string name="num_empresa_empleado">NIF de la empresa en la que trabajas</string>
 </resources>

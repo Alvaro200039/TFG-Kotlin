@@ -51,16 +51,42 @@ object Validaciones {
             }
         }
     }
+    fun validarNif(
+        til: TextInputLayout,
+        et: TextInputEditText
+    ): Boolean {
+        val nif = et.text?.toString()?.trim().orEmpty()
+        val regex = Regex("^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}")
+
+        return when {
+            nif.isEmpty() -> {
+                til.error = "El NIF es obligatorio"
+                et.requestFocus()
+                false
+            }
+            !regex.matches(nif) -> {
+                til.error = "Formato de NIF inválido (1 letra + 7 dígitos + 1 carácter de control)"
+                et.requestFocus()
+                false
+            }
+            else -> {
+                til.error = null
+                true
+            }
+        }
+    }
 
     /**
      * Valida LoginPersona: correo + contraseña.
      */
     fun validarLoginPersona(
         tilEmail: TextInputLayout, etEmail: TextInputEditText,
-        tilPass: TextInputLayout, etPass: TextInputEditText
+        tilPass: TextInputLayout, etPass: TextInputEditText,
+        tilNif: TextInputLayout, etNif: TextInputEditText
     ): Boolean {
         val okEmail = validarCampoRequerido(tilEmail,etEmail) && validarFormatoEmail(tilEmail,etEmail)
-        val okPass = validarCampoRequerido(tilPass,etPass)
+        val okPass = validarCampoRequerido(tilPass,etPass, "Introduce la contraseña")
+        val okNif = validarNif(tilNif, etNif)
         return okEmail && okPass
     }
 
@@ -74,7 +100,7 @@ object Validaciones {
     ): Boolean {
         val okEmail = validarCampoRequerido(tilEmail,etEmail) && validarFormatoEmail(tilEmail,etEmail)
         val okPass = validarCampoRequerido(tilPass,etPass)
-        val okNif = validarCampoRequerido(tilNif,etNif, "Introduce el NIF")
+        val okNif = validarNif(tilNif,etNif)
         return okEmail && okPass && okNif
     }
 
@@ -105,7 +131,7 @@ object Validaciones {
                 false
             }
         } else false
-        val okNif = validarCampoRequerido(tilNif, etNif, "Introduce el NIF de la empresa")
+        val okNif = validarNif(tilNif, etNif)
         return okEmpresa && okEmail && okPass && okRep && okMatch && okNif
     }
 

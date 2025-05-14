@@ -6,7 +6,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.room.Room
+import com.example.tfg_kotlin.BBDD.BBDD
+import com.example.tfg_kotlin.BBDD.Empleados
 import com.example.tfg_kotlin.databinding.ActivityRegistroEmpresaBinding
+import android.widget.Toast
 import com.example.tfg_kotlin.databinding.ActivityRegistroPersonaBinding
 
 
@@ -30,15 +34,46 @@ class RegistroEmpresaActivity : AppCompatActivity() {
         // supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_arrow_back)
 
         binding.btnFinalizarRegistro.setOnClickListener {
-            if (Validaciones.validarRegistroEmpresa(
+            //----------Validaciones editText-----------
+
+            val esValido = Validaciones.validarRegistroEmpresa(
                     binding.tilNombreEmpresa, binding.etNombreEmpresa,
                     binding.tilCorreo, binding.etCorreo,
                     binding.tilContrasena, binding.etContrasena,
                     binding.tilRepContrasena, binding.etRepContrasena,
                     binding.tilNumEmpresa, binding.etNumEmpresa
-                )) {
-                // Registro válido → continúa
-            }
+                )
+            //----------------------------------------
+            // --------GUARDA LOS DATOS DE LA EMPRESA EN LA BBDD----------
+           if (esValido){
+               val db = Room.databaseBuilder(
+                   applicationContext,
+                   BBDD::class.java,
+                   "reservas_db"
+               ).allowMainThreadQueries().build()
+
+               //Comprobar si el correo ya esta registrado
+               val correo = binding.etCorreo.text.toString()
+               val usuarioExistente = db.appDao().buscarEmpleadoPorCorreo(correo)
+
+               if (usuarioExistente != null) {
+                   binding.tilCorreo.error = "Este correo ya está registrado"
+                   binding.etCorreo.requestFocus()
+                   return@setOnClickListener
+               }//Fin Comprobación
+
+               val jefe = Empleados(
+                   nombre = binding.etNombreEmpresa.text.toString(),
+                   correo = binding.etCorreo.text.toString(),
+                   contrasena = binding.etContrasena.text.toString(),
+                   nif = binding.etNumEmpresa.text.toString(),
+                   esJefe = true // acceso corporativo
+               )
+
+               db.appDao().insertarEmpleado(jefe)
+               Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()
+           }
+            //------------------------------------------------------------------
         }
 
     }
