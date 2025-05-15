@@ -57,19 +57,17 @@ class Activity_empleados : AppCompatActivity() {
         supportActionBar?.title = ""
 
         val sharedPreferences = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val pisosGuardados = sharedPreferences.getStringSet("pisos", setOf()) ?: setOf()
+        val pisosGuardadosSet = sharedPreferences.getStringSet("pisos", setOf()) ?: setOf()
+        val pisosGuardados = pisosGuardadosSet.toList().sorted()
 
         spinnerPisos = Spinner(this).apply {
             adapter = ArrayAdapter(this@Activity_empleados, android.R.layout.simple_spinner_dropdown_item, pisosGuardados.toList())
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                    pisoSeleccionado = pisosGuardados.elementAt(position)
+                    pisoSeleccionado = pisosGuardados[position]
                     cargarSalas(pisoSeleccionado)
                     cargarImagenFondo(pisoSeleccionado)
-                    // Verificar disponibilidad si ya se seleccionó fecha y hora
-                    if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
-                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
-                    }
+                    verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
                 }
 
                 override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -163,7 +161,7 @@ class Activity_empleados : AppCompatActivity() {
                 nombre = salaGuardada.nombre,
                 tamaño = salaGuardada.tamaño,
                 opcionesExtra = salaGuardada.extras,
-                piso = salaGuardada.piso
+                piso = pisoSeleccionado
             )
 
             // Crear un botón para cada sala cargada
@@ -262,8 +260,16 @@ class Activity_empleados : AppCompatActivity() {
             val view = container.getChildAt(i)
             if (view is Button) {
                 val sala = view.tag as? Sala ?: continue
-                val ocupada = reservas.any { it.nombreSala == sala.nombre && it.piso == sala.piso && it.fechaHora == fechaHora }
+
+                // Verificamos si hay una reserva exacta para esta sala en esa fecha y hora
+                val ocupada = reservas.any {
+                    it.nombreSala.equals(sala.nombre, ignoreCase = true) &&
+                            it.piso.trim().equals(sala.piso.trim(), ignoreCase = true) &&
+                            it.fechaHora == fechaHora
+                }
+
                 val color = if (ocupada) Color.RED else Color.GREEN
+
                 view.background = GradientDrawable().apply {
                     setColor(color)
                     cornerRadius = 50f
@@ -288,13 +294,18 @@ class Activity_empleados : AppCompatActivity() {
         // Verificar si ya hay una reserva para esa sala, fecha y piso
         val reservaExistente = reservas.find { it.nombreSala == nombreSala && it.piso == pisoSeleccionado && it.fechaHora == fechaHora }
 
-        // Verificar si ya hay otra reserva para el mismo usuario en esa hora, pero en una sala diferente
-        val yaReservadoOtraSala = reservas.any {
-            it.fechaHora == fechaHora && it.nombreUsuario == nombreUsuario && it.nombreSala != nombreSala && it.piso == pisoSeleccionado
+        // Verificar si el usuario ya tiene una reserva a esa hora en cualquier sala y piso
+        val reservaUsuarioMismaHora = reservas.find {
+            it.fechaHora == fechaHora && it.nombreUsuario == nombreUsuario
         }
 
-        if (yaReservadoOtraSala) {
-            Snackbar.make(container, "Ya tienes reservada otra sala a esa hora en este piso", Snackbar.LENGTH_SHORT).show()
+        // Bloqueo si el usuario ya tiene reserva a esa hora en algún piso (distinto al piso y sala actual)
+        if (reservaUsuarioMismaHora != null) {
+            if (reservaUsuarioMismaHora.piso == pisoSeleccionado) {
+                Snackbar.make(container, "Ya tienes reservada otra sala a esa hora en este piso", Snackbar.LENGTH_SHORT).show()
+            } else {
+                Snackbar.make(container, "Ya tienes una sala reservada a esa hora en el ${reservaUsuarioMismaHora.piso}", Snackbar.LENGTH_SHORT).show()
+            }
             return
         }
 
@@ -321,11 +332,27 @@ class Activity_empleados : AppCompatActivity() {
 
         val dialog = AlertDialog.Builder(this)
             .setTitle("Confirmar reserva")
-            .setMessage("¿Deseas reservar la sala '$nombreSala' en el piso '$pisoSeleccionado' para '$fechaHora'?")
+            .setMessage("¿Deseas reservar la sala '$nombreSala' en el '$pisoSeleccionado' para '$fechaHora'?")
             .setPositiveButton("Sí") { _, _ ->
                 reservas.add(Reserva(nombreSala, fechaHora, nombreUsuario, pisoSeleccionado))
                 sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
-                verificarDisponibilidad(fechaHora)
+
+                // Guardamos el piso actual
+                val pisoAnterior = pisoSeleccionado
+
+                // 1. Pintar el botón reservado aunque no estemos en ese piso
+                if (pisoAnterior != pisoSeleccionado) {
+                    cargarSalas(pisoSeleccionado)
+                    cargarImagenFondo(pisoSeleccionado)
+                    verificarDisponibilidad(fechaHora)
+                    // Volver al piso anterior visualmente
+                    pisoSeleccionado = pisoAnterior
+                    cargarSalas(pisoAnterior)
+                    cargarImagenFondo(pisoAnterior)
+                    verificarDisponibilidad(fechaHora)
+                } else {
+                    verificarDisponibilidad(fechaHora)
+                }
                 Snackbar.make(container, "Reserva realizada para $nombreSala en el piso $pisoSeleccionado", Snackbar.LENGTH_SHORT).show()
             }
             .setNegativeButton("No", null)

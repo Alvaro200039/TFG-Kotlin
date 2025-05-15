@@ -38,6 +38,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.core.content.edit
 import androidx.core.view.children
+import java.util.UUID
 
 data class Sala(
     var nombre: String,
