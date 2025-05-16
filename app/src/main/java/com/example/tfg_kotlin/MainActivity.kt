@@ -78,13 +78,19 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar?.title = "\"Piso nº...\""
+        supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Agregar el listener de clic al título de la Toolbar
-        toolbar.setOnClickListener {
+        val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val pisoGuardado = sharedPreferences.getString("pisos", "Piso nº ")
+
+        val titleView = findViewById<TextView>(R.id.toolbar_title)
+        titleView.text = pisoGuardado
+        titleView.setOnClickListener {
             showChangeTitleDialog()
         }
+
+
         container = findViewById(R.id.container)
     }
 
@@ -153,10 +159,13 @@ class MainActivity : AppCompatActivity() {
 
     // Función para cambiar el título de la Toolbar con un EditText
     private fun showChangeTitleDialog() {
-        // Crear un EditText para que el usuario ingrese el nuevo título
+        val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val pisoGuardado = sharedPreferences.getString("pisos", "Piso nº ")
+
+        // Crear un EditText con el valor actual
         val editText = EditText(this).apply {
-            hint = "Piso nº"  // El texto del hint
-            setText("Piso nº ")  // Mostrar el título actual en el EditText
+            setText(pisoGuardado)
+            setSelection(text.length) // Poner cursor al final para editar fácilmente
         }
 
         val layout = LinearLayout(this).apply {
@@ -169,18 +178,19 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Edite el piso al que pertenece")
             .setView(layout)
             .setPositiveButton("Guardar") { dialog, _ ->
-                val nuevoTitulo = editText.text.toString().trim()
+                val maxTitleLength = 11
+                val nuevoTitulo = editText.text.toString().trim().take(maxTitleLength)
                 if (nuevoTitulo.isNotBlank()) {
-                    // Guardar el nuevo título actual en mi_preferencia (si quieres que se muestre en la toolbar)
-                    val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+                    // Guardar el nuevo título en SharedPreferences
                     sharedPreferences.edit().putString("numero_piso", nuevoTitulo).apply()
-                    supportActionBar?.title = nuevoTitulo
 
-                    // Ahora guardar el nuevo piso dentro del conjunto de pisos
+                    // Actualizar el TextView del título
+                    findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
+
+                    // Guardar el nuevo piso en conjunto de pisos en "DistribucionSalas"
                     val distPrefs = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
                     val pisosActuales = distPrefs.getStringSet("pisos", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-                    pisosActuales.add(nuevoTitulo)  // Añadir el nuevo piso al conjunto
-
+                    pisosActuales.add(nuevoTitulo)
                     distPrefs.edit().putStringSet("pisos", pisosActuales).apply()
                 }
             }
@@ -192,6 +202,7 @@ class MainActivity : AppCompatActivity() {
         }
         builder.show()
     }
+
 
     private fun showButtonOptions(button: Button) {
         val options = arrayOf("Editar", "Eliminar", "Cambiar tamaño")

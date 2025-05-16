@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="AppCompatResource">
     <item
         android:id="@+id/action_add_image"
         android:icon="@drawable/photo_add"
-        android:title="Añadir imagen"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom"
+        android:title="Añadir imagen" />
     <item
         android:id="@+id/action_add"
         android:icon="@drawable/plus_add"
+        app:showAsAction="ifRoom"
         android:title="Añadir sala"
-        app:showAsAction="ifRoom" />
+        tools:ignore="AppCompatResource" />
     <item
         android:id="@+id/action_save"
         android:icon="@drawable/save"
-        android:title="Guardar"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom"
+        android:title="Guardar" />
 </menu>

@@ -278,7 +278,6 @@ class Activity_empleados : AppCompatActivity() {
         }
     }
 
-
     private fun reservarSala(nombreSala: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
@@ -291,29 +290,23 @@ class Activity_empleados : AppCompatActivity() {
         val nombreUsuario = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
             .getString("nombre_usuario", "Empleado") ?: "Empleado"
 
-        // Verificar si ya hay una reserva para esa sala, fecha y piso
-        val reservaExistente = reservas.find { it.nombreSala == nombreSala && it.piso == pisoSeleccionado && it.fechaHora == fechaHora }
+        // Buscar una reserva existente para esa sala, fecha, piso
+        val reservaExistente = reservas.find {
+            it.nombreSala == nombreSala && it.piso == pisoSeleccionado && it.fechaHora == fechaHora
+        }
 
-        // Verificar si el usuario ya tiene una reserva a esa hora en cualquier sala y piso
+        // Verificar si el usuario ya tiene una reserva en otra sala a la misma hora
         val reservaUsuarioMismaHora = reservas.find {
             it.fechaHora == fechaHora && it.nombreUsuario == nombreUsuario
         }
 
-        // Bloqueo si el usuario ya tiene reserva a esa hora en algún piso (distinto al piso y sala actual)
-        if (reservaUsuarioMismaHora != null) {
-            if (reservaUsuarioMismaHora.piso == pisoSeleccionado) {
-                Snackbar.make(container, "Ya tienes reservada otra sala a esa hora en este piso", Snackbar.LENGTH_SHORT).show()
-            } else {
-                Snackbar.make(container, "Ya tienes una sala reservada a esa hora en el ${reservaUsuarioMismaHora.piso}", Snackbar.LENGTH_SHORT).show()
-            }
-            return
-        }
-
+        // Si ya existe una reserva en esa sala, fecha y piso
         if (reservaExistente != null) {
             if (reservaExistente.nombreUsuario == nombreUsuario) {
+                // Si la reserva es del mismo usuario, se ofrece cancelarla
                 val dialog = AlertDialog.Builder(this)
                     .setTitle("Cancelar reserva")
-                    .setMessage("¿Deseas cancelar tu reserva para la sala '$nombreSala' en '$fechaHora'?")
+                    .setMessage("¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
                     .setPositiveButton("Sí") { _, _ ->
                         reservas.remove(reservaExistente)
                         sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
@@ -330,33 +323,25 @@ class Activity_empleados : AppCompatActivity() {
             return
         }
 
+        // Si el usuario ya tiene otra reserva a esa hora (en otra sala)
+        if (reservaUsuarioMismaHora != null) {
+            Snackbar.make(container, "Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora.nombreSala}'(${reservaUsuarioMismaHora.piso})", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        // Si no hay conflictos, hacer la reserva
         val dialog = AlertDialog.Builder(this)
             .setTitle("Confirmar reserva")
-            .setMessage("¿Deseas reservar la sala '$nombreSala' en el '$pisoSeleccionado' para '$fechaHora'?")
+            .setMessage("¿Deseas reservar '$nombreSala' en el '$pisoSeleccionado' para '$fechaHora'?")
             .setPositiveButton("Sí") { _, _ ->
                 reservas.add(Reserva(nombreSala, fechaHora, nombreUsuario, pisoSeleccionado))
                 sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
-
-                // Guardamos el piso actual
-                val pisoAnterior = pisoSeleccionado
-
-                // 1. Pintar el botón reservado aunque no estemos en ese piso
-                if (pisoAnterior != pisoSeleccionado) {
-                    cargarSalas(pisoSeleccionado)
-                    cargarImagenFondo(pisoSeleccionado)
-                    verificarDisponibilidad(fechaHora)
-                    // Volver al piso anterior visualmente
-                    pisoSeleccionado = pisoAnterior
-                    cargarSalas(pisoAnterior)
-                    cargarImagenFondo(pisoAnterior)
-                    verificarDisponibilidad(fechaHora)
-                } else {
-                    verificarDisponibilidad(fechaHora)
-                }
-                Snackbar.make(container, "Reserva realizada para $nombreSala en el piso $pisoSeleccionado", Snackbar.LENGTH_SHORT).show()
+                verificarDisponibilidad(fechaHora)
+                Snackbar.make(container, "Reserva realizada para $nombreSala en el $pisoSeleccionado", Snackbar.LENGTH_SHORT).show()
             }
             .setNegativeButton("No", null)
             .create()
+
         dialog.show()
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.setOnShowListener {
@@ -369,6 +354,5 @@ class Activity_empleados : AppCompatActivity() {
                 setTextColor(Color.WHITE)
             }
         }
-        dialog.show()
     }
 }
