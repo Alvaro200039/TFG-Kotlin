@@ -11,6 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
+import com.example.tfg_kotlin.BBDD.MIGRATION_1_2
 import com.example.tfg_kotlin.databinding.ActivityLoginPersonaBinding
 import com.example.tfg_kotlin.databinding.ActivityMainBinding
 import com.example.tfg_kotlin.Validaciones
@@ -50,7 +51,7 @@ class LoginPersonaActivity : AppCompatActivity() {
                 applicationContext,
                 BBDD::class.java,
                 "reservas_db"
-            ).allowMainThreadQueries().build()
+            ).addMigrations(MIGRATION_1_2).allowMainThreadQueries().build()
 
             val correo = binding.etCorreo.text.toString()
             val contrasena = binding.etContrasena.text.toString()

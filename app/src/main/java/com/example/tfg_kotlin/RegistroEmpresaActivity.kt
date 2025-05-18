@@ -11,6 +11,7 @@ import com.example.tfg_kotlin.BBDD.BBDD
 import com.example.tfg_kotlin.BBDD.Empleados
 import com.example.tfg_kotlin.databinding.ActivityRegistroEmpresaBinding
 import android.widget.Toast
+import com.example.tfg_kotlin.BBDD.MIGRATION_1_2
 import com.example.tfg_kotlin.databinding.ActivityRegistroPersonaBinding
 
 
@@ -50,7 +51,7 @@ class RegistroEmpresaActivity : AppCompatActivity() {
                    applicationContext,
                    BBDD::class.java,
                    "reservas_db"
-               ).allowMainThreadQueries().build()
+               ).addMigrations(MIGRATION_1_2).allowMainThreadQueries().build()
 
                //Comprobar si el correo ya esta registrado
                val correo = binding.etCorreo.text.toString()

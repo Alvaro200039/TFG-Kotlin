@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
 import com.example.tfg_kotlin.BBDD.Empleados
+import com.example.tfg_kotlin.BBDD.MIGRATION_1_2
 import com.example.tfg_kotlin.databinding.ActivityLoginEmpresaBinding
 import com.example.tfg_kotlin.databinding.ActivityRegistroPersonaBinding
 
@@ -49,7 +50,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
                    applicationContext,
                    BBDD::class.java,
                    "reservs_db"
-               ).allowMainThreadQueries().build()
+               ).addMigrations(MIGRATION_1_2).allowMainThreadQueries().build()
                //Comprobar si el correo ya esta registrado
                val correo = binding.etCorreo.text.toString()
                val usuarioExistente = db.appDao().buscarEmpleadoPorCorreo(correo)
