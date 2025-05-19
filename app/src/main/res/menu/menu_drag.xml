@@ -10,7 +10,7 @@
         android:title="Añadir horas" />
     <item
         android:id="@+id/action_add_image"
-        android:icon="@drawable/photo_add"
+        android:icon="@drawable/plano"
         app:showAsAction="always"
         android:title="Añadir imagen" />
     <item

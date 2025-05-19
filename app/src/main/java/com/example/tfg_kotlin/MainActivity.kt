@@ -3,13 +3,13 @@ package com.example.tfg_kotlin
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
-import android.text.InputType
 import android.text.TextWatcher
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -34,6 +34,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.graphics.toColorInt
@@ -43,7 +44,6 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.core.content.edit
 import androidx.core.view.children
-import java.util.UUID
 
 data class Sala(
     var nombre: String,
@@ -405,8 +405,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         val anchoSeekBar = SeekBar(this).apply {
-            max = 1000
+            max = 1070
             progress = salaButton.width
+            thumbTintList = ColorStateList.valueOf(Color.DKGRAY)
+            progressTintList = ColorStateList.valueOf(Color.DKGRAY)
         }
 
         val anchoValue = TextView(this).apply {
@@ -414,8 +416,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         val altoSeekBar = SeekBar(this).apply {
-            max = 1000
+            max = 1750
             progress = salaButton.height
+            thumbTintList = ColorStateList.valueOf(Color.DKGRAY)
+            progressTintList = ColorStateList.valueOf(Color.DKGRAY)
         }
 
         val altoValue = TextView(this).apply {
@@ -461,7 +465,7 @@ class MainActivity : AppCompatActivity() {
                 params.width = nuevoAncho
                 params.height = nuevoAlto
                 salaButton.layoutParams = params
-                actualizarTamañoSalaGuardada(sala.nombre, nuevoAncho, nuevoAlto)
+                actualizarTamanioSalaGuardada(sala.nombre, nuevoAncho, nuevoAlto)
             }
             .setNegativeButton("Cancelar", null)
             .create()
@@ -478,12 +482,13 @@ class MainActivity : AppCompatActivity() {
             dialog.window?.attributes = layoutParams
 
             dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
         }
-
         dialog.show()
     }
 
-    private fun actualizarTamañoSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
+    private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
         val json = sharedPref.getString("salas", "[]")
@@ -530,23 +535,38 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        val tamaños = listOf("Grande", "Pequeño")
+        val tamanios = listOf("Grande", "Pequeño")
+
+        val adapter = ArrayAdapter(
+
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            tamanios
+        ).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+
         val spinnerTamaño = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, tamaños)
-            setSelection(tamaños.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
+            this.adapter = adapter
+            setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
+            background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
+            this.setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
         }
 
         val checkWifi = CheckBox(this).apply {
             text = "WiFi"
             isChecked = sala.opcionesExtra.contains("WiFi")
+            buttonTintList = ColorStateList.valueOf(Color.GRAY)
         }
         val checkProyector = CheckBox(this).apply {
             text = "Proyector"
             isChecked = sala.opcionesExtra.contains("Proyector")
+            buttonTintList = ColorStateList.valueOf(Color.GRAY)
         }
         val checkPizarra = CheckBox(this).apply {
             text = "Pizarra"
             isChecked = sala.opcionesExtra.contains("Pizarra")
+            buttonTintList = ColorStateList.valueOf(Color.GRAY)
         }
 
         layout.apply {
@@ -569,12 +589,9 @@ class MainActivity : AppCompatActivity() {
 
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
-            positiveButton.setBackgroundColor("#008000".toColorInt())
-            positiveButton.setTextColor("#FFFFFF".toColorInt())
-            negativeButton.setBackgroundColor("#B22222".toColorInt())
-            negativeButton.setTextColor("#FFFFFF".toColorInt())
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
 
             positiveButton.setOnClickListener {
                 val nuevoNombre = editTextNombre.text.toString().trim()
