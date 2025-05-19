@@ -13,6 +13,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -130,10 +131,15 @@ class Activity_empleados : AppCompatActivity() {
     }
 
     private fun mostrarDialogoHoras() {
-        val horasDisponibles = arrayOf(
-            "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
-            "12:00 - 13:00", "13:00 - 14:00", "16:00 - 17:00", "17:00 - 18:00"
-        )
+        val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val franjasSet = prefs.getStringSet("franjas_horarias", emptySet()) ?: emptySet()
+        val horasDisponibles = franjasSet.toTypedArray()
+
+        if (horasDisponibles.isEmpty()) {
+            Toast.makeText(this, "No hay franjas horarias disponibles. Crea algunas primero.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("Selecciona una franja horaria para el $fechaSeleccionada")
             .setItems(horasDisponibles) { _, which ->

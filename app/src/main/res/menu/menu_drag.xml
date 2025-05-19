@@ -4,19 +4,24 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     tools:ignore="AppCompatResource">
     <item
+        android:id="@+id/action_add_hour"
+        android:icon="@drawable/time"
+        app:showAsAction="always"
+        android:title="Añadir horas" />
+    <item
         android:id="@+id/action_add_image"
         android:icon="@drawable/photo_add"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:title="Añadir imagen" />
     <item
         android:id="@+id/action_add"
         android:icon="@drawable/plus_add"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:title="Añadir sala"
         tools:ignore="AppCompatResource" />
     <item
         android:id="@+id/action_save"
         android:icon="@drawable/save"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:title="Guardar" />
 </menu>

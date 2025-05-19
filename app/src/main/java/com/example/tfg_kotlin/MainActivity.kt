@@ -1,5 +1,7 @@
 package com.example.tfg_kotlin
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
@@ -7,13 +9,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputFilter
+import android.text.InputType
 import android.text.TextWatcher
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
@@ -106,6 +111,10 @@ class MainActivity : AppCompatActivity() {
                 onBackPressedDispatcher.onBackPressed()
                 true
             }
+            R.id.action_add_hour -> {
+                mostrarDialogoFranjas()
+                true
+            }
             R.id.action_add_image -> {
                 openGallery()
                 true
@@ -122,6 +131,149 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private fun EditText.autoAdvanceTo(next: EditText?) {
+        this.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                if (s?.length == 2) {
+                    if (next != null) {
+                        next.requestFocus()
+                    } else {
+                        // Ocultar teclado si es el último campo
+                        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.hideSoftInputFromWindow(windowToken, 0)
+                        clearFocus()
+                    }
+                }
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+    }
+
+    @SuppressLint("SuspiciousIndentation")
+    private fun mostrarDialogoFranjas() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
+        val editHoraInicio = dialogView.findViewById<EditText>(R.id.etHoraInicio)
+        val editMinutoInicio = dialogView.findViewById<EditText>(R.id.etMinInicio)
+        val editHoraFin = dialogView.findViewById<EditText>(R.id.etHoraFin)
+        val editMinutoFin = dialogView.findViewById<EditText>(R.id.etMinFin)
+        val botonAgregar = dialogView.findViewById<Button>(R.id.btnAddFranja)
+        val layoutFranjas = dialogView.findViewById<LinearLayout>(R.id.layoutFranjas)
+
+
+        editHoraInicio.autoAdvanceTo(editMinutoInicio)
+        editMinutoInicio.autoAdvanceTo(editHoraFin)
+        editHoraFin.autoAdvanceTo(editMinutoFin)
+        editMinutoFin.autoAdvanceTo(null)
+
+        val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val listaFranjas = prefs.getStringSet("franjas_horarias", mutableSetOf())!!.toMutableSet()
+
+        fun actualizarListaFranjasUI() {
+            layoutFranjas.removeAllViews()
+            val ordenadas = listaFranjas.sorted()
+            for (franja in ordenadas) {
+                val franjaView = LinearLayout(dialogView.context).apply {
+                    orientation = LinearLayout.HORIZONTAL
+
+                    val text = TextView(dialogView.context).apply {
+                        this.text = franja
+                        textSize = 16f
+                        setPadding(8, 4, 8, 4)
+                    }
+
+                    val botonEliminar = Button(dialogView.context).apply {
+                        this.text = "❌"
+                        textSize = 14f
+                        setBackgroundColor(Color.TRANSPARENT)
+                        setPadding(16, 0, 16, 0)
+                        setOnClickListener {
+                            listaFranjas.remove(franja)
+                            prefs.edit() { putStringSet("franjas_horarias", listaFranjas) }
+                            actualizarListaFranjasUI()
+                        }
+                    }
+
+                    addView(text)
+                    addView(botonEliminar)
+                }
+                layoutFranjas.addView(franjaView)
+            }
+        }
+
+        botonAgregar.setOnClickListener {
+            val hInicio = editHoraInicio.text.toString()
+            val mInicio = editMinutoInicio.text.toString()
+            val hFin = editHoraFin.text.toString()
+            val mFin = editMinutoFin.text.toString()
+
+            if (hInicio.isBlank() || mInicio.isBlank() || hFin.isBlank() || mFin.isBlank()) {
+                Toast.makeText(this, "Todos los campos deben estar completos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val hi = hInicio.toIntOrNull()
+            val mi = mInicio.toIntOrNull()
+            val hf = hFin.toIntOrNull()
+            val mf = mFin.toIntOrNull()
+
+            if (hi == null || mi == null || hf == null || mf == null) {
+                Toast.makeText(this, "Todos los valores deben ser números válidos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (hi !in 0..23 || hf !in 0..23) {
+                Toast.makeText(this, "Las horas deben estar entre 0 y 23", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (mi !in 0..59 || mf !in 0..59) {
+                Toast.makeText(this, "Los minutos deben estar entre 0 y 59", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val minutosInicio = hi * 60 + mi
+            val minutosFin = hf * 60 + mf
+
+            if (minutosFin <= minutosInicio) {
+                Toast.makeText(this, "La hora de fin debe ser posterior a la de inicio", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val horaInicioStr = "%02d:%02d".format(hi, mi)
+            val horaFinStr = "%02d:%02d".format(hf, mf)
+            val nuevaFranja = "$horaInicioStr - $horaFinStr"
+
+            if (listaFranjas.contains(nuevaFranja)) {
+                Toast.makeText(this, "Franja ya añadida", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            listaFranjas.add(nuevaFranja)
+            prefs.edit() { putStringSet("franjas_horarias", listaFranjas) }
+            actualizarListaFranjasUI()
+
+            // Limpiar campos
+            editHoraInicio.text.clear()
+            editMinutoInicio.text.clear()
+            editHoraFin.text.clear()
+            editMinutoFin.text.clear()
+        }
+
+        actualizarListaFranjasUI()
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Añadir franjas horarias")
+            .setView(dialogView)
+            .setNegativeButton("Cerrar", null)
+            .create()
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+            dialog.show()
+            val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            btnCerrar.setTextColor(Color.BLACK)
+    }
+
 
     fun entrarModoEmpleado(view: View) {
         val intent = Intent(this, Activity_empleados::class.java)
@@ -162,10 +314,9 @@ class MainActivity : AppCompatActivity() {
         val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
         val pisoGuardado = sharedPreferences.getString("pisos", "Piso nº ")
 
-        // Crear un EditText con el valor actual
         val editText = EditText(this).apply {
             setText(pisoGuardado)
-            setSelection(text.length) // Poner cursor al final para editar fácilmente
+            setSelection(text.length)
         }
 
         val layout = LinearLayout(this).apply {
@@ -174,20 +325,17 @@ class MainActivity : AppCompatActivity() {
             addView(editText)
         }
 
-        val builder = AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle("Edite el piso al que pertenece")
             .setView(layout)
-            .setPositiveButton("Guardar") { dialog, _ ->
+            .setPositiveButton("Guardar") { dialogInterface, _ ->
                 val maxTitleLength = 11
                 val nuevoTitulo = editText.text.toString().trim().take(maxTitleLength)
                 if (nuevoTitulo.isNotBlank()) {
-                    // Guardar el nuevo título en SharedPreferences
                     sharedPreferences.edit().putString("numero_piso", nuevoTitulo).apply()
 
-                    // Actualizar el TextView del título
                     findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
 
-                    // Guardar el nuevo piso en conjunto de pisos en "DistribucionSalas"
                     val distPrefs = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
                     val pisosActuales = distPrefs.getStringSet("pisos", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
                     pisosActuales.add(nuevoTitulo)
@@ -197,10 +345,15 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancelar", null)
             .create()
 
-        builder.setOnShowListener {
-            builder.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+            // Cambiar color de botones
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK) // Azul
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.RED) // Rojo
         }
-        builder.show()
+
+        dialog.show()
     }
 
 
@@ -463,9 +616,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun obtenerTodosLosBotones(): List<Button> {
-        return container.children.filterIsInstance<Button>().toList()
-    }
+   // private fun obtenerTodosLosBotones(): List<Button> {
+     //   return container.children.filterIsInstance<Button>().toList()
+    //}
 
     private fun actualizarBotonConSala(button: Button, sala: Sala) {
         val builder = StringBuilder()
