@@ -11,6 +11,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -46,10 +47,24 @@ class Activity_empleados : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_empleados)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.container)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.empleados)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        val btnReservas = findViewById<LinearLayout>(R.id.btn_reservas)
+        btnReservas.setOnClickListener {
+            mostrarDialogoReservas()
+        }
+
+        val btnFranja = findViewById<LinearLayout>(R.id.btn_franja)
+        btnFranja.setOnClickListener {
+            if (fechaSeleccionada.isEmpty()) {
+                Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_SHORT).show()
+            } else {
+                mostrarDialogoHoras()
+            }
         }
 
         container = findViewById(R.id.contentLayout)
@@ -129,27 +144,97 @@ class Activity_empleados : AppCompatActivity() {
             calendario.get(Calendar.MONTH),
             calendario.get(Calendar.DAY_OF_MONTH)
         )
+        // Aquí se establece la fecha mínima como la fecha actual (no permite días anteriores)
+        datePicker.datePicker.minDate = calendario.timeInMillis
+
         datePicker.show()
     }
+
+    private fun mostrarDialogoReservas() {
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val gson = Gson()
+
+        // Obtener la lista de reservas guardadas
+        val reservas: List<Reserva> = gson.fromJson(
+            sharedPref.getString("reservas", "[]"),
+            object : TypeToken<List<Reserva>>() {}.type
+        )
+
+        if (reservas.isEmpty()) {
+            Toast.makeText(this, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Formatear las reservas para mostrarlas en la lista
+        val listaReservas = reservas.map { reserva ->
+            "${reserva.piso} ${reserva.nombreSala}\n${reserva.fechaHora}"
+        }.toTypedArray()
+
+        // Crear y mostrar el diálogo con la lista
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Tus reservas activas")
+            .setItems(listaReservas, null)
+            .setPositiveButton("Cerrar", null)
+            .create()
+
+        dialog.show()
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+        btnCerrar.setTextColor(Color.BLACK)
+    }
+
 
     private fun mostrarDialogoHoras() {
         val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
         val franjasSet = prefs.getStringSet("franjas_horarias", emptySet()) ?: emptySet()
-        val horasDisponibles = franjasSet.toTypedArray()
+        val franjasOriginales = franjasSet.toList()
 
-        if (horasDisponibles.isEmpty()) {
+        if (franjasOriginales.isEmpty()) {
             Toast.makeText(this, "No hay franjas horarias disponibles. Crea algunas primero.", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val calendario = Calendar.getInstance()
+        val hoy = String.format("%02d/%02d/%d",
+            calendario.get(Calendar.DAY_OF_MONTH),
+            calendario.get(Calendar.MONTH) + 1,
+            calendario.get(Calendar.YEAR)
+        )
+
+        val horaActual = String.format("%02d:%02d",
+            calendario.get(Calendar.HOUR_OF_DAY),
+            calendario.get(Calendar.MINUTE)
+        )
+
+        // Filtrar franjas si la fecha seleccionada es hoy
+        val horasDisponibles = if (fechaSeleccionada == hoy) {
+            franjasOriginales.filter { franja ->
+                // Comparamos cadenas HH:mm lexicográficamente porque el formato es fijo
+                franja >= horaActual
+            }
+        } else {
+            franjasOriginales
+        }
+
+        if (horasDisponibles.isEmpty()) {
+            Toast.makeText(this, "No hay franjas horarias disponibles para el día seleccionado.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val horasArray = horasDisponibles.toTypedArray()
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("Selecciona una franja horaria para el $fechaSeleccionada")
-            .setItems(horasDisponibles) { _, which ->
-                horaSeleccionada = horasDisponibles[which]
+            .setItems(horasArray) { _, which ->
+                horaSeleccionada = horasArray[which]
                 verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
             }
             .create()
+
         dialog.show()
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+        btnCerrar?.setTextColor(Color.BLACK)
     }
 
     private fun cargarSalas(nombrePiso: String) {

@@ -12,12 +12,10 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -70,13 +68,34 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        setContentView(R.layout.activity_creacion)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.creacion)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Enlace botones
+        val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
+        val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
+        val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
+
+        // Listener para btnHoras (antes action_add_hour)
+        btnHoras.setOnClickListener {
+            mostrarDialogoFranjas()
+        }
+
+        // Listener para btnPlano (antes action_add_image)
+        btnPlano.setOnClickListener {
+            openGallery()
+        }
+
+        // Listener para btnSala (antes action_add)
+        btnSala.setOnClickListener {
+            addMovableButton()
+        }
+
+
 //Solo usar en modo desarrollo
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         sharedPref.edit() { clear() }  // Borra todos los datos guardados
@@ -87,10 +106,11 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-        val pisoGuardado = sharedPreferences.getString("pisos", "Piso nº ")
+        sharedPreferences.edit().putString("numero_piso", "Piso nº").apply()
 
         val titleView = findViewById<TextView>(R.id.toolbar_title)
-        titleView.text = pisoGuardado
+// Mostrar siempre texto fijo en la toolbar
+        titleView.text = "Piso nº"
         titleView.setOnClickListener {
             showChangeTitleDialog()
         }
@@ -109,18 +129,6 @@ class MainActivity : AppCompatActivity() {
 
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
-                true
-            }
-            R.id.action_add_hour -> {
-                mostrarDialogoFranjas()
-                true
-            }
-            R.id.action_add_image -> {
-                openGallery()
-                true
-            }
-            R.id.action_add -> {
-                addMovableButton()
                 true
             }
 
@@ -312,7 +320,7 @@ class MainActivity : AppCompatActivity() {
     // Función para cambiar el título de la Toolbar con un EditText
     private fun showChangeTitleDialog() {
         val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-        val pisoGuardado = sharedPreferences.getString("pisos", "Piso nº ")
+        val pisoGuardado = sharedPreferences.getString("numero_piso", "Piso nº") ?: "Piso nº"
 
         val editText = EditText(this).apply {
             setText(pisoGuardado)
@@ -328,12 +336,13 @@ class MainActivity : AppCompatActivity() {
         val dialog = AlertDialog.Builder(this)
             .setTitle("Edite el piso al que pertenece")
             .setView(layout)
-            .setPositiveButton("Guardar") { dialogInterface, _ ->
+            .setPositiveButton("Guardar") { _, _ ->
                 val maxTitleLength = 11
                 val nuevoTitulo = editText.text.toString().trim().take(maxTitleLength)
-                if (nuevoTitulo.isNotBlank()) {
+                if (nuevoTitulo.isEmpty() || nuevoTitulo.equals("Piso nº", ignoreCase = true)|| nuevoTitulo.equals("Piso nº ", ignoreCase = true)) {
+                    Toast.makeText(this, "Por favor, cambie el nombre del piso antes de guardar", Toast.LENGTH_SHORT).show()
+                } else {
                     sharedPreferences.edit().putString("numero_piso", nuevoTitulo).apply()
-
                     findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
 
                     val distPrefs = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
@@ -347,10 +356,8 @@ class MainActivity : AppCompatActivity() {
 
         dialog.setOnShowListener {
             dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-
-            // Cambiar color de botones
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK) // Azul
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.RED) // Rojo
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.RED)
         }
 
         dialog.show()
@@ -664,7 +671,6 @@ class MainActivity : AppCompatActivity() {
             val view = container.getChildAt(i)
             if (view is Button) {
                 val sala = view.tag as? Sala ?: continue
-
                 salasGuardadas.add(
                     SalaGuardada(
                         nombre = sala.nombre,
@@ -674,23 +680,29 @@ class MainActivity : AppCompatActivity() {
                         alto = view.height.toFloat(),
                         tamaño = sala.tamaño,
                         extras = sala.opcionesExtra,
-                        piso= sala.piso
+                        piso = sala.piso
                     )
                 )
             }
         }
 
+        val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val nombrePiso = sharedPreferences.getString("numero_piso", "Piso nº") ?: "Piso nº"
+
+        if (nombrePiso == "Piso nº") {
+            Snackbar.make(container, "Por favor, asigne un nombre al piso", Snackbar.LENGTH_LONG)
+                .setAction("Editar") {
+                    showChangeTitleDialog()
+                }.show()
+            return
+        }
+
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
-
         val fondoUriString = fondoUri?.toString()
 
         sharedPref.edit().apply {
-            val sharedPrefsTitulo = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-            val nombrePiso = sharedPrefsTitulo.getString("numero_piso", "Piso 1") ?: "Piso 1"
-
             putString("salas_$nombrePiso", gson.toJson(salasGuardadas))
-            // Guardar el URI del fondo específico para ese piso
             fondoUriString?.let { putString("fondo_uri_$nombrePiso", it) }
             putBoolean("distribucion_guardada", true)
             apply()
@@ -698,6 +710,7 @@ class MainActivity : AppCompatActivity() {
 
         Snackbar.make(container, "Distribución guardada", Snackbar.LENGTH_SHORT).show()
     }
+
 
 
     // Aquí es donde gestionas la selección de imagen de fondo
