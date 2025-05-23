@@ -2,6 +2,7 @@ package com.example.tfg_kotlin
 
 import android.app.DatePickerDialog
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.MediaStore
@@ -10,6 +11,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.DatePicker
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Spinner
@@ -133,28 +135,34 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun mostrarDialogoFecha() {
         val calendario = Calendar.getInstance()
-        val datePicker = DatePickerDialog(
+
+        val datePickerDialog = DatePickerDialog(
             this,
+            android.R.style.Theme_Material_Dialog_MinWidth,
             { _, year, month, dayOfMonth ->
                 fechaSeleccionada = String.format("%02d/%02d/%d", dayOfMonth, month + 1, year)
                 textViewFecha.text = "Fecha: $fechaSeleccionada"
-                mostrarDialogoHoras() // Llamamos a mostrar las horas después de seleccionar la fecha
+                mostrarDialogoHoras()
             },
             calendario.get(Calendar.YEAR),
             calendario.get(Calendar.MONTH),
             calendario.get(Calendar.DAY_OF_MONTH)
         )
-        // Aquí se establece la fecha mínima como la fecha actual (no permite días anteriores)
-        datePicker.datePicker.minDate = calendario.timeInMillis
 
-        datePicker.show()
+        datePickerDialog.datePicker.minDate = calendario.timeInMillis
+
+        datePickerDialog.setOnShowListener {
+            datePickerDialog.window?.setBackgroundDrawableResource(R.drawable.datepicker_background)
+        }
+
+        datePickerDialog.show()
     }
+
 
     private fun mostrarDialogoReservas() {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
 
-        // Obtener la lista de reservas guardadas
         val reservas: List<Reserva> = gson.fromJson(
             sharedPref.getString("reservas", "[]"),
             object : TypeToken<List<Reserva>>() {}.type
@@ -165,23 +173,56 @@ class Activity_empleados : AppCompatActivity() {
             return
         }
 
-        // Formatear las reservas para mostrarlas en la lista
-        val listaReservas = reservas.map { reserva ->
-            "${reserva.piso} ${reserva.nombreSala}\n${reserva.fechaHora}"
-        }.toTypedArray()
+        // Agrupar por piso
+        val reservasPorPiso = reservas.groupBy { it.piso }
 
-        // Crear y mostrar el diálogo con la lista
+        // Inflar el layout personalizado
+        val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
+        val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
+
+        for ((piso, lista) in reservasPorPiso) {
+            // Título del piso
+            val pisoText = TextView(this).apply {
+                text = piso
+                textSize = 18f
+                setPadding(0, 16, 0, 8)
+                setTextColor(Color.BLACK)
+                setTypeface(null, Typeface.BOLD)
+            }
+            contenedor.addView(pisoText)
+
+            // Añadir las reservas de ese piso
+            lista.forEach { reserva ->
+                val reservaText = TextView(this).apply {
+                    text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
+                    setPadding(16, 4, 0, 4)
+                    setTextColor(Color.DKGRAY)
+                }
+                contenedor.addView(reservaText)
+            }
+
+            // Línea divisoria entre pisos
+            val divider = View(this).apply {
+                setBackgroundColor(Color.LTGRAY)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    2
+                ).apply { setMargins(0, 16, 0, 16) }
+            }
+            contenedor.addView(divider)
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("Tus reservas activas")
-            .setItems(listaReservas, null)
+            .setView(dialogView)
             .setPositiveButton("Cerrar", null)
             .create()
 
         dialog.show()
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-        val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-        btnCerrar.setTextColor(Color.BLACK)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
     }
+
 
 
     private fun mostrarDialogoHoras() {
