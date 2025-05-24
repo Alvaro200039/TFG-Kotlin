@@ -5,7 +5,7 @@
     android:id="@+id/menucreacion"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity_menu_creador"
+    tools:context=".MainActivity"
     android:background="@drawable/wallpaper">
 
     <androidx.appcompat.widget.Toolbar
@@ -17,13 +17,77 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/contentLayout"
+    <LinearLayout
+        android:id="@+id/contenedorContenido"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        android:orientation="vertical"
+        android:padding="24dp"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Título o logo -->
+        <TextView
+            android:id="@+id/textTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="16dp"
+            android:text="Reservas de Espacios"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <!-- Próxima reserva -->
+        <TextView
+            android:id="@+id/textProximaReserva"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="🕒 Próxima: "
+            android:textColor="@color/black"
+            android:textSize="16sp" />
+
+        <!-- Botón: Nueva reserva -->
+        <Button
+            android:id="@+id/btnNuevaReserva"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@color/black"
+            android:text="Hacer nueva reserva"
+            android:textColor="@color/white" />
+
+        <!-- Botón: Crear/editar salas -->
+        <Button
+            android:id="@+id/btnEditarSalas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/black"
+            android:text="Crear o editar salas"
+            android:textColor="@color/white" />
+
+        <!-- Botón: Ver reservas activas -->
+        <Button
+            android:id="@+id/btnVerReservas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/black"
+            android:text="Ver mis reservas"
+            android:textColor="@color/white" />
+
+        <!-- Botón: Cerrar sesión (opcional) -->
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Cerrar sesión"
+            android:textColor="#FA0202" />
+    </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

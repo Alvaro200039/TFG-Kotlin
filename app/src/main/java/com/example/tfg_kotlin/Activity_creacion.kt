@@ -61,7 +61,7 @@ data class SalaGuardada(
     var piso: String
 )
 
-class MainActivity : AppCompatActivity() {
+class Activity_creacion : AppCompatActivity() {
 
     private lateinit var container: ConstraintLayout
 

@@ -11,7 +11,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.DatePicker
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Spinner
@@ -23,7 +22,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.toColorInt
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
@@ -309,7 +307,7 @@ class Activity_empleados : AppCompatActivity() {
                     if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
                         Snackbar.make(container, "Selecciona fecha y hora primero", Snackbar.LENGTH_SHORT).show()
                     } else {
-                        reservarSala(sala.nombre)  // Llamar a la función para reservar la sala
+                        mostrarDialogoDetallesSala(sala)
                     }
                 }
 
@@ -338,6 +336,42 @@ class Activity_empleados : AppCompatActivity() {
         if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
             verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
         }
+    }
+
+    private fun mostrarDialogoDetallesSala(sala: Sala) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Detalles de ${sala.nombre}")
+
+        val detalles = """
+        ${sala.piso}
+        Tamaño: ${sala.tamaño}
+        Extras: ${if (sala.opcionesExtra.isNotEmpty()) sala.opcionesExtra.joinToString(", ") else "Ninguno"}
+        Fecha: $fechaSeleccionada
+        Hora: $horaSeleccionada
+    """.trimIndent()
+
+        builder.setMessage(detalles)
+
+        builder.setPositiveButton("Reservar") { _, _ ->
+            reservarSala(sala.nombre)
+        }
+
+        builder.setNegativeButton("Cancelar") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val dialog = builder.create()
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        dialog.setOnShowListener {
+            val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positive.setTextColor(ContextCompat.getColor(this, R.color.black)) // cambia por tu color
+
+            val negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            negative.setTextColor(ContextCompat.getColor(this, R.color.black))
+        }
+
+
+        dialog.show()
     }
 
     private fun formatearTextoSala(sala: Sala): String {
@@ -476,17 +510,14 @@ class Activity_empleados : AppCompatActivity() {
             .setNegativeButton("No", null)
             .create()
 
-        dialog.show()
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
-                setBackgroundColor("#008000".toColorInt())
-                setTextColor(Color.WHITE)
-            }
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
-                setBackgroundColor("#B22222".toColorInt())
-                setTextColor(Color.WHITE)
-            }
+            val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positive.setTextColor(ContextCompat.getColor(this, R.color.black))
+
+            val negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            negative.setTextColor(ContextCompat.getColor(this, R.color.black))
         }
+        dialog.show()
     }
 }
