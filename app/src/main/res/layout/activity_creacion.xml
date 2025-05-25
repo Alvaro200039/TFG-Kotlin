@@ -132,6 +132,34 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/btn_pisos"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="@android:color/transparent">
+
+            <ImageView
+                android:id="@+id/icono_btn_pisos"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/edit"
+                android:contentDescription="Icono pisos" />
+
+            <TextView
+                android:id="@+id/texto_btn_pisos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eliminar pisos"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </LinearLayout>
+
 
         <LinearLayout
             android:id="@+id/btn_sala"

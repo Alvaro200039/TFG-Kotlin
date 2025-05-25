@@ -28,6 +28,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+
         <!-- Título o logo -->
         <TextView
             android:id="@+id/textTitulo"
@@ -37,7 +38,8 @@
             android:paddingBottom="16dp"
             android:text="Reservas de Espacios"
             android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
 
         <!-- Próxima reserva -->
         <TextView
@@ -45,48 +47,68 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="8dp"
-            android:text="🕒 Próxima: "
             android:textColor="@color/black"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:gravity="center"/>
 
-        <!-- Botón: Nueva reserva -->
-        <Button
-            android:id="@+id/btnNuevaReserva"
+        <LinearLayout
+            android:id="@+id/botones"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="@color/black"
-            android:text="Hacer nueva reserva"
-            android:textColor="@color/white" />
+            android:orientation="horizontal"
+            android:paddingEnd="0dp"
+            android:paddingStart="10dp"
 
-        <!-- Botón: Crear/editar salas -->
-        <Button
-            android:id="@+id/btnEditarSalas"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/black"
-            android:text="Crear o editar salas"
-            android:textColor="@color/white" />
+            android:layout_marginTop="16dp">
+
+            <!-- Botón: Nueva reserva -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNuevaReserva"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:backgroundTint="@android:color/holo_green_dark"
+                app:cornerRadius="16dp"
+                android:text="Realizar nueva reserva"
+                android:textColor="@color/white"
+               />
+
+            <!-- Botón: Crear/editar salas -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditarSalas"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:backgroundTint="@android:color/holo_purple"
+                app:cornerRadius="16dp"
+                android:text="Crear o editar estancias"
+                android:textColor="@color/white"/>
+
+        </LinearLayout>
 
         <!-- Botón: Ver reservas activas -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnVerReservas"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/black"
+            app:cornerRadius="16dp"
+            android:backgroundTint="@android:color/darker_gray"
+            android:layout_marginTop="24dp"
             android:text="Ver mis reservas"
-            android:textColor="@color/white" />
+            android:textColor="@color/white"
+            />
 
         <!-- Botón: Cerrar sesión (opcional) -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            app:cornerRadius="16dp"
             android:text="Cerrar sesión"
-            android:textColor="#FA0202" />
+            android:textColor="@color/white"
+            android:backgroundTint="@android:color/holo_red_dark"/>
     </LinearLayout>
 
 

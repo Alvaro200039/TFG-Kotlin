@@ -42,6 +42,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.core.content.edit
 import androidx.core.view.children
+import java.util.Locale
 
 data class Sala(
     var nombre: String,
@@ -79,10 +80,15 @@ class Activity_creacion : AppCompatActivity() {
         val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
         val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
         val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
+        val btnPisos = findViewById<LinearLayout>(R.id.btn_pisos)
 
         // Listener para btnHoras (antes action_add_hour)
         btnHoras.setOnClickListener {
             mostrarDialogoFranjas()
+        }
+
+        btnPisos.setOnClickListener {
+            mostrarDialogoEliminarPisos()
         }
 
         // Listener para btnPlano (antes action_add_image)
@@ -97,8 +103,8 @@ class Activity_creacion : AppCompatActivity() {
 
 
 //Solo usar en modo desarrollo
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        sharedPref.edit() { clear() }  // Borra todos los datos guardados
+      //  val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+       // sharedPref.edit() { clear() }  // Borra todos los datos guardados
 
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
@@ -709,6 +715,108 @@ class Activity_creacion : AppCompatActivity() {
         }
 
         Snackbar.make(container, "Distribución guardada", Snackbar.LENGTH_SHORT).show()
+    }
+
+    fun naturalOrderKey(s: String): List<Any> {
+        val regex = Regex("""(\d+|\D+)""")
+        return regex.findAll(s.lowercase(Locale.ROOT)).map {
+            val part = it.value
+            part.toIntOrNull() ?: part
+        }.toList()
+    }
+
+    fun compareNaturalKeys(a: List<Any>, b: List<Any>): Int {
+        val minSize = minOf(a.size, b.size)
+        for (i in 0 until minSize) {
+            val comp = when {
+                a[i] is Int && b[i] is Int -> (a[i] as Int).compareTo(b[i] as Int)
+                a[i] is String && b[i] is String -> (a[i] as String).compareTo(b[i] as String)
+                a[i] is Int && b[i] is String -> -1 // números antes que letras
+                a[i] is String && b[i] is Int -> 1  // letras después que números
+                else -> 0
+            }
+            if (comp != 0) return comp
+        }
+        // Si todos los elementos iguales hasta ahora, la lista más corta es menor
+        return a.size.compareTo(b.size)
+    }
+
+    fun eliminarPiso(nombrePiso: String) {
+        val sharedPrefDistribucion = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+
+        // Actualizar la distribución y el set de pisos dentro del mismo bloque edit para evitar errores de concurrencia
+        sharedPrefDistribucion.edit().apply {
+            // Elimina distribución y fondo
+            remove("salas_$nombrePiso")
+            remove("fondo_uri_$nombrePiso")
+
+            // Actualiza el set de pisos guardados
+            val pisosSet = sharedPrefDistribucion.getStringSet("pisos", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+            pisosSet.remove(nombrePiso)
+            putStringSet("pisos", pisosSet)
+
+            apply()
+        }
+
+        // Ahora actualiza "mi_preferencia" si es el piso que está guardado ahí
+        val sharedPrefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val pisoGuardado = sharedPrefNumeroPiso.getString("numero_piso", null)
+
+        if (pisoGuardado == nombrePiso) {
+            val pisosRestantes = sharedPrefDistribucion.getStringSet("pisos", emptySet())
+            val nuevoPiso = pisosRestantes?.firstOrNull()
+
+            sharedPrefNumeroPiso.edit().apply {
+                if (nuevoPiso != null) {
+                    putString("numero_piso", nuevoPiso)
+                } else {
+                    remove("numero_piso")
+                }
+                apply()
+            }
+        }
+    }
+
+    private fun mostrarDialogoEliminarPisos() {
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val todasClaves = sharedPref.all.keys
+
+        val pisos = todasClaves
+            .filter { it.startsWith("salas_") }
+            .map { it.removePrefix("salas_") }
+            .toMutableList()
+
+        if (pisos.isEmpty()) {
+            Toast.makeText(this, "No hay pisos guardados.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Ordenar de forma natural, respetando números dentro de las cadenas
+        pisos.sortWith { piso1, piso2 ->
+            val key1 = naturalOrderKey(piso1)
+            val key2 = naturalOrderKey(piso2)
+            compareNaturalKeys(key1, key2)
+        }
+
+        val pisosArray = pisos.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Eliminar piso")
+            .setItems(pisosArray) { _, which ->
+                val pisoSeleccionado = pisosArray[which]
+
+                AlertDialog.Builder(this)
+                    .setTitle("¿Eliminar '$pisoSeleccionado'?")
+                    .setMessage("Esta acción eliminará la distribución y el fondo del piso.")
+                    .setPositiveButton("Eliminar") { _, _ ->
+                        eliminarPiso(pisoSeleccionado)
+                        Toast.makeText(this, "Piso eliminado", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
 

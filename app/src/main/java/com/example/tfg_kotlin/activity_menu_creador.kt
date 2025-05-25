@@ -4,8 +4,11 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -17,6 +20,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import androidx.core.content.edit
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +37,10 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        limpiarReservasPasadas()
+        mostrarSiguienteReserva()
+
+
         // Botón: Crear o editar salas
         val btnEditarSalas = findViewById<Button>(R.id.btnEditarSalas)
         btnEditarSalas.setOnClickListener {
@@ -40,8 +51,25 @@ class MainActivity : AppCompatActivity() {
         // Botón: Hacer nueva reserva
         val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
         btnNuevaReserva.setOnClickListener {
-            val intent = Intent(this, Activity_empleados::class.java)
-            startActivity(intent)
+            val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+            val nombrePiso = prefNumeroPiso.getString("numero_piso", null)
+
+            val prefDistribucion = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+            val pisosGuardadosSet = prefDistribucion.getStringSet("pisos", emptySet()) ?: emptySet()
+
+            if (nombrePiso != null && pisosGuardadosSet.contains(nombrePiso)) {
+                // Aquí opcionalmente podrías verificar si hay salas guardadas para ese piso
+                val salasJson = prefDistribucion.getString("salas_$nombrePiso", null)
+                if (!salasJson.isNullOrEmpty()) {
+                    val intent = Intent(this, Activity_empleados::class.java)
+                    intent.putExtra("nombre_piso", nombrePiso)
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "No hay salas guardadas para el piso $nombrePiso. Crea una distribución primero.", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "No hay piso guardado o válido. Crea uno primero.", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // Botón: Ver mis reservas
@@ -65,8 +93,35 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val nombrePiso = prefNumeroPiso.getString("numero_piso", null)
+
+        val prefDistribucion = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val pisosGuardadosSet = prefDistribucion.getStringSet("pisos", emptySet()) ?: emptySet()
+
+        if (nombrePiso == null || !pisosGuardadosSet.contains(nombrePiso)) {
+            Toast.makeText(this, "No hay piso válido guardado. Crea uno primero.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
 
     private fun mostrarDialogoReservas() {
+        limpiarReservasPasadas()
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
 
@@ -129,4 +184,80 @@ class MainActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
     }
+
+    private fun limpiarReservasPasadas() {
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val gson = Gson()
+
+        val reservas: List<Reserva> = gson.fromJson(
+            sharedPref.getString("reservas", "[]"),
+            object : TypeToken<List<Reserva>>() {}.type
+        )
+
+        val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        val ahora = Date()
+
+        val reservasFuturas = reservas.filter {
+            try {
+                val fechaReserva = formato.parse(it.fechaHora)
+                fechaReserva.after(ahora)
+            } catch (e: Exception) {
+                true // Si falla el parseo, la dejamos para evitar perder reservas por error
+            }
+        }
+
+        sharedPref.edit() {
+            putString("reservas", gson.toJson(reservasFuturas))
+        }
+    }
+
+    private fun mostrarSiguienteReserva() {
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val gson = Gson()
+
+        val reservas: List<Reserva> = gson.fromJson(
+            sharedPref.getString("reservas", "[]"),
+            object : TypeToken<List<Reserva>>() {}.type
+        )
+
+        val textView = findViewById<TextView>(R.id.textProximaReserva)
+
+        if (reservas.isEmpty()) {
+            textView.text = "No hay reservas"
+            return
+        }
+
+        val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        val ahora = Date()
+
+        // Filtrar reservas que aún no han pasado (fechaHora > ahora)
+        val reservasFuturas = reservas.filter {
+            try {
+                val fechaReserva = formato.parse(it.fechaHora)
+                fechaReserva != null && fechaReserva.after(ahora)
+            } catch (e: Exception) {
+                false
+            }
+        }
+
+        if (reservasFuturas.isEmpty()) {
+            textView.text = "No hay reservas próximas"
+            return
+        }
+
+        // Ordenar por fecha ascendente
+        val siguienteReserva = reservasFuturas.minByOrNull {
+            formato.parse(it.fechaHora)?.time ?: Long.MAX_VALUE
+        }
+
+        // Mostrar datos en el TextView
+        siguienteReserva?.let {
+            val texto = "Siguiente reserva \n${it.nombreSala} el ${it.fechaHora}"
+            textView.text = texto
+        }
+    }
+
+
+
+
 }

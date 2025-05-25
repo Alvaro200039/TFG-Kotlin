@@ -3,10 +3,11 @@ package com.example.tfg_kotlin
 import android.app.DatePickerDialog
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.Gravity
+import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -30,7 +31,9 @@ import com.google.gson.reflect.TypeToken
 import java.util.Calendar
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import androidx.core.graphics.drawable.toDrawable
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 
 data class Reserva(val nombreSala: String, val fechaHora: String, val nombreUsuario: String, val piso: String)
 
@@ -47,6 +50,7 @@ class Activity_empleados : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_empleados)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.empleados)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -71,6 +75,7 @@ class Activity_empleados : AppCompatActivity() {
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = ""
 
         val sharedPreferences = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
@@ -78,7 +83,7 @@ class Activity_empleados : AppCompatActivity() {
         val pisosGuardados = pisosGuardadosSet.toList().sorted()
 
         spinnerPisos = Spinner(this).apply {
-            adapter = ArrayAdapter(this@Activity_empleados, android.R.layout.simple_spinner_dropdown_item, pisosGuardados.toList())
+            adapter = ArrayAdapter(this@Activity_empleados, android.R.layout.simple_spinner_dropdown_item, pisosGuardados)
             this.setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
@@ -104,18 +109,17 @@ class Activity_empleados : AppCompatActivity() {
         textViewFecha = TextView(this).apply {
             setTextColor(Color.BLACK)
             textSize = 16f
-            // Alineamos el texto a la derecha de la Toolbar
             layoutParams = Toolbar.LayoutParams(
                 Toolbar.LayoutParams.WRAP_CONTENT,
                 Toolbar.LayoutParams.WRAP_CONTENT
             ).apply {
-                gravity = Gravity.END // Esto alinea el TextView a la derecha
-                marginEnd = 16 // Opcional: añadir un margen para separar el texto del borde derecho
+                gravity = Gravity.END
+                marginEnd = 16
             }
         }
         toolbar.addView(textViewFecha)
 
-// Botón para seleccionar fecha y hora
+        // Botón para seleccionar fecha y hora
         val botonSeleccionarFechaHora = ImageButton(this).apply {
             setImageResource(R.drawable.time)
             setBackgroundColor(Color.TRANSPARENT)
@@ -124,11 +128,60 @@ class Activity_empleados : AppCompatActivity() {
                 Toolbar.LayoutParams.WRAP_CONTENT,
                 Toolbar.LayoutParams.WRAP_CONTENT
             ).apply {
-                gravity = Gravity.END // Esto alinea el botón a la derecha también
+                gravity = Gravity.END
                 marginEnd = 25
             }
         }
         toolbar.addView(botonSeleccionarFechaHora)
+
+        // Cargar piso automáticamente si se ha guardado o se ha pasado por intent
+        val pisoDesdeIntent = intent.getStringExtra("nombre_piso")
+        val pisoInicial = pisoDesdeIntent ?: sharedPreferences.getString("numero_piso", null)
+
+        if (pisoInicial != null && pisosGuardados.contains(pisoInicial)) {
+            pisoSeleccionado = pisoInicial
+            cargarSalas(pisoSeleccionado)
+            cargarImagenFondo(pisoSeleccionado)
+            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+            spinnerPisos.setSelection(pisosGuardados.indexOf(pisoSeleccionado))
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        actualizarSpinnerPisos()
+    }
+
+    private fun actualizarSpinnerPisos() {
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val pisosGuardadosSet = sharedPref.getStringSet("pisos", setOf()) ?: setOf()
+        val pisosGuardados = pisosGuardadosSet.toList().sorted()
+
+        // Actualizar el adaptador del spinner
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, pisosGuardados)
+        spinnerPisos.adapter = adapter
+
+        // Si tienes un piso seleccionado guardado, intenta seleccionarlo
+        val pisoInicial = intent.getStringExtra("nombre_piso") ?: sharedPref.getString("numero_piso", null)
+        if (pisoInicial != null && pisosGuardados.contains(pisoInicial)) {
+            spinnerPisos.setSelection(pisosGuardados.indexOf(pisoInicial))
+        } else if (pisosGuardados.isNotEmpty()) {
+            pisoSeleccionado = pisosGuardados[0]
+            cargarSalas(pisoSeleccionado)
+            cargarImagenFondo(pisoSeleccionado)
+            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun mostrarDialogoFecha() {
@@ -394,24 +447,29 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun cargarImagenFondo(nombrePiso: String) {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-
-        // Verificar si la distribución ha sido guardada
-        if (!sharedPref.getBoolean("distribucion_guardada", false)) return
-
-        // Recuperar el URI del fondo específico para el piso actual
         val fondoUriString = sharedPref.getString("fondo_uri_$nombrePiso", null)
 
-        // Si se encuentra el URI, cargar la imagen de fondo
-        fondoUriString?.let {
-            try {
-                val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, it.toUri())
-                container.background = bitmap.toDrawable(resources)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        } ?: run {
-            // Si no hay fondo guardado, puedes establecer un fondo predeterminado o hacer algo más
+        if (fondoUriString.isNullOrEmpty()) {
+            // No hay fondo guardado, opcional: establecer un fondo por defecto
             // container.setBackgroundResource(R.drawable.fondo_predeterminado)
+            return
+        }
+
+        try {
+            val uri = fondoUriString.toUri()
+            Glide.with(this)
+                .load(uri)
+                .centerCrop()
+                .into(object : CustomTarget<Drawable>() {
+                    override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                        container.background = resource
+                    }
+                    override fun onLoadCleared(placeholder: Drawable?) {
+                        // Opcional: limpiar fondo si es necesario
+                    }
+                })
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
