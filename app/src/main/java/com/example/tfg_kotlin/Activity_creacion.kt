@@ -756,6 +756,18 @@ class Activity_creacion : AppCompatActivity() {
             val pisosSet = sharedPrefDistribucion.getStringSet("pisos", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
             pisosSet.remove(nombrePiso)
             putStringSet("pisos", pisosSet)
+            val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+            val pisoActual = prefNumeroPiso.getString("numero_piso", null)
+
+            if (pisoActual == nombrePiso) {
+                prefNumeroPiso.edit() { remove("numero_piso") }
+            }
+            val otroPiso = pisosSet.firstOrNull()
+            if (otroPiso != null) {
+                prefNumeroPiso.edit() { putString("numero_piso", otroPiso) }
+            } else {
+                prefNumeroPiso.edit() { remove("numero_piso") }
+            }
 
             apply()
         }
@@ -807,7 +819,7 @@ class Activity_creacion : AppCompatActivity() {
             .setItems(pisosArray) { _, which ->
                 val pisoSeleccionado = pisosArray[which]
 
-                AlertDialog.Builder(this)
+                val dialog = AlertDialog.Builder(this)
                     .setTitle("¿Eliminar '$pisoSeleccionado'?")
                     .setMessage("Esta acción eliminará la distribución y el fondo del piso.")
                     .setPositiveButton("Eliminar") { _, _ ->
@@ -815,9 +827,24 @@ class Activity_creacion : AppCompatActivity() {
                         Toast.makeText(this, "Piso eliminado", Toast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("Cancelar", null)
-                    .show()
+                    .create()
+
+                // Aplica el fondo personalizado después de crear el diálogo
+                dialog.setOnShowListener {
+                    dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                }
+
+                dialog.show()
             }
             .setNegativeButton("Cancelar", null)
+            .create()
+            .apply {
+                setOnShowListener {
+                    window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                    getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                }
+            }
             .show()
     }
 
