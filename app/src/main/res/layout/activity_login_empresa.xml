@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:id="@+id/loginempresa"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
@@ -13,7 +13,6 @@
         android:background="@color/blue_600"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
-        android:layout_marginTop="20dp"
         app:title="Inicio de sesión"
         app:titleTextColor="@color/white" />
 
