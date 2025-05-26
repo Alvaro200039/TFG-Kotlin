@@ -156,8 +156,13 @@ class MainActivity : AppCompatActivity() {
                             .create()
 
                         // 🔹 Aquí aplicas el fondo personalizado
-                        confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
 
+                        confirmDialog.setOnShowListener {
+                            confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+                            confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                        }
+
+                        confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                         confirmDialog.show()
                     }
                 }
