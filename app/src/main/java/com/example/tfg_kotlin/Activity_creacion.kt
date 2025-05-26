@@ -76,6 +76,11 @@ class Activity_creacion : AppCompatActivity() {
             insets
         }
 
+        val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         // Enlace botones
         val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
         val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
@@ -106,10 +111,7 @@ class Activity_creacion : AppCompatActivity() {
       //  val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
        // sharedPref.edit() { clear() }  // Borra todos los datos guardados
 
-        val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
 
         val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
         sharedPreferences.edit().putString("numero_piso", "Piso nº").apply()
