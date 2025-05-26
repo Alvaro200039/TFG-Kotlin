@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/menucreacion"
+    android:id="@+id/menuempleado"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity_menu_creador"
@@ -28,7 +28,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-
         <!-- Título o logo -->
         <TextView
             android:id="@+id/textTitulo"
@@ -51,41 +50,16 @@
             android:textSize="16sp"
             android:gravity="center"/>
 
-        <LinearLayout
-            android:id="@+id/botones"
+        <!-- Botón: Nueva reserva -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNuevaReserva"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingEnd="0dp"
-            android:paddingStart="10dp"
-
-            android:layout_marginTop="16dp">
-
-            <!-- Botón: Nueva reserva -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnNuevaReserva"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:backgroundTint="@android:color/holo_green_dark"
-                app:cornerRadius="16dp"
-                android:text="Realizar nueva reserva"
-                android:textColor="@color/white"
-               />
-
-            <!-- Botón: Crear/editar salas -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEditarSalas"
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:backgroundTint="@android:color/holo_purple"
-                app:cornerRadius="16dp"
-                android:text="Crear o editar estancias"
-                android:textColor="@color/white"/>
-
-        </LinearLayout>
+            android:backgroundTint="@android:color/holo_green_dark"
+            app:cornerRadius="16dp"
+            android:text="Realizar nueva reserva"
+            android:textColor="@color/white"
+            />
 
         <!-- Botón: Ver reservas activas -->
         <com.google.android.material.button.MaterialButton

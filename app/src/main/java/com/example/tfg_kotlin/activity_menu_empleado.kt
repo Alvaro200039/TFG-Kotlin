@@ -14,22 +14,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import androidx.core.content.edit
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class activity_menu_creador : AppCompatActivity() {
+class activity_menu_empleado : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_menu_creador)
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.menucreacion)) { v, insets ->
+        setContentView(R.layout.activity_menu_empleado)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.menuempleado)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -38,13 +37,6 @@ class activity_menu_creador : AppCompatActivity() {
         limpiarReservasPasadas()
         mostrarSiguienteReserva()
 
-
-        // Botón: Crear o editar salas
-        val btnEditarSalas = findViewById<Button>(R.id.btnEditarSalas)
-        btnEditarSalas.setOnClickListener {
-            val intent = Intent(this, Activity_creacion::class.java)
-            startActivity(intent)
-        }
 
         // Botón: Hacer nueva reserva
         val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
@@ -137,7 +129,7 @@ class activity_menu_creador : AppCompatActivity() {
                     setPadding(16, 4, 0, 4)
                     setTextColor(Color.DKGRAY)
                     setOnClickListener {
-                        val confirmDialog = AlertDialog.Builder(this@activity_menu_creador)
+                        val confirmDialog = AlertDialog.Builder(this@activity_menu_empleado)
                             .setTitle("¿Cancelar reserva?")
                             .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
                             .setPositiveButton("Sí") { _, _ ->
