@@ -34,7 +34,6 @@ import androidx.core.net.toUri
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import com.example.tfg_kotlin.MainActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

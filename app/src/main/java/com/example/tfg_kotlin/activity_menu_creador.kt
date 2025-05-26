@@ -54,21 +54,12 @@ class MainActivity : AppCompatActivity() {
             val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
             val nombrePiso = prefNumeroPiso.getString("numero_piso", null)
 
-            val prefDistribucion = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-            val pisosGuardadosSet = prefDistribucion.getStringSet("pisos", emptySet()) ?: emptySet()
-
-            if (nombrePiso != null && pisosGuardadosSet.contains(nombrePiso)) {
-                // Aquí opcionalmente podrías verificar si hay salas guardadas para ese piso
-                val salasJson = prefDistribucion.getString("salas_$nombrePiso", null)
-                if (!salasJson.isNullOrEmpty()) {
-                    val intent = Intent(this, Activity_empleados::class.java)
-                    intent.putExtra("nombre_piso", nombrePiso)
-                    startActivity(intent)
-                } else {
-                    Toast.makeText(this, "No hay salas guardadas para el piso $nombrePiso. Crea una distribución primero.", Toast.LENGTH_LONG).show()
-                }
+            if (!nombrePiso.isNullOrEmpty()) {
+                val intent = Intent(this, Activity_empleados::class.java)
+                intent.putExtra("nombre_piso", nombrePiso)
+                startActivity(intent)
             } else {
-                Toast.makeText(this, "No hay piso guardado o válido. Crea uno primero.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "No se ha seleccionado ningún piso. Crea uno primero.", Toast.LENGTH_SHORT).show()
             }
         }
 

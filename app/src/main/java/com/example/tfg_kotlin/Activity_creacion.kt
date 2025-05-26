@@ -694,6 +694,12 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
 
+        // ✅ Validar que al menos haya una sala colocada
+        if (salasGuardadas.isEmpty()) {
+            Snackbar.make(container, "Debes colocar al menos una sala antes de guardar", Snackbar.LENGTH_LONG).show()
+            return
+        }
+
         val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
         val nombrePiso = sharedPreferences.getString("numero_piso", "Piso nº") ?: "Piso nº"
 
