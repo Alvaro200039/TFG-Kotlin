@@ -4,10 +4,10 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [Empleados::class, Salas::class, SalaReservada::class],
+    entities = [TablaEmpleados::class, TablaSalas::class, TablaSalaReservada::class],
     version = 1
 )
-abstract class BBDD : RoomDatabase() {
+abstract class DB_Global : RoomDatabase() {
     abstract fun appDao(): Operaciones
 }
 

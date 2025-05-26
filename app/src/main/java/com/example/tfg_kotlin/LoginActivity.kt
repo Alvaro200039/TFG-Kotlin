@@ -7,7 +7,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
-import com.example.tfg_kotlin.BBDD.BBDD
+import com.example.tfg_kotlin.BBDD.DB_Global
 import com.example.tfg_kotlin.BBDD.Operaciones
 
 class LoginActivity : AppCompatActivity() {
@@ -19,7 +19,7 @@ class LoginActivity : AppCompatActivity() {
 
         database = Room.databaseBuilder(
             applicationContext,
-            BBDD::class.java,
+            DB_Global::class.java,
             "reservas_db"
         ).allowMainThreadQueries() // Solo para pruebas
             .build().appDao()
