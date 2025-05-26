@@ -1,15 +1,16 @@
 package com.example.tfg_kotlin
 
 import android.content.Intent
+import com.example.tfg_kotlin.databinding.ActivityMainBinding
+import com.example.tfg_kotlin.databinding.BottomsheetTipoUsuarioBinding
+import com.example.tfg_kotlin.databinding.BottomsheetTipoUsuarioRegistroBinding
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.tfg_kotlin.databinding.ActivityMainBinding
-import com.example.tfg_kotlin.databinding.BottomsheetTipoUsuarioBinding
-import com.example.tfg_kotlin.databinding.BottomsheetTipoUsuarioRegistroBinding
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import androidx.appcompat.widget.Toolbar
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,6 +24,11 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
 

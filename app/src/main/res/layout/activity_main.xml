@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    tools:context=".MainActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
         android:background="@color/blue_600"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
@@ -19,68 +20,68 @@
         app:title="App"
         app:titleTextColor="@color/white" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
+
+    <TextView
+        android:id="@+id/tV1"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="10dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:orientation="vertical"
-        android:padding="0dp">
-
-
-        <TextView
-            android:id="@+id/tV1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Bienvenido a Miapp"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            />
-        <TextView
-            android:id="@+id/tV2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:textSize="20sp"
-            android:gravity="center"
-            android:text="¿Que desea hacer?"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_marginStart="9dp"
+        android:layout_marginLeft="9dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="9dp"
+        android:layout_marginRight="9dp"
         android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingVertical="10dp"
-        android:layout_marginTop="90dp">
+        android:text="Bienvenido a Miapp"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
+    <TextView
+        android:id="@+id/tV2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="9dp"
+        android:layout_marginLeft="9dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginEnd="9dp"
+        android:layout_marginRight="9dp"
+        android:gravity="center"
+        android:text="¿Que desea hacer?"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tV1" />
 
 
-        <Button
-            android:id="@+id/btnIniciarSesion"
-            android:layout_width="161dp"
-            android:layout_height="wrap_content"
-            android:textSize="18dp"
-            android:backgroundTint="@color/blue_600"
-            android:text="@string/iniciar_sesion" />
+    <Button
+        android:id="@+id/btnIniciarSesion"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="45dp"
+        android:layout_marginLeft="45dp"
+        android:backgroundTint="@color/blue_600"
+        android:text="@string/iniciar_sesion"
+        android:textSize="18dp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/btnRegistrarse"
+        app:layout_constraintEnd_toStartOf="@+id/btnRegistrarse"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <Button
-            android:id="@+id/btnRegistrarse"
-            android:layout_width="161dp"
-            android:textSize="18dp"
-            android:backgroundTint="@color/blue_600"
-            android:layout_height="wrap_content"
-            android:text="@string/registrarse"
-            android:textColor="@color/white" />
-    </LinearLayout>
+    <Button
+        android:id="@+id/btnRegistrarse"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="299dp"
+        android:layout_marginEnd="44dp"
+        android:layout_marginRight="44dp"
+        android:backgroundTint="@color/blue_600"
+        android:text="@string/registrarse"
+        android:textColor="@color/white"
+        android:textSize="18dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btnIniciarSesion"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
-
-
-
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
