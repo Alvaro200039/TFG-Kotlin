@@ -37,6 +37,8 @@ import com.bumptech.glide.request.transition.Transition
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.tfg_kotlin.Utils.naturalOrderKey
+import com.example.tfg_kotlin.Utils.compareNaturalKeys
 
 data class Reserva(val nombreSala: String, val fechaHora: String, val nombreUsuario: String, val piso: String)
 
@@ -48,6 +50,7 @@ class Activity_empleados : AppCompatActivity() {
     private lateinit var textViewFecha: TextView
     private lateinit var spinnerPisos: Spinner
     private var pisoSeleccionado: String = ""
+    private lateinit var textViewHora: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +71,11 @@ class Activity_empleados : AppCompatActivity() {
         val btnFranja = findViewById<LinearLayout>(R.id.btn_franja)
         btnFranja.setOnClickListener {
             if (fechaSeleccionada.isEmpty()) {
-                Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_SHORT)
+                    .setAction("Seleccionar") {
+                        mostrarDialogoFecha()
+                    }
+                    .show()
             } else {
                 mostrarDialogoHoras()
             }
@@ -103,26 +110,13 @@ class Activity_empleados : AppCompatActivity() {
                 Toolbar.LayoutParams.WRAP_CONTENT
             ).apply {
                 gravity = Gravity.START
-                marginStart = 20
+                marginStart = 0
             }
         }
         toolbar.addView(spinnerPisos)
 
-        // Texto para mostrar la fecha seleccionada
-        textViewFecha = TextView(this).apply {
-            setTextColor(Color.BLACK)
-            textSize = 16f
-            layoutParams = Toolbar.LayoutParams(
-                Toolbar.LayoutParams.WRAP_CONTENT,
-                Toolbar.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.END
-                marginEnd = 16
-            }
-        }
-        toolbar.addView(textViewFecha)
 
-        // Botón para seleccionar fecha y hora
+
         val botonSeleccionarFechaHora = ImageButton(this).apply {
             setImageResource(R.drawable.time)
             setBackgroundColor(Color.TRANSPARENT)
@@ -132,10 +126,39 @@ class Activity_empleados : AppCompatActivity() {
                 Toolbar.LayoutParams.WRAP_CONTENT
             ).apply {
                 gravity = Gravity.END
-                marginEnd = 25
+                marginEnd = 20
+                marginStart= 20
             }
         }
         toolbar.addView(botonSeleccionarFechaHora)
+
+        val contenedorFechaHora = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = Toolbar.LayoutParams(
+                Toolbar.LayoutParams.WRAP_CONTENT,
+                Toolbar.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                marginEnd = 8
+            }
+        }
+
+        textViewFecha = TextView(this).apply {
+            text = "Fecha:"
+            setTextColor(Color.BLACK)
+            textSize = 16f
+        }
+
+        textViewHora = TextView(this).apply {
+            text = "Hora:"
+            setTextColor(Color.BLACK)
+            textSize = 16f
+        }
+
+        contenedorFechaHora.addView(textViewFecha)
+        contenedorFechaHora.addView(textViewHora)
+        toolbar.addView(contenedorFechaHora)
+
 
         // Cargar piso automáticamente si se ha guardado o se ha pasado por intent
         val pisoDesdeIntent = intent.getStringExtra("nombre_piso")
@@ -158,7 +181,8 @@ class Activity_empleados : AppCompatActivity() {
     private fun actualizarSpinnerPisos() {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val pisosGuardadosSet = sharedPref.getStringSet("pisos", setOf()) ?: setOf()
-        val pisosGuardados = pisosGuardadosSet.toList().sorted()
+        val pisosGuardados = pisosGuardadosSet.toList()
+            .sortedWith { a, b -> compareNaturalKeys(naturalOrderKey(a), naturalOrderKey(b)) }
 
         // Actualizar el adaptador del spinner
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, pisosGuardados)
@@ -232,7 +256,7 @@ class Activity_empleados : AppCompatActivity() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
         val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
 
-        // 🔸 Declaramos dialog como variable externa para poder cerrarlo desde dentro
+        //Declaramos dialog como variable externa para poder cerrarlo desde dentro
         lateinit var dialog: AlertDialog
 
         for ((piso, lista) in reservasPorPiso) {
@@ -258,18 +282,21 @@ class Activity_empleados : AppCompatActivity() {
                                 reservas.remove(reserva)
                                 sharedPref.edit() { putString("reservas", gson.toJson(reservas)) }
 
-                                // 🔸 Cerrar todos los diálogos antes de refrescar
+                                //Cerrar todos los diálogos antes de refrescar
                                 dialog.dismiss()
 
-                                // 🔄 Volver a mostrar el diálogo actualizado
+                                //Volver a mostrar el diálogo actualizado
                                 mostrarDialogoReservas()
                             }
                             .setNegativeButton("No", null)
                             .create()
 
-                        // 🔹 Aquí aplicas el fondo personalizado
-                        confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                        confirmDialog.setOnShowListener {
+                            confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+                            confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                        }
 
+                        confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                         confirmDialog.show()
                     }
                 }
@@ -368,6 +395,9 @@ class Activity_empleados : AppCompatActivity() {
             .setTitle("Selecciona una franja horaria para el $fechaSeleccionada")
             .setItems(horasArray) { _, which ->
                 horaSeleccionada = horasArray[which]
+                // Actualizamos el textViewHora aquí
+                textViewHora.text = "Hora: $horaSeleccionada"
+
                 verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
             }
             .create()
@@ -407,7 +437,11 @@ class Activity_empleados : AppCompatActivity() {
                 // Configurar la acción al hacer clic en el botón
                 setOnClickListener {
                     if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
-                        Snackbar.make(container, "Selecciona fecha y hora primero", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_INDEFINITE)
+                            .setAction("Elegir fecha") {
+                                mostrarDialogoFecha()
+                            }
+                            .show()
                     } else {
                         mostrarDialogoDetallesSala(sala)
                     }
@@ -477,7 +511,7 @@ class Activity_empleados : AppCompatActivity() {
                 reservas.remove(reservaExistente)
                 sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
                 verificarDisponibilidad(fechaHora)
-                Snackbar.make(container, "Reserva cancelada para ${sala.nombre}", Snackbar.LENGTH_SHORT).show()
+                Toast.makeText(this, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
             }
         } else {
             // Si no está reservada por el usuario → opción de reservar
@@ -613,21 +647,21 @@ class Activity_empleados : AppCompatActivity() {
                         reservas.remove(reservaExistente)
                         sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
                         verificarDisponibilidad(fechaHora)
-                        Snackbar.make(container, "Reserva cancelada para $nombreSala", Snackbar.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Reserva cancelada para $nombreSala", Toast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("No", null)
                     .create()
                 dialog.show()
                 dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
             } else {
-                Snackbar.make(container, "Ya reservada por ${reservaExistente.nombreUsuario} en este piso", Snackbar.LENGTH_SHORT).show()
+                Toast.makeText(this, "Ya reservada por ${reservaExistente.nombreUsuario} en este piso", Toast.LENGTH_SHORT).show()
             }
             return
         }
 
         // Si el usuario ya tiene otra reserva a esa hora (en otra sala)
         if (reservaUsuarioMismaHora != null) {
-            Snackbar.make(container, "Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora.nombreSala}'(${reservaUsuarioMismaHora.piso})", Snackbar.LENGTH_SHORT).show()
+            Toast.makeText(this,"Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora.nombreSala}'(${reservaUsuarioMismaHora.piso})", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -639,7 +673,7 @@ class Activity_empleados : AppCompatActivity() {
                 reservas.add(Reserva(nombreSala, fechaHora, nombreUsuario, pisoSeleccionado))
                 sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
                 verificarDisponibilidad(fechaHora)
-                Snackbar.make(container, "Reserva realizada para $nombreSala en el $pisoSeleccionado", Snackbar.LENGTH_SHORT).show()
+                Toast.makeText(this,"Reserva realizada para $nombreSala en el $pisoSeleccionado", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("No", null)
             .create()

@@ -1,8 +1,6 @@
 package com.example.tfg_kotlin
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
@@ -42,7 +40,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.core.content.edit
 import androidx.core.view.children
-import java.util.Locale
+import com.example.tfg_kotlin.Utils.naturalOrderKey
+import com.example.tfg_kotlin.Utils.compareNaturalKeys
 
 data class Sala(
     var nombre: String,
@@ -114,7 +113,7 @@ class Activity_creacion : AppCompatActivity() {
 
 
         val sharedPreferences = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-        sharedPreferences.edit().putString("numero_piso", "Piso nº").apply()
+        sharedPreferences.edit() { putString("numero_piso", "Piso nº") }
 
         val titleView = findViewById<TextView>(R.id.toolbar_title)
 // Mostrar siempre texto fijo en la toolbar
@@ -168,7 +167,6 @@ class Activity_creacion : AppCompatActivity() {
         })
     }
 
-    @SuppressLint("SuspiciousIndentation")
     private fun mostrarDialogoFranjas() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
         val editHoraInicio = dialogView.findViewById<EditText>(R.id.etHoraInicio)
@@ -290,12 +288,6 @@ class Activity_creacion : AppCompatActivity() {
             btnCerrar.setTextColor(Color.BLACK)
     }
 
-
-    fun entrarModoEmpleado(view: View) {
-        val intent = Intent(this, Activity_empleados::class.java)
-        startActivity(intent)
-    }
-
     private fun openGallery() {
         getImage.launch("image/*")
     }
@@ -350,13 +342,13 @@ class Activity_creacion : AppCompatActivity() {
                 if (nuevoTitulo.isEmpty() || nuevoTitulo.equals("Piso nº", ignoreCase = true)|| nuevoTitulo.equals("Piso nº ", ignoreCase = true)) {
                     Toast.makeText(this, "Por favor, cambie el nombre del piso antes de guardar", Toast.LENGTH_SHORT).show()
                 } else {
-                    sharedPreferences.edit().putString("numero_piso", nuevoTitulo).apply()
+                    sharedPreferences.edit() { putString("numero_piso", nuevoTitulo) }
                     findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
 
                     val distPrefs = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
                     val pisosActuales = distPrefs.getStringSet("pisos", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
                     pisosActuales.add(nuevoTitulo)
-                    distPrefs.edit().putStringSet("pisos", pisosActuales).apply()
+                    distPrefs.edit() { putStringSet("pisos", pisosActuales) }
                 }
             }
             .setNegativeButton("Cancelar", null)
@@ -385,7 +377,7 @@ class Activity_creacion : AppCompatActivity() {
                 2 -> {
                     val sala = button.tag as? Sala
                     if (sala != null) {
-                        mostrarDialogoCambiarTamaño(button, sala)
+                        mostrarDialogoCambiarTamanio(button, sala)
                     } else {
                         Toast.makeText(this, "Modifica priemero la sala", Toast.LENGTH_SHORT).show()
                     }
@@ -413,10 +405,11 @@ class Activity_creacion : AppCompatActivity() {
     }
 
 
-    private fun mostrarDialogoCambiarTamaño(salaButton: Button, sala: Sala) {
+    private fun mostrarDialogoCambiarTamanio(salaButton: Button, sala: Sala) {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(50, 40, 50, 10)
+
         }
 
         val anchoSeekBar = SeekBar(this).apply {
@@ -561,7 +554,7 @@ class Activity_creacion : AppCompatActivity() {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
 
-        val spinnerTamaño = Spinner(this).apply {
+        val spinnerTamanio = Spinner(this).apply {
             this.adapter = adapter
             setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
             background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
@@ -587,7 +580,7 @@ class Activity_creacion : AppCompatActivity() {
         layout.apply {
             addView(editTextNombre)
             addView(charCountTextView)
-            addView(spinnerTamaño)
+            addView(spinnerTamanio)
             addView(checkWifi)
             addView(checkProyector)
             addView(checkPizarra)
@@ -630,7 +623,7 @@ class Activity_creacion : AppCompatActivity() {
 
                 // Guardar cambios
                 sala.nombre = nuevoNombre
-                sala.tamaño = spinnerTamaño.selectedItem as String
+                sala.tamaño = spinnerTamanio.selectedItem as String
 
                 val opciones = mutableListOf<String>()
                 if (checkWifi.isChecked) opciones.add("WiFi")
@@ -646,11 +639,6 @@ class Activity_creacion : AppCompatActivity() {
         }
         dialog.show()
     }
-
-
-   // private fun obtenerTodosLosBotones(): List<Button> {
-     //   return container.children.filterIsInstance<Button>().toList()
-    //}
 
     private fun actualizarBotonConSala(button: Button, sala: Sala) {
         val builder = StringBuilder()
@@ -696,7 +684,7 @@ class Activity_creacion : AppCompatActivity() {
 
         // ✅ Validar que al menos haya una sala colocada
         if (salasGuardadas.isEmpty()) {
-            Snackbar.make(container, "Debes colocar al menos una sala antes de guardar", Snackbar.LENGTH_LONG).show()
+            Toast.makeText(this, "Debes colocar al menos una sala antes de guardar", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -721,33 +709,9 @@ class Activity_creacion : AppCompatActivity() {
             putBoolean("distribucion_guardada", true)
             apply()
         }
-
-        Snackbar.make(container, "Distribución guardada", Snackbar.LENGTH_SHORT).show()
+        Toast.makeText(this, "Distribución guardada", Toast.LENGTH_SHORT).show()
     }
 
-    fun naturalOrderKey(s: String): List<Any> {
-        val regex = Regex("""(\d+|\D+)""")
-        return regex.findAll(s.lowercase(Locale.ROOT)).map {
-            val part = it.value
-            part.toIntOrNull() ?: part
-        }.toList()
-    }
-
-    fun compareNaturalKeys(a: List<Any>, b: List<Any>): Int {
-        val minSize = minOf(a.size, b.size)
-        for (i in 0 until minSize) {
-            val comp = when {
-                a[i] is Int && b[i] is Int -> (a[i] as Int).compareTo(b[i] as Int)
-                a[i] is String && b[i] is String -> (a[i] as String).compareTo(b[i] as String)
-                a[i] is Int && b[i] is String -> -1 // números antes que letras
-                a[i] is String && b[i] is Int -> 1  // letras después que números
-                else -> 0
-            }
-            if (comp != 0) return comp
-        }
-        // Si todos los elementos iguales hasta ahora, la lista más corta es menor
-        return a.size.compareTo(b.size)
-    }
 
     fun eliminarPiso(nombrePiso: String) {
         val sharedPrefDistribucion = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
