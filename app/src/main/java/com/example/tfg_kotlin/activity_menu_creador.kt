@@ -93,20 +93,10 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
-    override fun onResume() {
+    override fun onResume(){
         super.onResume()
-
-        val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-        val nombrePiso = prefNumeroPiso.getString("numero_piso", null)
-
-        val prefDistribucion = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val pisosGuardadosSet = prefDistribucion.getStringSet("pisos", emptySet()) ?: emptySet()
-
-        if (nombrePiso == null || !pisosGuardadosSet.contains(nombrePiso)) {
-            Toast.makeText(this, "No hay piso válido guardado. Crea uno primero.", Toast.LENGTH_SHORT).show()
-        }
+        mostrarSiguienteReserva()
     }
-
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
@@ -125,9 +115,9 @@ class MainActivity : AppCompatActivity() {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
 
-        val reservas: List<Reserva> = gson.fromJson(
+        val reservas: MutableList<Reserva> = gson.fromJson(
             sharedPref.getString("reservas", "[]"),
-            object : TypeToken<List<Reserva>>() {}.type
+            object : TypeToken<MutableList<Reserva>>() {}.type
         )
 
         if (reservas.isEmpty()) {
@@ -135,15 +125,14 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Agrupar por piso
         val reservasPorPiso = reservas.groupBy { it.piso }
-
-        // Inflar el layout personalizado
         val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
         val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
 
+        // 🔸 Declaramos dialog como variable externa para poder cerrarlo desde dentro
+        lateinit var dialog: AlertDialog
+
         for ((piso, lista) in reservasPorPiso) {
-            // Título del piso
             val pisoText = TextView(this).apply {
                 text = piso
                 textSize = 18f
@@ -153,17 +142,37 @@ class MainActivity : AppCompatActivity() {
             }
             contenedor.addView(pisoText)
 
-            // Añadir las reservas de ese piso
             lista.forEach { reserva ->
                 val reservaText = TextView(this).apply {
                     text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
                     setPadding(16, 4, 0, 4)
                     setTextColor(Color.DKGRAY)
+                    setOnClickListener {
+                        val confirmDialog = AlertDialog.Builder(this@MainActivity)
+                            .setTitle("¿Cancelar reserva?")
+                            .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
+                            .setPositiveButton("Sí") { _, _ ->
+                                reservas.remove(reserva)
+                                sharedPref.edit() { putString("reservas", gson.toJson(reservas)) }
+
+                                // 🔸 Cerrar todos los diálogos antes de refrescar
+                                dialog.dismiss()
+
+                                // 🔄 Volver a mostrar el diálogo actualizado
+                                mostrarDialogoReservas()
+                            }
+                            .setNegativeButton("No", null)
+                            .create()
+
+                        // 🔹 Aquí aplicas el fondo personalizado
+                        confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+                        confirmDialog.show()
+                    }
                 }
                 contenedor.addView(reservaText)
             }
 
-            // Línea divisoria entre pisos
             val divider = View(this).apply {
                 setBackgroundColor(Color.LTGRAY)
                 layoutParams = LinearLayout.LayoutParams(
@@ -174,7 +183,7 @@ class MainActivity : AppCompatActivity() {
             contenedor.addView(divider)
         }
 
-        val dialog = AlertDialog.Builder(this)
+        dialog = AlertDialog.Builder(this)
             .setTitle("Tus reservas activas")
             .setView(dialogView)
             .setPositiveButton("Cerrar", null)
@@ -184,6 +193,7 @@ class MainActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
     }
+
 
     private fun limpiarReservasPasadas() {
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)

@@ -34,6 +34,10 @@ import androidx.core.net.toUri
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.example.tfg_kotlin.MainActivity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class Reserva(val nombreSala: String, val fechaHora: String, val nombreUsuario: String, val piso: String)
 
@@ -211,12 +215,13 @@ class Activity_empleados : AppCompatActivity() {
 
 
     private fun mostrarDialogoReservas() {
+        limpiarReservasPasadas()
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
 
-        val reservas: List<Reserva> = gson.fromJson(
+        val reservas: MutableList<Reserva> = gson.fromJson(
             sharedPref.getString("reservas", "[]"),
-            object : TypeToken<List<Reserva>>() {}.type
+            object : TypeToken<MutableList<Reserva>>() {}.type
         )
 
         if (reservas.isEmpty()) {
@@ -224,15 +229,14 @@ class Activity_empleados : AppCompatActivity() {
             return
         }
 
-        // Agrupar por piso
         val reservasPorPiso = reservas.groupBy { it.piso }
-
-        // Inflar el layout personalizado
         val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
         val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
 
+        // 🔸 Declaramos dialog como variable externa para poder cerrarlo desde dentro
+        lateinit var dialog: AlertDialog
+
         for ((piso, lista) in reservasPorPiso) {
-            // Título del piso
             val pisoText = TextView(this).apply {
                 text = piso
                 textSize = 18f
@@ -242,17 +246,37 @@ class Activity_empleados : AppCompatActivity() {
             }
             contenedor.addView(pisoText)
 
-            // Añadir las reservas de ese piso
             lista.forEach { reserva ->
                 val reservaText = TextView(this).apply {
                     text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
                     setPadding(16, 4, 0, 4)
                     setTextColor(Color.DKGRAY)
+                    setOnClickListener {
+                        val confirmDialog = AlertDialog.Builder(this@Activity_empleados)
+                            .setTitle("¿Cancelar reserva?")
+                            .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
+                            .setPositiveButton("Sí") { _, _ ->
+                                reservas.remove(reserva)
+                                sharedPref.edit() { putString("reservas", gson.toJson(reservas)) }
+
+                                // 🔸 Cerrar todos los diálogos antes de refrescar
+                                dialog.dismiss()
+
+                                // 🔄 Volver a mostrar el diálogo actualizado
+                                mostrarDialogoReservas()
+                            }
+                            .setNegativeButton("No", null)
+                            .create()
+
+                        // 🔹 Aquí aplicas el fondo personalizado
+                        confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+                        confirmDialog.show()
+                    }
                 }
                 contenedor.addView(reservaText)
             }
 
-            // Línea divisoria entre pisos
             val divider = View(this).apply {
                 setBackgroundColor(Color.LTGRAY)
                 layoutParams = LinearLayout.LayoutParams(
@@ -263,7 +287,7 @@ class Activity_empleados : AppCompatActivity() {
             contenedor.addView(divider)
         }
 
-        val dialog = AlertDialog.Builder(this)
+        dialog = AlertDialog.Builder(this)
             .setTitle("Tus reservas activas")
             .setView(dialogView)
             .setPositiveButton("Cerrar", null)
@@ -272,6 +296,32 @@ class Activity_empleados : AppCompatActivity() {
         dialog.show()
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+    }
+
+    private fun limpiarReservasPasadas() {
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val gson = Gson()
+
+        val reservas: List<Reserva> = gson.fromJson(
+            sharedPref.getString("reservas", "[]"),
+            object : TypeToken<List<Reserva>>() {}.type
+        )
+
+        val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        val ahora = Date()
+
+        val reservasFuturas = reservas.filter {
+            try {
+                val fechaReserva = formato.parse(it.fechaHora)
+                fechaReserva.after(ahora)
+            } catch (e: Exception) {
+                true // Si falla el parseo, la dejamos para evitar perder reservas por error
+            }
+        }
+
+        sharedPref.edit() {
+            putString("reservas", gson.toJson(reservasFuturas))
+        }
     }
 
 
@@ -402,30 +452,57 @@ class Activity_empleados : AppCompatActivity() {
         Fecha: $fechaSeleccionada
         Hora: $horaSeleccionada
     """.trimIndent()
-
         builder.setMessage(detalles)
 
-        builder.setPositiveButton("Reservar") { _, _ ->
-            reservarSala(sala.nombre)
+        val fechaHora = "$fechaSeleccionada $horaSeleccionada"
+        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
+        val gson = Gson()
+        val reservas: MutableList<Reserva> = gson.fromJson(
+            sharedPref.getString("reservas", "[]"),
+            object : TypeToken<MutableList<Reserva>>() {}.type
+        )
+
+        val nombreUsuario = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+            .getString("nombre_usuario", "Empleado") ?: "Empleado"
+
+        val reservaExistente = reservas.find {
+            it.nombreSala == sala.nombre &&
+                    it.piso.trim() == sala.piso.trim() &&
+                    it.fechaHora == fechaHora &&
+                    it.nombreUsuario == nombreUsuario
         }
 
-        builder.setNegativeButton("Cancelar") { dialog, _ ->
+        if (reservaExistente != null) {
+            // Si ya está reservada por el usuario → opción de cancelar
+            builder.setPositiveButton("Cancelar reserva") { _, _ ->
+                reservas.remove(reservaExistente)
+                sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
+                verificarDisponibilidad(fechaHora)
+                Snackbar.make(container, "Reserva cancelada para ${sala.nombre}", Snackbar.LENGTH_SHORT).show()
+            }
+        } else {
+            // Si no está reservada por el usuario → opción de reservar
+            builder.setPositiveButton("Reservar") { _, _ ->
+                reservarSala(sala.nombre)
+            }
+        }
+
+        builder.setNegativeButton("Cerrar") { dialog, _ ->
             dialog.dismiss()
         }
 
         val dialog = builder.create()
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.setOnShowListener {
-            val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            positive.setTextColor(ContextCompat.getColor(this, R.color.black)) // cambia por tu color
-
-            val negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-            negative.setTextColor(ContextCompat.getColor(this, R.color.black))
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                ?.setTextColor(ContextCompat.getColor(this, R.color.black))
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                ?.setTextColor(ContextCompat.getColor(this, R.color.black))
         }
-
 
         dialog.show()
     }
+
 
     private fun formatearTextoSala(sala: Sala): String {
         val builder = StringBuilder().append(sala.nombre)
