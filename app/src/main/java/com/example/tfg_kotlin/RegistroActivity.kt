@@ -26,7 +26,7 @@ class RegistroActivity : AppCompatActivity() {
             "reservas_db"
         ).allowMainThreadQueries().build().appDao()
 
-
+        val etCorreo = findViewById<EditText>()
         val etNombre = findViewById<EditText>(R.id.etNombre)
         val etApellidos = findViewById<EditText>(R.id.etApellidos)
         val etContrasena = findViewById<EditText>(R.id.etContrasena)
@@ -52,6 +52,7 @@ class RegistroActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             val nuevoEmpleado = TablaEmpleados(
+                correo = correo,
                 nombre = nombre,
                 apellidos = apellidos,
                 contrasena = contrasena,
