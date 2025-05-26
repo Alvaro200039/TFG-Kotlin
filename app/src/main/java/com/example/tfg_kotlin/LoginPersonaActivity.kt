@@ -1,87 +1,91 @@
 package com.example.tfg_kotlin
 
-import android.R
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.Button
 import android.widget.Toast
-import android.content.Intent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
 import com.example.tfg_kotlin.BBDD.MIGRATION_1_2
-import com.example.tfg_kotlin.databinding.ActivityLoginPersonaBinding
-import com.example.tfg_kotlin.databinding.ActivityMainBinding
-import com.example.tfg_kotlin.Validaciones
-
-
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 class LoginPersonaActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityLoginPersonaBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_login_persona)
 
-    //Flecha TOOLBAR "ATRAS"
-        binding = ActivityLoginPersonaBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.loginpersona)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
-        // Asocia tu Toolbar como ActionBar
-        setSupportActionBar(binding.toolbar)
-
-        //Muestra la flecha
+        // Asocia Toolbar como ActionBar
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        // (opcional) cambiar el icono por defecto:
-        // supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_arrow_back)
-        //Fin Flecha TOOLBAR "ATRAS"------------------
 
-        binding.btnFinalizarLogin.setOnClickListener {
-            //----------Validaciones editText-----------
-            if (Validaciones.validarLoginPersona(
-                    binding.tilCorreo,   binding.etCorreo,
-                    binding.tilContrasena, binding.etContrasena,
-                    binding.tilNumEmpresa, binding.etNumEmpresa
-                )) {
-                // TODOS los campos tienen texto, continúa el registro
-            }
-            //----------------------------------------
-            // ----LOGIN EMPLEADO, COMPRUEBA SI LOS DATOS DEL ENPLEADO COINCIDEN CON LOS REGISTRADOS EN LA BBDD
-            val db = Room.databaseBuilder(
-                applicationContext,
-                BBDD::class.java,
-                "reservas_db"
-            ).addMigrations(MIGRATION_1_2).allowMainThreadQueries().build()
+        // Referencias a vistas
+        val btnFinalizarLogin = findViewById<Button>(R.id.btnFinalizarLogin)
+        val tilCorreo = findViewById<TextInputLayout>(R.id.tilCorreo)
+        val tilContrasena = findViewById<TextInputLayout>(R.id.tilContrasena)
+        val tilNumEmpresa = findViewById<TextInputLayout>(R.id.tilNumEmpresa)
 
-            val correo = binding.etCorreo.text.toString()
-            val contrasena = binding.etContrasena.text.toString()
-            val nifEmpresa = binding.etNumEmpresa.text.toString()
+        val etCorreo = findViewById<TextInputEditText>(R.id.etCorreo)
+        val etContrasena = findViewById<TextInputEditText>(R.id.etContrasena)
+        val etNumEmpresa = findViewById<TextInputEditText>(R.id.etNumEmpresa)
 
-            val empleado = db.appDao().loginEmpleado(correo, contrasena)
-            val empresa = db.appDao().existeEmpresaConNif(nifEmpresa)
+        btnFinalizarLogin.setOnClickListener {
+            val validado = Validaciones.validarLoginPersona(
+                tilCorreo, etCorreo,
+                tilContrasena, etContrasena,
+                tilNumEmpresa, etNumEmpresa
+            )
 
-            if (empleado != null && empresa != null) {
-                // Login correcto: empleado existe y empresa también
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
-                Toast.makeText(this, "Bienvenido  ${empleado.nombre} ", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Datos incorrectos o empresa no registrada", Toast.LENGTH_SHORT).show()
+            if (validado) {
+                val db = Room.databaseBuilder(
+                    applicationContext,
+                    BBDD::class.java,
+                    "reservas_db"
+                ).addMigrations(MIGRATION_1_2)
+                    .allowMainThreadQueries()
+                    .build()
+
+                val correo = etCorreo.text.toString()
+                val contrasena = etContrasena.text.toString()
+                val nifEmpresa = etNumEmpresa.text.toString()
+
+                val empleado = db.appDao().loginEmpleado(correo, contrasena)
+                val empresa = db.appDao().existeEmpresaConNif(nifEmpresa)
+
+                if (empleado != null && empresa != null) {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    finish()
+                    Toast.makeText(this, "Bienvenido ${empleado.nombre}", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Datos incorrectos o empresa no registrada", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    //Flecha TOOLBAR "ATRAS"
+    // Flecha TOOLBAR "ATRÁS"
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when(item.itemId) {
-            R.id.home -> {
-                //Vuelve a la anterior Activity
+        return when (item.itemId) {
+            android.R.id.home -> {
                 onBackPressed()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
-    //Fin Flecha TOOLBAR "ATRAS"
-
 }

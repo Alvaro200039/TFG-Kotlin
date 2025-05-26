@@ -1,24 +1,23 @@
 package com.example.tfg_kotlin
 
 import android.content.Intent
-import com.example.tfg_kotlin.databinding.ActivityMainBinding
-import com.example.tfg_kotlin.databinding.BottomsheetTipoUsuarioBinding
-import com.example.tfg_kotlin.databinding.BottomsheetTipoUsuarioRegistroBinding
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.appcompat.widget.Toolbar
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -30,23 +29,23 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        val btnIniciarSesion = findViewById<Button>(R.id.btnIniciarSesion)
+        val btnRegistrarse = findViewById<Button>(R.id.btnRegistrarse)
 
-        // 2. Establecer el layout raíz
-        setContentView(binding.root)
-
-        // 3. Acciones de los botones
-        binding.btnIniciarSesion.setOnClickListener {
+        btnIniciarSesion.setOnClickListener {
             val bottomSheetDialog = BottomSheetDialog(this)
-            val bottomSheetBinding = BottomsheetTipoUsuarioBinding.inflate(layoutInflater)
-            bottomSheetDialog.setContentView(bottomSheetBinding.root)
+            val view = LayoutInflater.from(this).inflate(R.layout.bottomsheet_tipo_usuario, null)
+            bottomSheetDialog.setContentView(view)
 
-            bottomSheetBinding.btnPersona.setOnClickListener {
+            val btnPersona = view.findViewById<Button>(R.id.btnPersona)
+            val btnEmpresa = view.findViewById<Button>(R.id.btnEmpresa)
+
+            btnPersona.setOnClickListener {
                 bottomSheetDialog.dismiss()
                 startActivity(Intent(this, LoginPersonaActivity::class.java))
             }
 
-            bottomSheetBinding.btnEmpresa.setOnClickListener {
+            btnEmpresa.setOnClickListener {
                 bottomSheetDialog.dismiss()
                 startActivity(Intent(this, LoginEmpresaActivity::class.java))
             }
@@ -54,24 +53,25 @@ class MainActivity : AppCompatActivity() {
             bottomSheetDialog.show()
         }
 
-        binding.btnRegistrarse.setOnClickListener {
+        btnRegistrarse.setOnClickListener {
             val bottomSheetDialog = BottomSheetDialog(this)
-            val bottomSheetBinding = BottomsheetTipoUsuarioRegistroBinding.inflate(layoutInflater)
-            bottomSheetDialog.setContentView(bottomSheetBinding.root)
+            val view = LayoutInflater.from(this).inflate(R.layout.bottomsheet_tipo_usuario_registro, null)
+            bottomSheetDialog.setContentView(view)
 
-            bottomSheetBinding.btnPersona.setOnClickListener {
+            val btnPersona = view.findViewById<Button>(R.id.btnPersona)
+            val btnEmpresa = view.findViewById<Button>(R.id.btnEmpresa)
+
+            btnPersona.setOnClickListener {
                 bottomSheetDialog.dismiss()
                 startActivity(Intent(this, RegistroPersonaActivity::class.java))
             }
 
-            bottomSheetBinding.btnEmpresa.setOnClickListener {
+            btnEmpresa.setOnClickListener {
                 bottomSheetDialog.dismiss()
                 startActivity(Intent(this, RegistroEmpresaActivity::class.java))
             }
 
             bottomSheetDialog.show()
         }
-
-
     }
 }
