@@ -51,6 +51,8 @@ class Activity_empleados : AppCompatActivity() {
     private lateinit var spinnerPisos: Spinner
     private var pisoSeleccionado: String = ""
     private lateinit var textViewHora: TextView
+    private var snackbarActivo: Snackbar? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,11 +73,13 @@ class Activity_empleados : AppCompatActivity() {
         val btnFranja = findViewById<LinearLayout>(R.id.btn_franja)
         btnFranja.setOnClickListener {
             if (fechaSeleccionada.isEmpty()) {
-                Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_SHORT)
-                    .setAction("Seleccionar") {
+                snackbarActivo?.dismiss()  // Cierra el anterior si sigue visible
+                snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
+                    .setAction("Seleccionar fecha") {
                         mostrarDialogoFecha()
                     }
-                    .show()
+
+                snackbarActivo?.show()
             } else {
                 mostrarDialogoHoras()
             }
@@ -212,6 +216,7 @@ class Activity_empleados : AppCompatActivity() {
     }
 
     private fun mostrarDialogoFecha() {
+        snackbarActivo?.dismiss()
         val calendario = Calendar.getInstance()
 
         val datePickerDialog = DatePickerDialog(
@@ -238,6 +243,7 @@ class Activity_empleados : AppCompatActivity() {
 
 
     private fun mostrarDialogoReservas() {
+        val fechaHora = "$fechaSeleccionada $horaSeleccionada"
         limpiarReservasPasadas()
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
@@ -277,10 +283,13 @@ class Activity_empleados : AppCompatActivity() {
                     setOnClickListener {
                         val confirmDialog = AlertDialog.Builder(this@Activity_empleados)
                             .setTitle("¿Cancelar reserva?")
-                            .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
+                            .setMessage("¿Deseas cancelar la reserva de ${reserva.nombreSala} el ${reserva.fechaHora}?")
                             .setPositiveButton("Sí") { _, _ ->
                                 reservas.remove(reserva)
                                 sharedPref.edit() { putString("reservas", gson.toJson(reservas)) }
+
+                                verificarDisponibilidad(fechaHora)
+                                Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${reserva.nombreSala}el ${reserva.fechaHora}", Toast.LENGTH_SHORT).show()
 
                                 //Cerrar todos los diálogos antes de refrescar
                                 dialog.dismiss()
@@ -301,7 +310,9 @@ class Activity_empleados : AppCompatActivity() {
                     }
                 }
                 contenedor.addView(reservaText)
+
             }
+
 
             val divider = View(this).apply {
                 setBackgroundColor(Color.LTGRAY)
@@ -437,11 +448,13 @@ class Activity_empleados : AppCompatActivity() {
                 // Configurar la acción al hacer clic en el botón
                 setOnClickListener {
                     if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
-                        Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_INDEFINITE)
-                            .setAction("Elegir fecha") {
+                        snackbarActivo?.dismiss()
+                        snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
+                            .setAction("Seleccionar fecha") {
                                 mostrarDialogoFecha()
                             }
-                            .show()
+
+                        snackbarActivo?.show()
                     } else {
                         mostrarDialogoDetallesSala(sala)
                     }
