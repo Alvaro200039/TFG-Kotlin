@@ -37,7 +37,6 @@ class activity_menu_empleado : AppCompatActivity() {
         limpiarReservasPasadas()
         mostrarSiguienteReserva()
 
-
         // Botón: Hacer nueva reserva
         val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
         btnNuevaReserva.setOnClickListener {
@@ -74,8 +73,10 @@ class activity_menu_empleado : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
+
     override fun onResume(){
         super.onResume()
+        limpiarReservasPasadas()
         mostrarSiguienteReserva()
     }
 
@@ -93,6 +94,7 @@ class activity_menu_empleado : AppCompatActivity() {
 
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
+        mostrarSiguienteReserva()
         val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
         val gson = Gson()
 
@@ -248,7 +250,7 @@ class activity_menu_empleado : AppCompatActivity() {
 
         // Mostrar datos en el TextView
         siguienteReserva?.let {
-            val texto = "Siguiente reserva \n${it.nombreSala} el ${it.fechaHora}"
+            val texto = "Siguiente reserva: ${it.piso} \n${it.nombreSala} el ${it.fechaHora}"
             textView.text = texto
         }
     }
