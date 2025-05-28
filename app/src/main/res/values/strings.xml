@@ -2,14 +2,18 @@
     <string name="app_name">TFG-Kotlin</string>
     <string name="iniciar_sesion">Iniciar sesión</string>
     <string name="registrarse">Registrarse</string>
+    <string name="registrarEmp">Registrar Empresa</string>
     <string name="persona">Acceso Individual</string>
     <string name="empresa">Acceso Corporativo</string>
     <string name="nombre">Introduce tu nombre</string>
     <string name="nombre_empresa">Introduce el nombre del grupo corporativo</string>
     <string name="apellidos">Introduce tus apellidos</string>
     <string name="correo">Introduce un correo</string>
+    <string name="dominio">Introduce el dominio de la empresa</string>
     <string name="contraseña">Introduce una contraseña</string>
     <string name="repetir_contraseña">Vuelve a introducir la contraseña</string>
-    <string name="num_empresa">NIF (Número de Identificación Fiscal)</string>
-    <string name="num_empresa_empleado">NIF de la empresa en la que trabajas</string>
+    <string name="num_empresa">CIF (Código de Identificación Fiscal)</string>
+    <string name="num_empresa_empleado">CIF de la empresa</string>
+    <string name="olvidaste_contra">¿Has olvidado tu contraseña?</string>
+
 </resources>

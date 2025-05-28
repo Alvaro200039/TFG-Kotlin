@@ -51,21 +51,21 @@ object Validaciones {
             }
         }
     }
-    fun validarNif(
+    fun validarCif(
         til: TextInputLayout,
         et: TextInputEditText
     ): Boolean {
-        val nif = et.text?.toString()?.trim().orEmpty()
+        val cif = et.text?.toString()?.trim().orEmpty()
         val regex = Regex("^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}")
 
         return when {
-            nif.isEmpty() -> {
-                til.error = "El NIF es obligatorio"
+            cif.isEmpty() -> {
+                til.error = "El CIF es obligatorio"
                 et.requestFocus()
                 false
             }
-            !regex.matches(nif) -> {
-                til.error = "Formato de NIF inválido (1 letra + 7 dígitos + 1 carácter de control)"
+            !regex.matches(cif) -> {
+                til.error = "Formato de CIF inválido (1 letra + 7 dígitos + 1 carácter de control)"
                 et.requestFocus()
                 false
             }
@@ -75,64 +75,59 @@ object Validaciones {
             }
         }
     }
+    fun validarCifOpcional(
+        til: TextInputLayout,
+        et: TextInputEditText
+    ): Boolean {
+        val cif = et.text?.toString()?.trim().orEmpty()
+        if (cif.isEmpty()) {
+            til.error = null
+            return true
+        }
+
+        val regex = Regex("^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}")
+        return if (!regex.matches(cif)) {
+            til.error = "Formato de CIF inválido (1 letra + 7 dígitos + 1 carácter de control)"
+            et.requestFocus()
+            false
+        } else {
+            til.error = null
+            true
+        }
+    }
 
     /**
      * Valida LoginPersona: correo + contraseña.
      */
-    fun validarLoginPersona(
+    fun validarLogin(
         tilEmail: TextInputLayout, etEmail: TextInputEditText,
-        tilPass: TextInputLayout, etPass: TextInputEditText,
-        tilNif: TextInputLayout, etNif: TextInputEditText
+        tilPass: TextInputLayout, etPass: TextInputEditText
+
     ): Boolean {
         val okEmail = validarCampoRequerido(tilEmail,etEmail) && validarFormatoEmail(tilEmail,etEmail)
         val okPass = validarCampoRequerido(tilPass,etPass, "Introduce la contraseña")
-        val okNif = validarNif(tilNif, etNif)
+
         return okEmail && okPass
     }
 
-    /**
-     * Valida LoginEmpresa: correo + contraseña + NIF.
-     */
-    fun validarLoginEmpresa(
-        tilEmail: TextInputLayout, etEmail: TextInputEditText,
-        tilPass: TextInputLayout, etPass: TextInputEditText,
-        tilNif: TextInputLayout, etNif: TextInputEditText
-    ): Boolean {
-        val okEmail = validarCampoRequerido(tilEmail,etEmail) && validarFormatoEmail(tilEmail,etEmail)
-        val okPass = validarCampoRequerido(tilPass,etPass)
-        val okNif = validarNif(tilNif,etNif)
-        return okEmail && okPass && okNif
-    }
 
     /**
      * Valida RegistroEmpresa: nombre empresa + correo + contraseña + NIF.
      */
     fun validarRegistroEmpresa(
-        tilEmpresa: TextInputLayout, etEmpresa: TextInputEditText,
-        tilEmail: TextInputLayout, etEmail: TextInputEditText,
+        tilNombre: TextInputLayout, etNombre: TextInputEditText,
+        tilDominio: TextInputLayout, etDominio: TextInputEditText,
         tilPass: TextInputLayout, etPass: TextInputEditText,
-        tilRepContrasena: TextInputLayout, etRepContrasena: TextInputEditText,
-        tilNif: TextInputLayout, etNif: TextInputEditText
+        tilRep: TextInputLayout, etRep: TextInputEditText,
+        tilCif: TextInputLayout, etCif: TextInputEditText
     ): Boolean {
-        val okEmpresa = validarCampoRequerido(tilEmpresa,etEmpresa, "Introduce el nombre de la empresa")
-        val okEmail = validarCampoRequerido(tilEmail,etEmail) && validarFormatoEmail(tilEmail,etEmail)
-        val okPass = validarCampoRequerido(tilPass,etPass)
-        val okRep = validarCampoRequerido(tilRepContrasena, etRepContrasena, "Repite la contraseña")
+        val okNombre = validarCampoRequerido(tilNombre, etNombre)
+        val okDominio = validarCampoRequerido(tilDominio, etDominio)
+        val okPass = validarCampoRequerido(tilPass, etPass)
+        val okRep = validarCampoRequerido(tilRep, etRep)
+        val okCif = validarCif(tilCif, etCif)
 
-        // Solo si contraseña y repetición no están vacías, comprobamos coincidencia
-        val okMatch = if (okPass && okRep) {
-            val pass = etPass.text?.toString().orEmpty()
-            val rep = etRepContrasena.text?.toString().orEmpty()
-            if (pass == rep) {
-                tilRepContrasena.error = null
-                true
-            } else {
-                tilRepContrasena.error = "Las contraseñas no coinciden"
-                false
-            }
-        } else false
-        val okNif = validarNif(tilNif, etNif)
-        return okEmpresa && okEmail && okPass && okRep && okMatch && okNif
+        return okNombre && okDominio && okPass && okRep && okCif
     }
 
 
@@ -143,8 +138,9 @@ object Validaciones {
         tilNombre: TextInputLayout, etNombre: TextInputEditText,
         tilApellidos: TextInputLayout, etApellidos: TextInputEditText,
         tilEmail: TextInputLayout, etEmail: TextInputEditText,
-        tilRepContrasena: TextInputLayout, etRepContrasena: TextInputEditText,
         tilPass: TextInputLayout, etPass: TextInputEditText,
+        tilRepContrasena: TextInputLayout, etRepContrasena: TextInputEditText,
+        tilCif: TextInputLayout, etCif: TextInputEditText
 
     ): Boolean {
         val okNombre = validarCampoRequerido(tilNombre,etNombre, "Introduce tu nombre")
@@ -152,7 +148,8 @@ object Validaciones {
         val okEmail = validarCampoRequerido(tilEmail,etEmail) && validarFormatoEmail(tilEmail,etEmail)
         val okPass = validarCampoRequerido(tilPass,etPass, "Introduce la contraseña")
         val okRep = validarCampoRequerido(tilRepContrasena, etRepContrasena, "Repite la contraseña")
-        return okNombre && okApellidos && okEmail && okPass
+        val okCif =  validarCifOpcional(tilCif, etCif)
+
         //  // Solo si contraseña y repetición no están vacías, comprobamos coincidencia
         val okMatch = if (okPass && okRep) {
             val pass = etPass.text?.toString().orEmpty()
@@ -166,8 +163,13 @@ object Validaciones {
             }
         } else false
 
-        return okNombre && okApellidos && okEmail && okPass && okRep && okMatch
+        return okNombre && okApellidos && okEmail && okPass && okRep && okMatch && okCif
     }
+
+    fun construirNombreBD(dominio: String): String {
+        return "empresa_${dominio.lowercase().replace(".", "_")}.db"
+    }
+
 
 
 }

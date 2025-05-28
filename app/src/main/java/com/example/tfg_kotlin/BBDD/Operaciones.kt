@@ -5,8 +5,6 @@ import androidx.room.*
 @Dao
 interface Operaciones {
 
-    @Query("SELECT * FROM Empleados WHERE nombre = :nombre AND contrasena = :contrasena")
-    fun login(nombre: String, contrasena: String): Empleados?
 
     // Empleados
     @Insert
@@ -18,17 +16,55 @@ interface Operaciones {
     @Query("SELECT * FROM Empleados WHERE esJefe = 1")
     fun obtenerJefes(): List<Empleados>
 
-    @Query("SELECT * FROM Empleados WHERE correo = :correo AND contrasena = :contrasena AND esJefe = 0")
-    fun loginEmpleado(correo: String, contrasena: String): Empleados?
+    @Query("SELECT * FROM Empleados WHERE correo = :correo AND contrasena = :contrasena")
+    fun loginUsuario(correo: String, contrasena: String): Empleados?
 
-    @Query("SELECT * FROM Empleados WHERE nif = :nif AND esJefe = 1")
-    fun existeEmpresaConNif(nif: String): Empleados?
+    @Query("SELECT * FROM Empleados WHERE cif = :cif AND esJefe = 1")
+    fun existeEmpresaConCif(cif: String): Empleados?
 
-    @Query("SELECT * FROM Empleados WHERE correo = :correo AND contrasena = :contrasena AND nif = :nif AND esJefe = 1")
-    fun loginJefe(correo: String, contrasena: String, nif: String): Empleados?
+
+    @Query("SELECT * FROM Empleados WHERE :dominio = SUBSTR(correo, INSTR(correo, '@') + 1) AND esJefe = 1")
+    fun getEmpresaPorDominio(dominio: String): Empleados?
 
     @Query("SELECT * FROM Empleados WHERE correo = :correo")
     fun buscarEmpleadoPorCorreo(correo: String): Empleados?
 
-   
+    @Insert
+    fun insertarEmpresa(empresa: Empresa)
+
+    @Query("SELECT * FROM Empresa WHERE cif = :cif")
+    fun getEmpresaPorCif(cif: String): Empresa?
+
+    fun construirNombreBD(dominio: String): String {
+        return "empresa_${dominio.lowercase()}.db"
+    }
+    @Query("UPDATE Empleados SET contrasena = :nuevaPass WHERE correo = :correo")
+    fun actualizarContrasena(correo: String, nuevaPass: String)
+
+
+
+    // Salas
+    /**
+    @Insert
+    fun insertarSala(sala: Salas)
+
+    @Query("SELECT * FROM Salas_creadas")
+    fun obtenerSalas(): List<Salas>
+
+    // Reservas
+    @Insert
+    fun reservarSala(reserva: SalaReservada)
+
+    @Query("""
+        SELECT Empleados.nombre, Empleados.apellidos, Empleados.seccion
+        FROM Salas_reservadas
+        INNER JOIN Empleados ON Salas_reservadas.idPersona = Empleados.id
+        WHERE Salas_reservadas.idSala = :salaId
+    """)
+    fun obtenerPersonasPorSala(salaId: Int): List<Empleados>
+
+
+    @Query("SELECT * FROM Empleados WHERE nombre = :nombre")
+    fun buscarEmpleadoPorNombre(nombre: String): Empleados?
+    **/
 }

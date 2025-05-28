@@ -12,7 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TFGKotlin"
         tools:targetApi="31">
-
+        <activity
+            android:name=".RecuperarContrasenaActivity"
+            android:exported="false" />
         <activity
             android:name=".RegistroEmpresaActivity"
             android:exported="false" />
@@ -23,7 +25,7 @@
             android:name=".LoginEmpresaActivity"
             android:exported="false" />
         <activity
-            android:name=".LoginPersonaActivity"
+            android:name=".LoginActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

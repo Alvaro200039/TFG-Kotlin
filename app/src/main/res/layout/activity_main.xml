@@ -61,20 +61,45 @@
 
             <Button
                 android:id="@+id/btnIniciarSesion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="20dp"
+                android:layout_width="227dp"
+                android:layout_height="60dp"
                 android:backgroundTint="@color/blue_600"
                 android:text="@string/iniciar_sesion"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
 
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="32dp">
+
             <Button
                 android:id="@+id/btnRegistrarse"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="227dp"
+                android:layout_height="60dp"
                 android:backgroundTint="@color/blue_600"
                 android:text="@string/registrarse"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="32dp">
+
+            <Button
+                android:id="@+id/btnRegistrarEmpresa"
+                android:layout_width="227dp"
+                android:layout_height="60dp"
+                android:backgroundTint="@color/blue_600"
+                android:text="@string/registrarEmp"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
         </LinearLayout>

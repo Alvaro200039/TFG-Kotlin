@@ -14,10 +14,12 @@
         android:background="@color/blue_600"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
-        app:title="Inicio de sesión"
+        app:title="¿Has olvidado tu contraseña?"
         app:titleTextColor="@color/white" />
 
+<!-- Paso 1 para introducir el correo-->
     <LinearLayout
+        android:id="@+id/layoutPaso1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -29,7 +31,7 @@
 
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilCorreo"
+            android:id="@+id/tilCorreoRec"
             style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -39,73 +41,109 @@
             app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etCorreo"
+                android:id="@+id/etCorreoRec"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:hint="@string/correo" />
+                android:hint="Introduce tu correo de recuperación" />
 
         </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilContrasena"
-            style="?attr/textInputFilledStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:endIconMode="clear_text"
-            app:errorEnabled="true">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etContrasena"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="@string/contraseña" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilNumEmpresa"
-            style="?attr/textInputFilledStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:endIconMode="clear_text"
-            app:counterEnabled="true"
-            app:counterMaxLength="9"
-            app:errorEnabled="true">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etNumEmpresa"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:maxLength="9"
-                android:hint="@string/num_empresa_empleado" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-
-
-
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingVertical="10dp">
 
         <Button
-            android:id="@+id/btnFinalizarLogin"
+            android:id="@+id/btnEnviarCodigo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="15dp"
             android:backgroundTint="@color/blue_600"
             android:textSize="26dp"
             android:layout_marginEnd="15dp"
-            android:text="@string/iniciar_sesion"
+            android:text="Enviar código"
             android:textColor="@color/white" />
+
+    </LinearLayout>
+
+    <!-- Paso 2: Introducir el código y la nueva contraseña-->
+    <!-- Está oculto al principio-->
+    <LinearLayout
+        android:id="@+id/layoutPaso2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:padding="0dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilCodigo"
+            style="?attr/textInputFilledStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            app:endIconMode="clear_text"
+            app:errorEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etCodigo"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:inputType="number"
+            android:hint="Introduce el código" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilNuevaPass"
+            style="?attr/textInputFilledStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            app:endIconMode="password_toggle"
+            app:errorEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNuevaPass"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:inputType="textPassword"
+                android:hint="Nueva contraseña" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilRepetirPass"
+            style="?attr/textInputFilledStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            app:endIconMode="password_toggle"
+            app:errorEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etRepetirPass"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:inputType="textPassword"
+                android:hint="Repite la nueva contraseña" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnCambiarPass"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:backgroundTint="@color/blue_600"
+            android:textSize="26dp"
+            android:layout_marginEnd="15dp"
+            android:text="Cambiar contraseña"
+            android:textColor="@color/white" />
+
+
     </LinearLayout>
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Button
@@ -12,7 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
 import com.example.tfg_kotlin.BBDD.Empleados
-import com.example.tfg_kotlin.BBDD.MIGRATION_1_2
+import com.example.tfg_kotlin.Validaciones.construirNombreBD
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
@@ -52,24 +53,47 @@ class RegistroPersonaActivity : AppCompatActivity() {
         val tilRepContrasena = findViewById<TextInputLayout>(R.id.tilRepContrasena)
         val etRepContrasena = findViewById<TextInputEditText>(R.id.etRepContrasena)
 
+        val tilCif = findViewById<TextInputLayout>(R.id.tilNumEmpresa)
+        val etCif = findViewById<TextInputEditText>(R.id.etNumEmpresa)
+
+
         btnFinalizarRegistro.setOnClickListener {
             val esValido = Validaciones.validarRegistroPersona(
                 tilNombre, etNombre,
                 tilApellidos, etApellidos,
                 tilCorreo, etCorreo,
                 tilContrasena, etContrasena,
-                tilRepContrasena, etRepContrasena
+                tilRepContrasena, etRepContrasena,
+                tilCif, etCif
             )
 
+
             if (esValido) {
-                val db = Room.databaseBuilder(
+                val correo = etCorreo.text.toString().trim()
+                val dominio = correo.substringAfter("@")
+                val cifInput = etCif.text.toString().trim().uppercase()
+
+                val nombreBD = construirNombreBD(dominio)
+
+                val dbMaestra  = Room.databaseBuilder(
                     applicationContext,
                     BBDD::class.java,
-                    "reservs_db"
-                ).addMigrations(MIGRATION_1_2).allowMainThreadQueries().build()
+                    nombreBD
+                ).allowMainThreadQueries().build()
 
-                val correo = etCorreo.text.toString()
-                val usuarioExistente = db.appDao().buscarEmpleadoPorCorreo(correo)
+                // Validar si existe el jefe (empresa)
+                val empresa = dbMaestra .appDao().getEmpresaPorDominio(dominio)
+
+                if (empresa == null) {
+                    tilCorreo.error = "No existe ninguna empresa con el dominio @$dominio"
+                    etCorreo.requestFocus()
+                    return@setOnClickListener
+                }
+
+
+
+                // Verificar si el correo ya está registrado
+                val usuarioExistente = dbMaestra .appDao().buscarEmpleadoPorCorreo(correo)
 
                 if (usuarioExistente != null) {
                     tilCorreo.error = "Este correo ya está registrado"
@@ -77,16 +101,29 @@ class RegistroPersonaActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
+                val esJefe = cifInput.isNotEmpty() && cifInput == empresa.cif
+
                 val empleado = Empleados(
                     nombre = etNombre.text.toString(),
                     apellidos = etApellidos.text.toString(),
-                    correo = etCorreo.text.toString(),
+                    correo = correo,
+                    dominio = dominio,
                     contrasena = etContrasena.text.toString(),
-                    esJefe = false
+                    cif = if (esJefe) cifInput else "",
+                    esJefe = esJefe
                 )
 
-                db.appDao().insertarEmpleado(empleado)
+                dbMaestra .appDao().insertarEmpleado(empleado)
                 Toast.makeText(this, "Registro completado", Toast.LENGTH_SHORT).show()
+
+                val intent = if (esJefe) {
+                    Intent(this, JefeActivity::class.java)
+                } else {
+                    Intent(this, EmpleadoActivity::class.java)
+                }
+                startActivity(intent)
+                finish()
+
             }
         }
     }

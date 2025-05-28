@@ -2,14 +2,12 @@ package com.example.tfg_kotlin
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,47 +29,19 @@ class MainActivity : AppCompatActivity() {
 
         val btnIniciarSesion = findViewById<Button>(R.id.btnIniciarSesion)
         val btnRegistrarse = findViewById<Button>(R.id.btnRegistrarse)
+        val btnRegistrarEmpresa = findViewById<Button>(R.id.btnRegistrarEmpresa)
+
 
         btnIniciarSesion.setOnClickListener {
-            val bottomSheetDialog = BottomSheetDialog(this)
-            val view = LayoutInflater.from(this).inflate(R.layout.bottomsheet_tipo_usuario, null)
-            bottomSheetDialog.setContentView(view)
-
-            val btnPersona = view.findViewById<Button>(R.id.btnPersona)
-            val btnEmpresa = view.findViewById<Button>(R.id.btnEmpresa)
-
-            btnPersona.setOnClickListener {
-                bottomSheetDialog.dismiss()
-                startActivity(Intent(this, LoginPersonaActivity::class.java))
-            }
-
-            btnEmpresa.setOnClickListener {
-                bottomSheetDialog.dismiss()
-                startActivity(Intent(this, LoginEmpresaActivity::class.java))
-            }
-
-            bottomSheetDialog.show()
+            startActivity(Intent(this, LoginActivity::class.java))
         }
 
         btnRegistrarse.setOnClickListener {
-            val bottomSheetDialog = BottomSheetDialog(this)
-            val view = LayoutInflater.from(this).inflate(R.layout.bottomsheet_tipo_usuario_registro, null)
-            bottomSheetDialog.setContentView(view)
+            startActivity(Intent(this, RegistroPersonaActivity::class.java))
+        }
 
-            val btnPersona = view.findViewById<Button>(R.id.btnPersona)
-            val btnEmpresa = view.findViewById<Button>(R.id.btnEmpresa)
-
-            btnPersona.setOnClickListener {
-                bottomSheetDialog.dismiss()
-                startActivity(Intent(this, RegistroPersonaActivity::class.java))
-            }
-
-            btnEmpresa.setOnClickListener {
-                bottomSheetDialog.dismiss()
-                startActivity(Intent(this, RegistroEmpresaActivity::class.java))
-            }
-
-            bottomSheetDialog.show()
+        btnRegistrarEmpresa.setOnClickListener {
+            startActivity(Intent(this, RegistroEmpresaActivity::class.java))
         }
     }
 }

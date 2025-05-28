@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:id="@+id/loginempresa"
+    android:id="@+id/loginpersona"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
@@ -10,6 +10,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:background="@color/blue_600"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
@@ -62,31 +63,28 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilNumEmpresa"
-            style="?attr/textInputFilledStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:endIconMode="clear_text"
-            app:counterEnabled="true"
-            app:counterMaxLength="9"
-            app:errorEnabled="true">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etNumEmpresa"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:maxLength="9"
-                android:hint="@string/num_empresa" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
 
     </LinearLayout>
 
-
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingVertical="10dp">
+
+        <TextView
+            android:id="@+id/tvOlvidarContrasena"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/olvidaste_contra"
+            android:textColor="@color/enlace"
+            android:textStyle="normal"
+            android:textSize="14sp"
+            android:layout_gravity="center_horizontal"
+            android:paddingTop="16dp"/>
+    </LinearLayout>
+<LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -98,13 +96,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="15dp"
-            android:layout_marginEnd="15dp"
             android:backgroundTint="@color/blue_600"
+            android:textSize="26dp"
+            android:layout_marginEnd="15dp"
             android:text="@string/iniciar_sesion"
-            android:textColor="@color/white"
-            android:textSize="26dp" />
+            android:textColor="@color/white" />
     </LinearLayout>
-
-
 
 </LinearLayout>

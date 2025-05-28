@@ -119,7 +119,25 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilNumEmpresa"
+            style="?attr/textInputFilledStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:endIconMode="clear_text"
+            app:counterEnabled="true"
+            app:counterMaxLength="9"
+            app:errorEnabled="true">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNumEmpresa"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:maxLength="9"
+                android:hint="@string/num_empresa_empleado" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
 
 
@@ -140,7 +158,7 @@
             android:backgroundTint="@color/blue_600"
             android:textSize="26dp"
             android:layout_marginEnd="15dp"
-            android:text="¡Vamos!"
+            android:text="Registrarse"
             android:textColor="@color/white" />
     </LinearLayout>
 
