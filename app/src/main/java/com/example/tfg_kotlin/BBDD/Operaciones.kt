@@ -13,9 +13,6 @@ interface Operaciones {
     @Query("SELECT * FROM Empleados WHERE nombre = :nombre AND apellidos = :apellidos")
     fun buscarEmpleado(nombre: String, apellidos: String): Empleados?
 
-    @Query("SELECT * FROM Empleados WHERE esJefe = 1")
-    fun obtenerJefes(): List<Empleados>
-
     @Query("SELECT * FROM Empleados WHERE correo = :correo AND contrasena = :contrasena")
     fun loginUsuario(correo: String, contrasena: String): Empleados?
 
