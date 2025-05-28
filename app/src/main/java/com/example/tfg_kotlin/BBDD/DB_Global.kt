@@ -1,6 +1,8 @@
 package com.example.tfg_kotlin.BBDD
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
@@ -9,17 +11,17 @@ import androidx.room.RoomDatabase
 )
 abstract class DB_Global : RoomDatabase() {
     abstract fun appDao(): Operaciones
+
+    companion object {
+        fun BDEmpresa_creacion(context: Context, nombreEmpresa: String): DB_Global {
+            val dbName = "BD_${nombreEmpresa.replace(" ", "_")}.db"
+            return Room.databaseBuilder(
+                context.applicationContext,
+                DB_Global::class.java,
+                dbName
+            ).fallbackToDestructiveMigration(true)
+                .allowMainThreadQueries()
+                .build()
+        }
+    }
 }
-
-
-// Para conectar a la bases de datos en las activity debemos pegar el siguiente código
-
-// Antes del Override fun OnCreate
-//  lateinit var database: Operaciones
-
-// dentro del OnCreate
-/*
-database = Room.databaseBuilder(
-            applicationContext, BBDD::class.java, "reservas_db"
-            ).allowMainThreadQueries().build().appDao()
-*/

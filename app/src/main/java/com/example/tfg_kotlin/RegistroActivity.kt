@@ -26,7 +26,7 @@ class RegistroActivity : AppCompatActivity() {
             "reservas_db"
         ).allowMainThreadQueries().build().appDao()
 
-        val etCorreo = findViewById<EditText>()
+        val etCorreo = findViewById<EditText>(R.id.etCorreo)
         val etNombre = findViewById<EditText>(R.id.etNombre)
         val etApellidos = findViewById<EditText>(R.id.etApellidos)
         val etContrasena = findViewById<EditText>(R.id.etContrasena)
@@ -36,10 +36,11 @@ class RegistroActivity : AppCompatActivity() {
 
 
         btnRegistrar.setOnClickListener {
-            val nombre = etNombre.text.toString()
-            val apellidos = etApellidos.text.toString()
+            val correo = etCorreo.text.toString()
             val contrasena = etContrasena.text.toString()
             val repetirContrasena = etRepetirContrasena.text.toString()
+            val nombre = etNombre.text.toString()
+            val apellidos = etApellidos.text.toString()
             val esJefe = checkEsJefe.isChecked
 
             if (contrasena != repetirContrasena) {
@@ -53,9 +54,9 @@ class RegistroActivity : AppCompatActivity() {
             }
             val nuevoEmpleado = TablaEmpleados(
                 correo = correo,
+                contrasena = contrasena,
                 nombre = nombre,
                 apellidos = apellidos,
-                contrasena = contrasena,
                 esJefe = esJefe
             )
             database.insertarEmpleado(nuevoEmpleado)

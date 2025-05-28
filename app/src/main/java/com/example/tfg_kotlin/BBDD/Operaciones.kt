@@ -5,7 +5,7 @@ import androidx.room.*
 @Dao
 interface Operaciones {
 
-    // Operaciones BD Maestra Registrio empresas
+// Operaciones BD Maestra Registrio empresas
     @Insert
     fun insertarEmpresa(empresa: TablaEmpresa)
 

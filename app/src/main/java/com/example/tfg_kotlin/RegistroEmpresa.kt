@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin
 
+import android.content.Context
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -18,24 +19,15 @@ class RegistroEmpresa : AppCompatActivity() {
     private lateinit var editDominio: EditText
     private lateinit var editCif: EditText
     private lateinit var btnRegistrar: Button
-    private lateinit var database: Operaciones
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_registro_empresa)
 
-        database = Room.databaseBuilder(
-            applicationContext,
-            DB_Empresa::class.java,
-            "reservas_db"
-        ).allowMainThreadQueries().build().appDao()
-
-        // Referencias a las vistas
-        val nombre = findViewById<EditText>(R.id.editNombreEmpresa)
-        val editDominio = findViewById<EditText>(R.id.editDominio)
-        val editCif = findViewById<EditText>(R.id.editCif)
-        val btnRegistrar = findViewById<Button>(R.id.btnRegistrarEmpresa)
+        editNombre = findViewById(R.id.editNombreEmpresa)
+        editDominio = findViewById(R.id.editDominio)
+        editCif = findViewById(R.id.editCif)
+        btnRegistrar = findViewById<Button>(R.id.btnRegistrarEmpresa)
 
         // Acción al pulsar el botón
         btnRegistrar.setOnClickListener {
@@ -62,9 +54,11 @@ class RegistroEmpresa : AppCompatActivity() {
             return
         }
 
+        val db = DB_Empresa.BDMaestra_creacion(this)
+        val dao = db.appDao()
 
         // Evitar registros duplicados
-        val empresaExistente = database.buscarPorCif(cif)
+        val empresaExistente = dao.buscarPorCif(cif)
         if (empresaExistente != null) {
             Toast.makeText(this, "Ya existe una empresa con ese CIF", Toast.LENGTH_SHORT).show()
             return
@@ -77,11 +71,14 @@ class RegistroEmpresa : AppCompatActivity() {
             dominio = dominio
         )
 
-        database.insertarEmpresa(nuevaEmpresa)
+        dao.insertarEmpresa(nuevaEmpresa)
+        
+        DB_Global.BDEmpresa_creacion(this, nombre)
 
         Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_LONG).show()
 
         // Finaliza la actividad y vuelve atrás
         finish()
     }
+
 }
