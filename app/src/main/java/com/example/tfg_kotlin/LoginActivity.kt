@@ -6,8 +6,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.room.Room
-import com.example.tfg_kotlin.BBDD.DB_Global
 import com.example.tfg_kotlin.BBDD.Operaciones
 
 class LoginActivity : AppCompatActivity() {
@@ -16,13 +14,6 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
-        database = Room.databaseBuilder(
-            applicationContext,
-            DB_Global::class.java,
-            "reservas_db"
-        ).allowMainThreadQueries() // Solo para pruebas
-            .build().appDao()
 
 
         val etNombre = findViewById<EditText>(R.id.etNombre)
@@ -38,9 +29,11 @@ class LoginActivity : AppCompatActivity() {
             val usuario = database.login(nombre, contrasena)
             if (usuario != null) {
                 if (usuario.esJefe) {
-                    startActivity(Intent(this, PantallaJefeActivity::class.java))
+                  //  startActivity(Intent(this, PantallaJefeActivity::class.java))
+                    Toast.makeText(this, "Este usuario es Jefe", Toast.LENGTH_SHORT).show()
                 } else {
-                    startActivity(Intent(this, PantallaEmpleadoActivity::class.java))
+                   // startActivity(Intent(this, PantallaEmpleadoActivity::class.java))
+                    Toast.makeText(this, "Este usaurio es un empleado normal", Toast.LENGTH_SHORT).show()
                 }
                 finish()
             } else {
@@ -48,7 +41,7 @@ class LoginActivity : AppCompatActivity() {
             }
         }
         btnRegistro.setOnClickListener {
-            startActivity(Intent(this, RegistroActivity::class.java))
+            startActivity(Intent(this, RegistroEmpleado::class.java))
         }
     }
 }

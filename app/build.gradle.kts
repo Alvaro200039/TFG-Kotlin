@@ -3,8 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
-
-
 android {
     namespace = "com.example.tfg_kotlin"
     compileSdk = 35
