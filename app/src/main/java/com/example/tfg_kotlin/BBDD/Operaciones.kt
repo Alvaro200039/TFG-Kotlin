@@ -18,7 +18,7 @@ interface Operaciones {
     @Query("SELECT * FROM Empresas")
     fun obtenerTodas(): List<TablaEmpresa>
 
-
+/*
 //Operaciones
     @Query("SELECT * FROM Empleados WHERE nombre = :nombre AND contrasena = :contrasena")
     fun login(nombre: String, contrasena: String): TablaEmpleados?
@@ -57,6 +57,6 @@ interface Operaciones {
     fun buscarEmpleadoPorNombre(nombre: String): TablaEmpleados?
 
 
-
+*/
 
 }

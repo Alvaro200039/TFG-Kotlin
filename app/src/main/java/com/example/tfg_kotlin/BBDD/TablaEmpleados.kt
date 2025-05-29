@@ -9,5 +9,6 @@ data class TablaEmpleados(
     val nombre: String,
     val apellidos: String,
     val contrasena: String,
+    val cif: String,
     val esJefe: Boolean
 )

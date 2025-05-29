@@ -2,6 +2,7 @@ package com.example.tfg_kotlin
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -24,17 +25,28 @@ class RegistroEmpresa : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro_empresa)
 
+        val db = Room.databaseBuilder(
+            applicationContext,
+            DB_Empresa::class.java, "Empresas"
+        ).build()
+
         editNombre = findViewById(R.id.editNombreEmpresa)
         editDominio = findViewById(R.id.editDominio)
         editCif = findViewById(R.id.editCif)
-        btnRegistrar = findViewById<Button>(R.id.btnRegistrarEmpresa)
+        btnRegistrar = findViewById(R.id.btnRegistrarEmpresa)
 
-        // Acción al pulsar el botón
+        val dao = db.appDao()
+        val empresa = TablaEmpresa("A11111111", "Test", "@test.com")
+        dao.insertarEmpresa(empresa)
+        val lista = dao.obtenerTodas()
+        Log.d("DB", "Empresas registradas: ${lista.size}")
+
+      /*  // Acción al pulsar el botón
         btnRegistrar.setOnClickListener {
-            registrarEmpresa()
-        }
+           registrarEmpresa()
+        }*/
     }
-
+/*
     private fun registrarEmpresa() {
         val nombre = editNombre.text.toString().trim()
         val dominio = editDominio.text.toString().trim()
@@ -54,7 +66,7 @@ class RegistroEmpresa : AppCompatActivity() {
             return
         }
 
-        val db = DB_Empresa.BDMaestra_creacion(this)
+        val db = DB_Empresa.getInstance(this)
         val dao = db.appDao()
 
         // Evitar registros duplicados
@@ -76,9 +88,6 @@ class RegistroEmpresa : AppCompatActivity() {
         DB_Global.BDEmpresa_creacion(this, nombre)
 
         Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_LONG).show()
-
-        // Finaliza la actividad y vuelve atrás
-        finish()
     }
-
+*/
 }

@@ -13,9 +13,17 @@
             android:id="@+id/etCorreo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nombre"
+            android:hint="Intoduzca el correo"
             android:inputType="textEmailAddress"
-            android:marginBottom="12dp" />
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etCif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Intoduzca Cif de su empresa si lo conoce"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="12dp" />
 
         <EditText
             android:id="@+id/etNombre"
@@ -23,7 +31,7 @@
             android:layout_height="wrap_content"
             android:hint="Nombre"
             android:inputType="textPersonName"
-            android:marginBottom="12dp" />
+            android:layout_marginBottom="12dp" />
 
         <EditText
             android:id="@+id/etApellidos"
@@ -31,15 +39,7 @@
             android:layout_height="wrap_content"
             android:hint="Apellidos"
             android:inputType="textPersonName"
-            android:marginBottom="12dp" />
-
-        <EditText
-            android:id="@+id/etSeccion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Sección"
-            android:inputType="text"
-            android:marginBottom="12dp" />
+            android:layout_marginBottom="12dp" />
 
         <EditText
             android:id="@+id/etContrasena"
@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:hint="Contraseña"
             android:inputType="textPassword"
-            android:marginBottom="12dp" />
+            android:layout_marginBottom="12dp" />
 
         <EditText
             android:id="@+id/etRepetirContrasena"
@@ -55,14 +55,7 @@
             android:layout_height="wrap_content"
             android:hint="Repetir Contraseña"
             android:inputType="textPassword"
-            android:marginBottom="12dp" />
-
-        <CheckBox
-            android:id="@+id/checkEsJefe"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="¿Es jefe?"
-            android:marginBottom="24dp" />
+            android:layout_marginBottom="12dp" />
 
         <Button
             android:id="@+id/btnRegistrar"
