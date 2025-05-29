@@ -2,6 +2,7 @@ package com.example.tfg_kotlin
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.Toast
@@ -70,15 +71,15 @@ class RegistroPersonaActivity : AppCompatActivity() {
 
             if (esValido) {
                 val correo = etCorreo.text.toString().trim()
-                val dominio = correo.substringAfter("@")
+                val dominio = correo.substringAfter("@").lowercase()
                 val cifInput = etCif.text.toString().trim().uppercase()
 
-                val nombreBD = construirNombreBD(dominio)
+                Log.d("REGISTRO_PERSONA", "Dominio buscado: $dominio")
 
                 val dbMaestra  = Room.databaseBuilder(
                     applicationContext,
                     BBDD::class.java,
-                    nombreBD
+                    "maestra_db"
                 ).allowMainThreadQueries().build()
 
                 // Validar si existe el jefe (empresa)
@@ -89,7 +90,13 @@ class RegistroPersonaActivity : AppCompatActivity() {
                     etCorreo.requestFocus()
                     return@setOnClickListener
                 }
-
+                // Verificar si el correo ya está registrado en la bd
+                val nombreBD = construirNombreBD(dominio)
+                val dbEmpresa = Room.databaseBuilder(
+                    applicationContext,
+                    BBDD::class.java,
+                    nombreBD
+                ).allowMainThreadQueries().build()
 
 
                 // Verificar si el correo ya está registrado
@@ -113,7 +120,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
                     esJefe = esJefe
                 )
 
-                dbMaestra .appDao().insertarEmpleado(empleado)
+                dbEmpresa .appDao().insertarEmpleado(empleado)
                 Toast.makeText(this, "Registro completado", Toast.LENGTH_SHORT).show()
 
                 val intent = if (esJefe) {

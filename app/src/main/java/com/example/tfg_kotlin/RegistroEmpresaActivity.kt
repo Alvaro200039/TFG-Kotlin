@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin
 
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.Toast
@@ -57,6 +58,8 @@ class RegistroEmpresaActivity : AppCompatActivity() {
             val dominio = etDominio.text.toString().trim().lowercase()
             val contrasena = etContrasena.text.toString()
             val repetir = etRepContrasena.text.toString()
+
+            Log.d("REGISTRO_EMPRESA", "Dominio guardado: $dominio")
 
             // Validaciones
             val esValido = validarRegistroEmpresa(
