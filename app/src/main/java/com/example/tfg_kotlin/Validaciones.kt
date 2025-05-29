@@ -117,17 +117,13 @@ object Validaciones {
     fun validarRegistroEmpresa(
         tilNombre: TextInputLayout, etNombre: TextInputEditText,
         tilDominio: TextInputLayout, etDominio: TextInputEditText,
-        tilPass: TextInputLayout, etPass: TextInputEditText,
-        tilRep: TextInputLayout, etRep: TextInputEditText,
         tilCif: TextInputLayout, etCif: TextInputEditText
     ): Boolean {
         val okNombre = validarCampoRequerido(tilNombre, etNombre)
         val okDominio = validarCampoRequerido(tilDominio, etDominio)
-        val okPass = validarCampoRequerido(tilPass, etPass)
-        val okRep = validarCampoRequerido(tilRep, etRep)
         val okCif = validarCif(tilCif, etCif)
 
-        return okNombre && okDominio && okPass && okRep && okCif
+        return okNombre && okDominio && okCif
     }
 
 

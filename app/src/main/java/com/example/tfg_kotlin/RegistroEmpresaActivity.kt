@@ -42,22 +42,16 @@ class RegistroEmpresaActivity : AppCompatActivity() {
 
         val tilNombreEmpresa = findViewById<TextInputLayout>(R.id.tilNombreEmpresa)
         val tilDominio = findViewById<TextInputLayout>(R.id.tilDominio)
-        val tilContrasena = findViewById<TextInputLayout>(R.id.tilContrasena)
-        val tilRepContrasena = findViewById<TextInputLayout>(R.id.tilRepContrasena)
         val tilNumEmpresa = findViewById<TextInputLayout>(R.id.tilNumEmpresa)
 
         val etNombreEmpresa = findViewById<TextInputEditText>(R.id.etNombreEmpresa)
         val etDominio = findViewById<TextInputEditText>(R.id.etDominio)
-        val etContrasena = findViewById<TextInputEditText>(R.id.etContrasena)
-        val etRepContrasena = findViewById<TextInputEditText>(R.id.etRepContrasena)
         val etNumEmpresa = findViewById<TextInputEditText>(R.id.etNumEmpresa)
 
         btnFinalizarRegistro.setOnClickListener {
             val nombreEmpresa = etNombreEmpresa.text.toString().trim()
             val cif = etNumEmpresa.text.toString().trim().uppercase()
             val dominio = etDominio.text.toString().trim().lowercase()
-            val contrasena = etContrasena.text.toString()
-            val repetir = etRepContrasena.text.toString()
 
             Log.d("REGISTRO_EMPRESA", "Dominio guardado: $dominio")
 
@@ -65,17 +59,10 @@ class RegistroEmpresaActivity : AppCompatActivity() {
             val esValido = validarRegistroEmpresa(
                 tilNombreEmpresa, etNombreEmpresa,
                 tilDominio, etDominio,
-                tilContrasena, etContrasena,
-                tilRepContrasena, etRepContrasena,
                 tilNumEmpresa, etNumEmpresa,
             )
 
             if (!esValido) return@setOnClickListener
-
-            if (contrasena != repetir) {
-                tilRepContrasena.error = "Las contraseñas no coinciden"
-                return@setOnClickListener
-            }
 
             val dbMaestra = Room.databaseBuilder(
                 applicationContext,
