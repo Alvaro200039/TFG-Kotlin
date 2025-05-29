@@ -1,165 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
     android:id="@+id/registropersona"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
+    <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:background="@color/blue_600"
-        android:minHeight="?attr/actionBarSize"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
         android:theme="?attr/actionBarTheme"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:title="Únete a Miapp"
-        app:titleTextColor="@color/white" />
+        app:titleTextColor="@color/black"/>
 
+    <!-- Formulario -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/formularioLayout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="10dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
         android:orientation="vertical"
-        android:padding="0dp">
+        android:layout_margin="16dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toTopOf="@+id/btnFinalizarRegistro"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-
+        <!-- Nombre -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilNombre"
-            style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@color/azul"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:hintTextColor="@color/azul">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNombre"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="50dp"
                 android:inputType="text"
-                android:hint="@string/nombre" />
-
+                android:background="@android:color/transparent"
+                android:hint="@string/nombre"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Apellidos -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilApellidos"
-            style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@color/azul"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:hintTextColor="@color/azul">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etApellidos"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="50dp"
                 android:inputType="text"
-                android:hint="@string/apellidos" />
-
+                android:background="@android:color/transparent"
+                android:hint="@string/apellidos"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Correo -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilCorreo"
-            style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@color/azul"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:hintTextColor="@color/azul">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCorreo"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="50dp"
                 android:inputType="textEmailAddress"
-                android:hint="@string/correo" />
-
+                android:background="@android:color/transparent"
+                android:hint="@string/correo"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Contraseña -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilContrasena"
-            style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="password_toggle"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@color/azul"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:hintTextColor="@color/azul">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etContrasena"
                 android:layout_width="match_parent"
+                android:layout_height="50dp"
                 android:inputType="textPassword"
-                android:layout_height="48dp"
-                android:hint="@string/contraseña" />
-
+                android:background="@android:color/transparent"
+                android:hint="@string/contraseña"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Repetir contraseña -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilRepContrasena"
-            style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="password_toggle"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@color/azul"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:hintTextColor="@color/azul">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRepContrasena"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="50dp"
                 android:inputType="textPassword"
-                android:hint="@string/repetir_contraseña" />
-
+                android:background="@android:color/transparent"
+                android:hint="@string/repetir_contraseña"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Número de empresa -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilNumEmpresa"
-            style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
             app:counterEnabled="true"
             app:counterMaxLength="9"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@color/azul"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:hintTextColor="@color/azul">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNumEmpresa"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="50dp"
+                android:inputType="text"
                 android:maxLength="9"
-                android:hint="@string/num_empresa_empleado" />
-
+                android:background="@android:color/transparent"
+                android:hint="@string/num_empresa_empleado"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-
-
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Botón registrarse -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnFinalizarRegistro"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingVertical="10dp">
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/blue_600"
+        android:text="Registrarse"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        app:cornerRadius="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <Button
-            android:id="@+id/btnFinalizarRegistro"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:backgroundTint="@color/blue_600"
-            android:textSize="26dp"
-            android:layout_marginEnd="15dp"
-            android:text="Registrarse"
-            android:textColor="@color/white" />
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

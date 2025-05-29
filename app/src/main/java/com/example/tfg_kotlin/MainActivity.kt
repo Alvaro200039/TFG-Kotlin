@@ -2,6 +2,7 @@ package com.example.tfg_kotlin
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -42,6 +43,16 @@ class MainActivity : AppCompatActivity() {
 
         btnRegistrarEmpresa.setOnClickListener {
             startActivity(Intent(this, RegistroEmpresaActivity::class.java))
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when(item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }
