@@ -31,6 +31,7 @@ import com.google.gson.reflect.TypeToken
 import java.util.Calendar
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -39,11 +40,18 @@ import java.util.Date
 import java.util.Locale
 import com.example.tfg_kotlin.Utils.naturalOrderKey
 import com.example.tfg_kotlin.Utils.compareNaturalKeys
+import com.example.tfg_kotlin.activity_menu_creador
+import com.example.tfg_kotlin.database.AppDatabase
+import com.example.tfg_kotlin.entities.Reserva
+import com.example.tfg_kotlin.entities.Salas
+import com.example.tfg_kotlin.repository.AppRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-data class Reserva(val nombreSala: String, val fechaHora: String, val nombreUsuario: String, val piso: String)
 
 class Activity_empleados : AppCompatActivity() {
-
+    private lateinit var repository: AppRepository
     private lateinit var container: ConstraintLayout
     private var fechaSeleccionada: String = ""
     private var horaSeleccionada: String = ""
@@ -56,6 +64,13 @@ class Activity_empleados : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val db = AppDatabase.getDatabase(applicationContext)
+        repository = AppRepository(
+            db.usuarioDao(),
+            db.salaDao(),
+            db.reservaDao(),
+            franjaHorariaDao = TODO(),
+        )
         enableEdgeToEdge()
         setContentView(R.layout.activity_empleados)
 
@@ -243,318 +258,291 @@ class Activity_empleados : AppCompatActivity() {
 
 
     private fun mostrarDialogoReservas() {
-        val fechaHora = "$fechaSeleccionada $horaSeleccionada"
         limpiarReservasPasadas()
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val gson = Gson()
 
-        val reservas: MutableList<Reserva> = gson.fromJson(
-            sharedPref.getString("reservas", "[]"),
-            object : TypeToken<MutableList<Reserva>>() {}.type
-        )
+        lifecycleScope.launch {
+            val reservas = repository.getAllReservas().toMutableList()
 
-        if (reservas.isEmpty()) {
-            Toast.makeText(this, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val reservasPorPiso = reservas.groupBy { it.piso }
-        val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
-        val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
-
-        //Declaramos dialog como variable externa para poder cerrarlo desde dentro
-        lateinit var dialog: AlertDialog
-
-        for ((piso, lista) in reservasPorPiso) {
-            val pisoText = TextView(this).apply {
-                text = piso
-                textSize = 18f
-                setPadding(0, 16, 0, 8)
-                setTextColor(Color.BLACK)
-                setTypeface(null, Typeface.BOLD)
+            if (reservas.isEmpty()) {
+                Toast.makeText(this@Activity_empleados, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
+                return@launch
             }
-            contenedor.addView(pisoText)
 
-            lista.forEach { reserva ->
-                val reservaText = TextView(this).apply {
-                    text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
-                    setPadding(16, 4, 0, 4)
-                    setTextColor(Color.DKGRAY)
-                    setOnClickListener {
-                        val confirmDialog = AlertDialog.Builder(this@Activity_empleados)
-                            .setTitle("¿Cancelar reserva?")
-                            .setMessage("¿Deseas cancelar la reserva de ${reserva.nombreSala} el ${reserva.fechaHora}?")
-                            .setPositiveButton("Sí") { _, _ ->
-                                reservas.remove(reserva)
-                                sharedPref.edit() { putString("reservas", gson.toJson(reservas)) }
+            val reservasPorPiso = reservas.groupBy { it.piso }
+            val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
+            val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
 
-                                verificarDisponibilidad(fechaHora)
-                                Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${reserva.nombreSala}el ${reserva.fechaHora}", Toast.LENGTH_SHORT).show()
+            lateinit var dialog: AlertDialog
 
-                                //Cerrar todos los diálogos antes de refrescar
-                                dialog.dismiss()
-
-                                //Volver a mostrar el diálogo actualizado
-                                mostrarDialogoReservas()
-                            }
-                            .setNegativeButton("No", null)
-                            .create()
-
-                        confirmDialog.setOnShowListener {
-                            confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
-                            confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
-                        }
-
-                        confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                        confirmDialog.show()
-                    }
+            for ((piso, lista) in reservasPorPiso) {
+                val pisoText = TextView(this@Activity_empleados).apply {
+                    text = piso
+                    textSize = 18f
+                    setPadding(0, 16, 0, 8)
+                    setTextColor(Color.BLACK)
+                    setTypeface(null, Typeface.BOLD)
                 }
-                contenedor.addView(reservaText)
+                contenedor.addView(pisoText)
 
+                lista.forEach { reserva ->
+                    val reservaText = TextView(this@Activity_empleados).apply {
+                        text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
+                        setPadding(16, 4, 0, 4)
+                        setTextColor(Color.DKGRAY)
+                        setOnClickListener {
+                            val confirmDialog = AlertDialog.Builder(this@Activity_empleados)
+                                .setTitle("¿Cancelar reserva?")
+                                .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
+                                .setPositiveButton("Sí") { _, _ ->
+                                    lifecycleScope.launch {
+                                        repository.eliminarReserva(reserva)
+
+                                        dialog.dismiss()
+                                        mostrarDialogoReservas() // Recargar reservas
+                                    }
+                                }
+                                .setNegativeButton("No", null)
+                                .create()
+
+                            confirmDialog.setOnShowListener {
+                                confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+                                confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                            }
+
+                            confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                            confirmDialog.show()
+                        }
+                    }
+                    contenedor.addView(reservaText)
+                }
+
+                val divider = View(this@Activity_empleados).apply {
+                    setBackgroundColor(Color.LTGRAY)
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        2
+                    ).apply { setMargins(0, 16, 0, 16) }
+                }
+                contenedor.addView(divider)
             }
 
+            dialog = AlertDialog.Builder(this@Activity_empleados)
+                .setTitle("Tus reservas activas")
+                .setView(dialogView)
+                .setPositiveButton("Cerrar", null)
+                .create()
 
-            val divider = View(this).apply {
-                setBackgroundColor(Color.LTGRAY)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    2
-                ).apply { setMargins(0, 16, 0, 16) }
-            }
-            contenedor.addView(divider)
+            dialog.show()
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
         }
-
-        dialog = AlertDialog.Builder(this)
-            .setTitle("Tus reservas activas")
-            .setView(dialogView)
-            .setPositiveButton("Cerrar", null)
-            .create()
-
-        dialog.show()
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
     }
 
     private fun limpiarReservasPasadas() {
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val gson = Gson()
-
-        val reservas: List<Reserva> = gson.fromJson(
-            sharedPref.getString("reservas", "[]"),
-            object : TypeToken<List<Reserva>>() {}.type
-        )
-
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        val ahora = Date()
+        val ahora = formato.format(Date()) // Lo convertimos a String porque Room usa fechaHora como String
 
-        val reservasFuturas = reservas.filter {
-            try {
-                val fechaReserva = formato.parse(it.fechaHora)
-                fechaReserva.after(ahora)
-            } catch (e: Exception) {
-                true // Si falla el parseo, la dejamos para evitar perder reservas por error
-            }
-        }
-
-        sharedPref.edit() {
-            putString("reservas", gson.toJson(reservasFuturas))
+        lifecycleScope.launch {
+            repository.limpiarReservasAntiguas(ahora)
         }
     }
-
 
 
     private fun mostrarDialogoHoras() {
-        val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-        val franjasSet = prefs.getStringSet("franjas_horarias", emptySet()) ?: emptySet()
-        val franjasOriginales = franjasSet.toList()
-
-        if (franjasOriginales.isEmpty()) {
-            Toast.makeText(this, "No hay franjas horarias disponibles. Crea algunas primero.", Toast.LENGTH_SHORT).show()
+        if (fechaSeleccionada.isEmpty()) {
+            Toast.makeText(this, "Primero selecciona una fecha.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val calendario = Calendar.getInstance()
-        val hoy = String.format("%02d/%02d/%d",
-            calendario.get(Calendar.DAY_OF_MONTH),
-            calendario.get(Calendar.MONTH) + 1,
-            calendario.get(Calendar.YEAR)
-        )
+        lifecycleScope.launch {
+            // Obtén la lista desde Room
+            val franjas = repository.getFranjasHorarias()
+            val franjasOriginales = franjas.map { it.hora }
 
-        val horaActual = String.format("%02d:%02d",
-            calendario.get(Calendar.HOUR_OF_DAY),
-            calendario.get(Calendar.MINUTE)
-        )
 
-        // Filtrar franjas si la fecha seleccionada es hoy
-        val horasDisponibles = if (fechaSeleccionada == hoy) {
-            franjasOriginales.filter { franja ->
-                // Comparamos cadenas HH:mm lexicográficamente porque el formato es fijo
-                franja >= horaActual
+            if (franjasOriginales.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_empleados, "No hay franjas horarias disponibles. Crea algunas primero.", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
             }
-        } else {
-            franjasOriginales
-        }
 
-        if (horasDisponibles.isEmpty()) {
-            Toast.makeText(this, "No hay franjas horarias disponibles para el día seleccionado.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val horasArray = horasDisponibles.toTypedArray()
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Selecciona una franja horaria para el $fechaSeleccionada")
-            .setItems(horasArray) { _, which ->
-                horaSeleccionada = horasArray[which]
-                // Actualizamos el textViewHora aquí
-                textViewHora.text = "Hora: $horaSeleccionada"
-
-                verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
-            }
-            .create()
-
-        dialog.show()
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-        val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-        btnCerrar?.setTextColor(Color.BLACK)
-    }
-
-    private fun cargarSalas(nombrePiso: String) {
-        container.removeAllViews()  // Limpiar el contenedor antes de cargar las salas
-
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val gson = Gson()
-
-        // Recuperar las salas guardadas como JSON
-        val jsonSalas = sharedPref.getString("salas_$nombrePiso", "[]")
-
-        // Convertir el JSON en una lista de objetos SalaGuardada
-        val salasGuardadas: List<SalaGuardada> = gson.fromJson(jsonSalas, object : TypeToken<List<SalaGuardada>>() {}.type)
-
-        for (salaGuardada in salasGuardadas) {
-            val sala = Sala(
-                nombre = salaGuardada.nombre,
-                tamaño = salaGuardada.tamaño,
-                opcionesExtra = salaGuardada.extras,
-                piso = pisoSeleccionado
+            val calendario = Calendar.getInstance()
+            val hoy = String.format("%02d/%02d/%d",
+                calendario.get(Calendar.DAY_OF_MONTH),
+                calendario.get(Calendar.MONTH) + 1,
+                calendario.get(Calendar.YEAR)
             )
 
-            // Crear un botón para cada sala cargada
-            val salaButton = Button(this).apply {
-                // Configurar el texto del botón con la información de la sala
-                text = formatearTextoSala(sala)
-                tag = sala  // Asignar la sala como tag para usarla más tarde
+            val horaActual = String.format("%02d:%02d",
+                calendario.get(Calendar.HOUR_OF_DAY),
+                calendario.get(Calendar.MINUTE)
+            )
 
-                // Configurar la acción al hacer clic en el botón
-                setOnClickListener {
-                    if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
-                        snackbarActivo?.dismiss()
-                        snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
-                            .setAction("Seleccionar fecha") {
-                                mostrarDialogoFecha()
-                            }
-
-                        snackbarActivo?.show()
-                    } else {
-                        mostrarDialogoDetallesSala(sala)
-                    }
+            val horasDisponibles = if (fechaSeleccionada == hoy) {
+                franjasOriginales.filter { franja ->
+                    franja >= horaActual
                 }
-
-                // Establecer el fondo del botón con un color y bordes redondeados
-                background = GradientDrawable().apply {
-                    setColor(Color.GREEN)  // Establecemos un color inicial por defecto
-                    cornerRadius = 50f
-                }
-
-                // Configurar el layoutParams del botón para ubicarlo en el contenedor
-                layoutParams = ConstraintLayout.LayoutParams(
-                    salaGuardada.ancho.toInt(),
-                    salaGuardada.alto.toInt()
-                ).apply {
-                    leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
-                    topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-                    setMargins(salaGuardada.x.toInt(), salaGuardada.y.toInt(), 0, 0)
-                }
+            } else {
+                franjasOriginales
             }
 
-            // Añadir el botón al contenedor
-            container.addView(salaButton)
-        }
+            if (horasDisponibles.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_empleados, "No hay franjas horarias disponibles para el día seleccionado.", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
+            }
 
-        // Después de cargar todas las salas, verificar la disponibilidad con la fecha y hora seleccionadas
-        if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
-            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+            withContext(Dispatchers.Main) {
+                val horasArray = horasDisponibles.toTypedArray()
+
+                val dialog = AlertDialog.Builder(this@Activity_empleados)
+                    .setTitle("Selecciona una franja horaria para el $fechaSeleccionada")
+                    .setItems(horasArray) { _, which ->
+                        horaSeleccionada = horasArray[which]
+                        textViewHora.text = "Hora: $horaSeleccionada"
+                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+                    }
+                    .setNegativeButton("Cerrar", null)
+                    .create()
+
+                dialog.show()
+                dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+                val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                btnCerrar?.setTextColor(Color.BLACK)
+            }
         }
     }
 
-    private fun mostrarDialogoDetallesSala(sala: Sala) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Detalles de ${sala.nombre}")
 
-        val detalles = """
-        ${sala.piso}
-        Tamaño: ${sala.tamaño}
-        Extras: ${if (sala.opcionesExtra.isNotEmpty()) sala.opcionesExtra.joinToString(", ") else "Ninguno"}
-        Fecha: $fechaSeleccionada
-        Hora: $horaSeleccionada
-    """.trimIndent()
-        builder.setMessage(detalles)
+    private fun cargarSalas(nombrePiso: String) {
+        container.removeAllViews()  // Limpiar contenedor antes de cargar
 
+        lifecycleScope.launch {
+            try {
+                // Obtener salas del repositorio (Room)
+                val salas = repository.getSalasPorPiso(nombrePiso)
+
+                withContext(Dispatchers.Main) {
+                    for (sala in salas) {
+                        // Crear botón para cada sala
+                        val salaButton = Button(this@Activity_empleados).apply {
+                            text = formatearTextoSala(sala)
+                            tag = sala
+
+                            setOnClickListener {
+                                if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
+                                    snackbarActivo?.dismiss()
+                                    snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
+                                        .setAction("Seleccionar fecha") {
+                                            mostrarDialogoFecha()
+                                        }
+                                    snackbarActivo?.show()
+                                } else {
+                                    mostrarDialogoDetallesSala(sala)
+                                }
+                            }
+
+                            background = GradientDrawable().apply {
+                                setColor(Color.GREEN)
+                                cornerRadius = 50f
+                            }
+
+                            layoutParams = ConstraintLayout.LayoutParams(
+                                sala.ancho.toInt(),
+                                sala.alto.toInt()
+                            ).apply {
+                                leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+                                topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                                setMargins(sala.x.toInt(), sala.y.toInt(), 0, 0)
+                            }
+                        }
+
+                        container.addView(salaButton)
+                    }
+
+                    // Verificar disponibilidad si fecha y hora están seleccionadas
+                    if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
+                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_empleados, "Error al cargar salas: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+
+
+    private fun mostrarDialogoDetallesSala(sala: Salas) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val gson = Gson()
-        val reservas: MutableList<Reserva> = gson.fromJson(
-            sharedPref.getString("reservas", "[]"),
-            object : TypeToken<MutableList<Reserva>>() {}.type
-        )
-
         val nombreUsuario = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
             .getString("nombre_usuario", "Empleado") ?: "Empleado"
 
-        val reservaExistente = reservas.find {
-            it.nombreSala == sala.nombre &&
-                    it.piso.trim() == sala.piso.trim() &&
-                    it.fechaHora == fechaHora &&
-                    it.nombreUsuario == nombreUsuario
-        }
+        lifecycleScope.launch {
+            // Obtener reservas para la fecha y hora con Room
+            val reservas = repository.getReservasPorFechaHora(fechaHora).toMutableList()
 
-        if (reservaExistente != null) {
-            // Si ya está reservada por el usuario → opción de cancelar
-            builder.setPositiveButton("Cancelar reserva") { _, _ ->
-                reservas.remove(reservaExistente)
-                sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
-                verificarDisponibilidad(fechaHora)
-                Toast.makeText(this, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
+            val reservaExistente = reservas.find {
+                it.nombreSala == sala.nombre &&
+                        it.piso.trim() == sala.piso.trim() &&
+                        it.fechaHora == fechaHora &&
+                        it.nombreUsuario == nombreUsuario
             }
-        } else {
-            // Si no está reservada por el usuario → opción de reservar
-            builder.setPositiveButton("Reservar") { _, _ ->
-                reservarSala(sala.nombre)
+
+            val builder = AlertDialog.Builder(this@Activity_empleados)  // Usa this@TuActivity si es necesario
+            builder.setTitle("Detalles de ${sala.nombre}")
+
+            val detalles = """
+            ${sala.piso}
+            Tamaño: ${sala.tamaño}
+            Extras: ${if (sala.extras.isNotEmpty()) sala.extras.joinToString(", ") else "Ninguno"}
+            Fecha: $fechaSeleccionada
+            Hora: $horaSeleccionada
+        """.trimIndent()
+            builder.setMessage(detalles)
+
+            if (reservaExistente != null) {
+                builder.setPositiveButton("Cancelar reserva") { _, _ ->
+                    lifecycleScope.launch {
+                        repository.eliminarReserva(reservaExistente)
+                        verificarDisponibilidad(fechaHora)
+                        Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                builder.setPositiveButton("Reservar") { _, _ ->
+                    reservarSala(sala.nombre)
+                }
             }
-        }
 
-        builder.setNegativeButton("Cerrar") { dialog, _ ->
-            dialog.dismiss()
-        }
+            builder.setNegativeButton("Cerrar") { dialog, _ ->
+                dialog.dismiss()
+            }
 
-        val dialog = builder.create()
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                ?.setTextColor(ContextCompat.getColor(this, R.color.black))
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                ?.setTextColor(ContextCompat.getColor(this, R.color.black))
+            val dialog = builder.create()
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+            dialog.setOnShowListener {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    ?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                    ?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+            }
+            dialog.show()
         }
-
-        dialog.show()
     }
 
 
-    private fun formatearTextoSala(sala: Sala): String {
+
+    private fun formatearTextoSala(sala: Salas): String {
         val builder = StringBuilder().append(sala.nombre)
-        if (sala.opcionesExtra.isNotEmpty()) {
+        if (sala.extras.isNotEmpty()) {
             builder.append("\n")
-            sala.opcionesExtra.forEach {
+            sala.extras.forEach {
                 builder.append(
                     when (it) {
                         "WiFi" -> "📶 "
@@ -598,107 +586,109 @@ class Activity_empleados : AppCompatActivity() {
 
 
     private fun verificarDisponibilidad(fechaHora: String) {
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val gson = Gson()
-        val reservas: List<Reserva> = gson.fromJson(
-            sharedPref.getString("reservas", "[]"),
-            object : TypeToken<List<Reserva>>() {}.type
-        )
+        lifecycleScope.launch {
+            val reservas = repository.getReservasPorFechaHora(fechaHora)  // llamada suspend
 
-        for (i in 0 until container.childCount) {
-            val view = container.getChildAt(i)
-            if (view is Button) {
-                val sala = view.tag as? Sala ?: continue
-
-                // Verificamos si hay una reserva exacta para esta sala en esa fecha y hora
-                val ocupada = reservas.any {
-                    it.nombreSala.equals(sala.nombre, ignoreCase = true) &&
-                            it.piso.trim().equals(sala.piso.trim(), ignoreCase = true) &&
-                            it.fechaHora == fechaHora
-                }
-
-                val color = if (ocupada) Color.RED else Color.GREEN
-
-                view.background = GradientDrawable().apply {
-                    setColor(color)
-                    cornerRadius = 50f
+            for (i in 0 until container.childCount) {
+                val view = container.getChildAt(i)
+                if (view is Button) {
+                    val sala = view.tag as? Salas ?: continue
+                    val ocupada = reservas.any {
+                        it.nombreSala.equals(sala.nombre, ignoreCase = true) &&
+                                it.piso.trim().equals(sala.piso.trim(), ignoreCase = true) &&
+                                it.fechaHora == fechaHora
+                    }
+                    val color = if (ocupada) Color.RED else Color.GREEN
+                    view.background = GradientDrawable().apply {
+                        setColor(color)
+                        cornerRadius = 50f
+                    }
                 }
             }
         }
     }
+
+
 
     private fun reservarSala(nombreSala: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val gson = Gson()
-        val reservas: MutableList<Reserva> = gson.fromJson(
-            sharedPref.getString("reservas", "[]"),
-            object : TypeToken<MutableList<Reserva>>() {}.type
-        )
 
-        val nombreUsuario = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-            .getString("nombre_usuario", "Empleado") ?: "Empleado"
+        val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        val idUsuario = prefs.getInt("usuario_id", -1)
 
-        // Buscar una reserva existente para esa sala, fecha, piso
-        val reservaExistente = reservas.find {
-            it.nombreSala == nombreSala && it.piso == pisoSeleccionado && it.fechaHora == fechaHora
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+            return
         }
 
-        // Verificar si el usuario ya tiene una reserva en otra sala a la misma hora
-        val reservaUsuarioMismaHora = reservas.find {
-            it.fechaHora == fechaHora && it.nombreUsuario == nombreUsuario
-        }
+        lifecycleScope.launch {
+            // Obtener usuario actual desde Room
+            val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
+            val nombreUsuario = usuarioActual?.nombre ?: "Empleado"
 
-        // Si ya existe una reserva en esa sala, fecha y piso
-        if (reservaExistente != null) {
-            if (reservaExistente.nombreUsuario == nombreUsuario) {
-                // Si la reserva es del mismo usuario, se ofrece cancelarla
-                val dialog = AlertDialog.Builder(this)
-                    .setTitle("Cancelar reserva")
-                    .setMessage("¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
-                    .setPositiveButton("Sí") { _, _ ->
-                        reservas.remove(reservaExistente)
-                        sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
+            // Cargar reservas para esa fecha y hora
+            val reservas = repository.getReservasPorFechaHora(fechaHora)
+
+            // Buscar reserva existente para la misma sala, piso y fechaHora
+            val reservaExistente = reservas.find {
+                it.nombreSala == nombreSala && it.piso == pisoSeleccionado && it.fechaHora == fechaHora
+            }
+
+            // Buscar si el usuario tiene reserva a esa hora en cualquier sala
+            val reservaUsuarioMismaHora = reservas.find {
+                it.fechaHora == fechaHora && it.nombreUsuario == nombreUsuario
+            }
+
+            if (reservaExistente != null) {
+                if (reservaExistente.nombreUsuario == nombreUsuario) {
+                    val dialog = AlertDialog.Builder(this@Activity_empleados)
+                        .setTitle("Cancelar reserva")
+                        .setMessage("¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
+                        .setPositiveButton("Sí") { _, _ ->
+                            lifecycleScope.launch {
+                                repository.eliminarReserva(reservaExistente)
+                                verificarDisponibilidad(fechaHora)
+                                Toast.makeText(this@Activity_empleados, "Reserva cancelada para $nombreSala", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .setNegativeButton("No", null)
+                        .create()
+                    dialog.show()
+                    dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                } else {
+                    Toast.makeText(this@Activity_empleados, "Ya reservada por ${reservaExistente.nombreUsuario} en este piso", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
+            }
+
+            if (reservaUsuarioMismaHora != null) {
+                Toast.makeText(this@Activity_empleados, "Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora.nombreSala}' (${reservaUsuarioMismaHora.piso})", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            val dialog = AlertDialog.Builder(this@Activity_empleados)
+                .setTitle("Confirmar reserva")
+                .setMessage("¿Deseas reservar '$nombreSala' en el '$pisoSeleccionado' para '$fechaHora'?")
+                .setPositiveButton("Sí") { _, _ ->
+                    lifecycleScope.launch {
+                        val reserva = Reserva(nombreSala, fechaHora, nombreUsuario, pisoSeleccionado)
+                        repository.insertarReserva(reserva)
                         verificarDisponibilidad(fechaHora)
-                        Toast.makeText(this, "Reserva cancelada para $nombreSala", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@Activity_empleados, "Reserva realizada para $nombreSala en el $pisoSeleccionado", Toast.LENGTH_SHORT).show()
                     }
-                    .setNegativeButton("No", null)
-                    .create()
-                dialog.show()
-                dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-            } else {
-                Toast.makeText(this, "Ya reservada por ${reservaExistente.nombreUsuario} en este piso", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("No", null)
+                .create()
+
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+            dialog.setOnShowListener {
+                val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                positive.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                val negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                negative.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
             }
-            return
+            dialog.show()
         }
-
-        // Si el usuario ya tiene otra reserva a esa hora (en otra sala)
-        if (reservaUsuarioMismaHora != null) {
-            Toast.makeText(this,"Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora.nombreSala}'(${reservaUsuarioMismaHora.piso})", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Si no hay conflictos, hacer la reserva
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Confirmar reserva")
-            .setMessage("¿Deseas reservar '$nombreSala' en el '$pisoSeleccionado' para '$fechaHora'?")
-            .setPositiveButton("Sí") { _, _ ->
-                reservas.add(Reserva(nombreSala, fechaHora, nombreUsuario, pisoSeleccionado))
-                sharedPref.edit { putString("reservas", gson.toJson(reservas)) }
-                verificarDisponibilidad(fechaHora)
-                Toast.makeText(this,"Reserva realizada para $nombreSala en el $pisoSeleccionado", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("No", null)
-            .create()
-
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-        dialog.setOnShowListener {
-            val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            positive.setTextColor(ContextCompat.getColor(this, R.color.black))
-
-            val negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-            negative.setTextColor(ContextCompat.getColor(this, R.color.black))
-        }
-        dialog.show()
     }
+
 }

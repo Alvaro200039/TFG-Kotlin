@@ -43,23 +43,6 @@ import androidx.core.view.children
 import com.example.tfg_kotlin.Utils.naturalOrderKey
 import com.example.tfg_kotlin.Utils.compareNaturalKeys
 
-data class Sala(
-    var nombre: String,
-    var tamaño: String = "Pequeño",
-    var opcionesExtra: List<String> = emptyList(),
-    var piso: String
-)
-
-data class SalaGuardada(
-    val nombre: String,
-    val x: Float,
-    val y: Float,
-    val tamaño: String,
-    var ancho: Float = 0f,
-    var alto: Float = 0f,
-    val extras: List<String>,
-    var piso: String
-)
 
 class Activity_creacion : AppCompatActivity() {
 
