@@ -12,7 +12,5 @@ data class TablaSalas(
     val tamano: String,
     val proyector: Boolean,
     val wifi: Boolean,
-    val pizarra: Boolean,
-    val fecha: Date,
-    val horario: Time
+    val pizarra: Boolean
 )

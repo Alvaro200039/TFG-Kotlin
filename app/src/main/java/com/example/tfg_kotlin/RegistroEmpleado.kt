@@ -25,7 +25,7 @@ class RegistroEmpleado : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro)
-
+/*
         etCorreo = findViewById(R.id.etCorreo)
         etCif = findViewById(R.id.etCif)
         etNombre = findViewById(R.id.etNombre)
@@ -37,9 +37,9 @@ class RegistroEmpleado : AppCompatActivity() {
 
         btnRegistrar.setOnClickListener {
             registrarEmpleados()
-        }
+        }*/
     }
-
+/*
     private fun registrarEmpleados(){
         val correo = etCorreo.text.toString()
         val cif = etCif.text.toString()
@@ -93,5 +93,5 @@ class RegistroEmpleado : AppCompatActivity() {
         startActivity(Intent(this, LoginActivity::class.java))
         finish()
     }
-
+*/
 }
