@@ -23,10 +23,19 @@ interface PisoDao {
     @Query("SELECT * FROM pisos WHERE id = :id")
     suspend fun obtenerPisoPorId(id: Int): Piso?
 
-    @Query("SELECT * FROM pisos WHERE nombre = :nombrePiso LIMIT 1")
-    suspend fun obtenerPisoPorNombre(nombrePiso: String): Piso?
+    @Query("SELECT * FROM pisos WHERE nombre = :nombre LIMIT 1")
+    suspend fun obtenerPisoPorNombre(nombre: String): Piso?
+
+    @Query("""
+    SELECT * FROM pisos
+    WHERE nombre = :nombre
+    AND (:empresaId IS NULL AND empresaId IS NULL OR empresaId = :empresaId)
+    LIMIT 1
+""")
+    suspend fun obtenerPisoPorNombreYEmpresa(nombre: String, empresaId: Int?): Piso?
 
     @Transaction
     @Query("SELECT * FROM pisos WHERE id = :pisoId")
     suspend fun obtenerPisoConSalas(pisoId: Int): PisoConSalas?
+
 }

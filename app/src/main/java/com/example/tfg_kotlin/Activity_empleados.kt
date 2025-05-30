@@ -116,9 +116,18 @@ class Activity_empleados : AppCompatActivity() {
                 val piso = listaPisos[position]
                 pisoSeleccionado = piso.id
                 val nombrePiso = piso.nombre
+                val empresaId: Int? = piso.empresaId
 
-                cargarSalas(nombrePiso)
-                cargarImagenFondo(nombrePiso)  // <--- Aquí cargas la imagen de fondo
+                // Carga las salas (sin cargar imagen)
+                cargarSalas(
+                    nombrePiso,
+                    empresaId
+                )
+
+                // Lanza coroutine para cargar imagen de fondo
+                lifecycleScope.launch {
+                    cargarImagenFondo(nombrePiso, empresaId)
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {
@@ -207,6 +216,99 @@ class Activity_empleados : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private fun cargarSalas(nombrePiso: String, empresaId: Int?) {
+        container.removeAllViews()
+
+        lifecycleScope.launch {
+            try {
+                val salas = repository.getSalasPorNombrePiso(nombrePiso)
+                withContext(Dispatchers.Main) {
+                    for (sala in salas) {
+                        val salaButton = Button(this@Activity_empleados).apply {
+                            text = formatearTextoSala(sala)
+                            tag = sala
+
+                            setOnClickListener {
+                                if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
+                                    snackbarActivo?.dismiss()
+                                    snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
+                                        .setAction("Seleccionar fecha") {
+                                            mostrarDialogoFecha()
+                                        }
+                                    snackbarActivo?.show()
+                                } else {
+                                    mostrarDialogoDetallesSala(sala)
+                                }
+                            }
+
+                            background = GradientDrawable().apply {
+                                setColor(Color.GREEN)
+                                cornerRadius = 50f
+                            }
+
+                            layoutParams = ConstraintLayout.LayoutParams(
+                                sala.ancho.toInt(),
+                                sala.alto.toInt()
+                            ).apply {
+                                leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+                                topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                                setMargins(sala.x.toInt(), sala.y.toInt(), 0, 0)
+                            }
+                        }
+                        container.addView(salaButton)
+                    }
+
+                    if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
+                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_empleados, "Error al cargar salas: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+
+    private suspend fun cargarImagenFondo(nombrePiso: String, empresaId: Int?) {
+        if (empresaId == null) {
+            withContext(Dispatchers.Main) {
+                container.setBackgroundResource(R.drawable.wallpaper)
+            }
+            return
+        }
+
+        val piso = repository.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaId)
+
+        withContext(Dispatchers.Main) {
+            if (piso == null || piso.uriFondo.isEmpty()) {
+                container.setBackgroundResource(R.drawable.wallpaper)
+                return@withContext
+            }
+
+            try {
+                val uri = piso.uriFondo.toUri()
+                Glide.with(this@Activity_empleados)
+                    .load(uri)
+                    .centerCrop()
+                    .into(object : CustomTarget<Drawable>() {
+                        override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                            container.background = resource
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            // limpiar fondo si es necesario
+                        }
+                    })
+            } catch (e: Exception) {
+                e.printStackTrace()
+                container.setBackgroundResource(R.drawable.wallpaper)
+            }
+        }
+    }
+
 
     private fun mostrarDialogoFecha() {
         snackbarActivo?.dismiss()
@@ -333,46 +435,43 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            // Obtén la lista desde Room
-            val franjas = repository.getFranjasHorarias()
-            val franjasOriginales = franjas.map { it.hora }
+            try {
+                // Obtén la lista desde Room
+                val franjas = withContext(Dispatchers.IO) {
+                    repository.getFranjasHorarias()
+                }
+                val franjasOriginales = franjas.map { it.hora }
 
-
-            if (franjasOriginales.isEmpty()) {
-                withContext(Dispatchers.Main) {
+                if (franjasOriginales.isEmpty()) {
                     Toast.makeText(this@Activity_empleados, "No hay franjas horarias disponibles. Crea algunas primero.", Toast.LENGTH_SHORT).show()
+                    return@launch
                 }
-                return@launch
-            }
 
-            val calendario = Calendar.getInstance()
-            val hoy = String.format("%02d/%02d/%d",
-                calendario.get(Calendar.DAY_OF_MONTH),
-                calendario.get(Calendar.MONTH) + 1,
-                calendario.get(Calendar.YEAR)
-            )
+                val calendario = Calendar.getInstance()
+                val hoy = String.format("%02d/%02d/%d",
+                    calendario.get(Calendar.DAY_OF_MONTH),
+                    calendario.get(Calendar.MONTH) + 1,
+                    calendario.get(Calendar.YEAR)
+                )
 
-            val horaActual = String.format("%02d:%02d",
-                calendario.get(Calendar.HOUR_OF_DAY),
-                calendario.get(Calendar.MINUTE)
-            )
+                val horaActual = String.format("%02d:%02d",
+                    calendario.get(Calendar.HOUR_OF_DAY),
+                    calendario.get(Calendar.MINUTE)
+                )
 
-            val horasDisponibles = if (fechaSeleccionada == hoy) {
-                franjasOriginales.filter { franja ->
-                    franja >= horaActual
+                val horasDisponibles = if (fechaSeleccionada == hoy) {
+                    franjasOriginales.filter { franja ->
+                        franja >= horaActual
+                    }
+                } else {
+                    franjasOriginales
                 }
-            } else {
-                franjasOriginales
-            }
 
-            if (horasDisponibles.isEmpty()) {
-                withContext(Dispatchers.Main) {
+                if (horasDisponibles.isEmpty()) {
                     Toast.makeText(this@Activity_empleados, "No hay franjas horarias disponibles para el día seleccionado.", Toast.LENGTH_SHORT).show()
+                    return@launch
                 }
-                return@launch
-            }
 
-            withContext(Dispatchers.Main) {
                 val horasArray = horasDisponibles.toTypedArray()
 
                 val dialog = AlertDialog.Builder(this@Activity_empleados)
@@ -390,70 +489,13 @@ class Activity_empleados : AppCompatActivity() {
 
                 val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
                 btnCerrar?.setTextColor(Color.BLACK)
-            }
-        }
-    }
 
-
-    private fun cargarSalas(nombrePiso: String) {
-        container.removeAllViews()  // Limpiar contenedor antes de cargar
-
-        lifecycleScope.launch {
-            try {
-                // Obtener salas del repositorio (Room)
-                val salas = repository.getSalasPorPiso(nombrePiso)
-
-                withContext(Dispatchers.Main) {
-                    for (sala in salas) {
-                        // Crear botón para cada sala
-                        val salaButton = Button(this@Activity_empleados).apply {
-                            text = formatearTextoSala(sala)
-                            tag = sala
-
-                            setOnClickListener {
-                                if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
-                                    snackbarActivo?.dismiss()
-                                    snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
-                                        .setAction("Seleccionar fecha") {
-                                            mostrarDialogoFecha()
-                                        }
-                                    snackbarActivo?.show()
-                                } else {
-                                    mostrarDialogoDetallesSala(sala)
-                                }
-                            }
-
-                            background = GradientDrawable().apply {
-                                setColor(Color.GREEN)
-                                cornerRadius = 50f
-                            }
-
-                            layoutParams = ConstraintLayout.LayoutParams(
-                                sala.ancho.toInt(),
-                                sala.alto.toInt()
-                            ).apply {
-                                leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
-                                topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-                                setMargins(sala.x.toInt(), sala.y.toInt(), 0, 0)
-                            }
-                        }
-
-                        container.addView(salaButton)
-                    }
-
-                    // Verificar disponibilidad si fecha y hora están seleccionadas
-                    if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
-                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
-                    }
-                }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_empleados, "Error al cargar salas: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(this@Activity_empleados, "Error al cargar franjas horarias.", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
             }
         }
     }
-
 
 
     private fun mostrarDialogoDetallesSala(sala: Salas) {
@@ -515,9 +557,6 @@ class Activity_empleados : AppCompatActivity() {
         }
     }
 
-
-
-
     private fun formatearTextoSala(sala: Salas): String {
         val builder = StringBuilder().append(sala.nombre)
         if (sala.extras.isNotEmpty()) {
@@ -534,37 +573,6 @@ class Activity_empleados : AppCompatActivity() {
             }
         }
         return builder.toString()
-    }
-
-    private fun cargarImagenFondo(nombrePiso: String) {
-        lifecycleScope.launch {
-            val piso = repository.pisoDao.obtenerPisoPorNombre(nombrePiso) // DAO debe tener esta función
-
-            withContext(Dispatchers.Main) {
-                if (piso == null || piso.uriFondo?.isEmpty() == true) {
-                    // No hay fondo guardado o piso no encontrado
-                    // container.setBackgroundResource(R.drawable.fondo_predeterminado)
-                    return@withContext
-                }
-
-                try {
-                    val uri = piso.uriFondo?.toUri()
-                    Glide.with(this@Activity_empleados)
-                        .load(uri)
-                        .centerCrop()
-                        .into(object : CustomTarget<Drawable>() {
-                            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                                container.background = resource
-                            }
-                            override fun onLoadCleared(placeholder: Drawable?) {
-                                // Opcional: limpiar fondo si es necesario
-                            }
-                        })
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
     }
 
     private fun verificarDisponibilidad(fechaHora: String) {
