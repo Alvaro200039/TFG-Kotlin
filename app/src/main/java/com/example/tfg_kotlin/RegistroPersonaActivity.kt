@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
+import com.example.tfg_kotlin.BBDD.BBDDInstance
 import com.example.tfg_kotlin.BBDD.Empleados
 import com.example.tfg_kotlin.Validaciones.construirNombreBD
 import com.google.android.material.textfield.TextInputEditText
@@ -76,11 +77,13 @@ class RegistroPersonaActivity : AppCompatActivity() {
 
                 Log.d("REGISTRO_PERSONA", "Dominio buscado: $dominio")
 
-                val dbMaestra  = Room.databaseBuilder(
-                    applicationContext,
-                    BBDD::class.java,
-                    "maestra_db"
-                ).allowMainThreadQueries().build()
+                val dbMaestra = BBDDInstance.getDatabase(this, "maestra_db")
+
+                val todas = dbMaestra.appDao().getTodasLasEmpresas()
+                for (e in todas) {
+                    Log.d("EMPRESA_CHECK", "Dominio en BBDD: '${e.dominio}'")
+                }
+                Log.d("EMPRESA_CHECK", "Dominio buscado: '$dominio'")
 
                 // Validar si existe el jefe (empresa)
                 val empresa = dbMaestra .appDao().getEmpresaPorDominioEnEmpresa(dominio)
@@ -92,15 +95,12 @@ class RegistroPersonaActivity : AppCompatActivity() {
                 }
                 // Verificar si el correo ya está registrado en la bd
                 val nombreBD = construirNombreBD(dominio)
-                val dbEmpresa = Room.databaseBuilder(
-                    applicationContext,
-                    BBDD::class.java,
-                    nombreBD
-                ).allowMainThreadQueries().build()
+
+                val dbEmpresa = BBDDInstance.getDatabase(this, nombreBD)
 
 
                 // Verificar si el correo ya está registrado
-                val usuarioExistente = dbMaestra .appDao().buscarEmpleadoPorCorreo(correo)
+                val usuarioExistente = dbEmpresa.appDao().buscarEmpleadoPorCorreo(correo)
 
                 if (usuarioExistente != null) {
                     tilCorreo.error = "Este correo ya está registrado"

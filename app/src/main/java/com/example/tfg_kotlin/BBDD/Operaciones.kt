@@ -42,6 +42,9 @@ interface Operaciones {
     @Query("SELECT * FROM Empresa WHERE dominio = :dominio")
     fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
 
+    @Query("SELECT * FROM Empresa")
+    fun getTodasLasEmpresas(): List<Empresa>
+
 
 
     // Salas

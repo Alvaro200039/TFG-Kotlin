@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
+import com.example.tfg_kotlin.BBDD.BBDDInstance
 import com.example.tfg_kotlin.BBDD.Empleados
 import com.example.tfg_kotlin.BBDD.Empresa
 import com.example.tfg_kotlin.Validaciones.construirNombreBD
@@ -64,11 +65,7 @@ class RegistroEmpresaActivity : AppCompatActivity() {
 
             if (!esValido) return@setOnClickListener
 
-            val dbMaestra = Room.databaseBuilder(
-                applicationContext,
-                BBDD::class.java,
-                "maestra_db"
-            ).allowMainThreadQueries().build()
+            val dbMaestra = BBDDInstance.getDatabase(this, "maestra_db")
 
             // Comprobar si ya existe ese CIF
             val empresaExistente = dbMaestra.appDao().getEmpresaPorCif(cif)
@@ -83,17 +80,18 @@ class RegistroEmpresaActivity : AppCompatActivity() {
 
             // Crear base de datos específica de la empresa (y forzar su creación)
             val nombreBD = construirNombreBD(dominio)
-            val dbEmpresa = Room.databaseBuilder(
-                applicationContext,
-                BBDD::class.java,
-                nombreBD
-            ).allowMainThreadQueries().build()
+            val dbEmpresa = BBDDInstance.getDatabase(this, nombreBD)
+
 
             // Forzar acceso a tabla para que Room cree físicamente la base de datos
             // No insertamos nada, solo lanzamos una consulta dummy
             dbEmpresa.appDao().buscarEmpleadoPorCorreo("dummy@${dominio}")
 
             Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()
+            val empresas = dbMaestra.appDao().getTodasLasEmpresas()
+            for (e in empresas) {
+                Log.d("EMPRESA_INSERTADA", "Dominio registrado: '${e.dominio}', CIF: ${e.cif}")
+            }
             finish()
         }
     }
