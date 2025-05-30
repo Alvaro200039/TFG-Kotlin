@@ -26,10 +26,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import java.util.Calendar
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -38,14 +35,13 @@ import com.bumptech.glide.request.transition.Transition
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.example.tfg_kotlin.Utils.naturalOrderKey
-import com.example.tfg_kotlin.Utils.compareNaturalKeys
-import com.example.tfg_kotlin.activity_menu_creador
 import com.example.tfg_kotlin.database.AppDatabase
+import com.example.tfg_kotlin.entities.Piso
 import com.example.tfg_kotlin.entities.Reserva
 import com.example.tfg_kotlin.entities.Salas
 import com.example.tfg_kotlin.repository.AppRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -57,9 +53,11 @@ class Activity_empleados : AppCompatActivity() {
     private var horaSeleccionada: String = ""
     private lateinit var textViewFecha: TextView
     private lateinit var spinnerPisos: Spinner
-    private var pisoSeleccionado: String = ""
+    private var pisoSeleccionado: Int = -1
     private lateinit var textViewHora: TextView
     private var snackbarActivo: Snackbar? = null
+    private lateinit var listaPisos: List<Piso>
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,7 +67,9 @@ class Activity_empleados : AppCompatActivity() {
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),
-            franjaHorariaDao = TODO(),
+            db.franjahorariaDao(),
+            db.pisoDao(),
+            db.empresaDao()
         )
         enableEdgeToEdge()
         setContentView(R.layout.activity_empleados)
@@ -80,26 +80,6 @@ class Activity_empleados : AppCompatActivity() {
             insets
         }
 
-        val btnReservas = findViewById<LinearLayout>(R.id.btn_reservas)
-        btnReservas.setOnClickListener {
-            mostrarDialogoReservas()
-        }
-
-        val btnFranja = findViewById<LinearLayout>(R.id.btn_franja)
-        btnFranja.setOnClickListener {
-            if (fechaSeleccionada.isEmpty()) {
-                snackbarActivo?.dismiss()  // Cierra el anterior si sigue visible
-                snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
-                    .setAction("Seleccionar fecha") {
-                        mostrarDialogoFecha()
-                    }
-
-                snackbarActivo?.show()
-            } else {
-                mostrarDialogoHoras()
-            }
-        }
-
         container = findViewById(R.id.contentLayout)
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -107,23 +87,9 @@ class Activity_empleados : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = ""
 
-        val sharedPreferences = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val pisosGuardadosSet = sharedPreferences.getStringSet("pisos", setOf()) ?: setOf()
-        val pisosGuardados = pisosGuardadosSet.toList().sorted()
-
+        // Crear spinnerPisos sin adapter por ahora
         spinnerPisos = Spinner(this).apply {
-            adapter = ArrayAdapter(this@Activity_empleados, android.R.layout.simple_spinner_dropdown_item, pisosGuardados)
-            this.setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
-            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                    pisoSeleccionado = pisosGuardados[position]
-                    cargarSalas(pisoSeleccionado)
-                    cargarImagenFondo(pisoSeleccionado)
-                    verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>) {}
-            }
+            setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
             layoutParams = Toolbar.LayoutParams(
                 Toolbar.LayoutParams.WRAP_CONTENT,
                 Toolbar.LayoutParams.WRAP_CONTENT
@@ -134,7 +100,53 @@ class Activity_empleados : AppCompatActivity() {
         }
         toolbar.addView(spinnerPisos)
 
+        // Cargar pisos desde Room y asignar adapter
+        lifecycleScope.launch {
+            repository.pisoDao.obtenerTodosLosPisos().collect { pisos ->
+                listaPisos = pisos
+                val nombresPisos = pisos.map { it.nombre }
+                val adapter = ArrayAdapter(this@Activity_empleados, android.R.layout.simple_spinner_item, nombresPisos)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spinnerPisos.adapter = adapter
+            }
+        }
 
+        spinnerPisos.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                val piso = listaPisos[position]
+                pisoSeleccionado = piso.id
+                val nombrePiso = piso.nombre
+
+                cargarSalas(nombrePiso)
+                cargarImagenFondo(nombrePiso)  // <--- Aquí cargas la imagen de fondo
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                pisoSeleccionado = -1
+                container.removeAllViews()
+                // Opcional: quitar fondo o poner fondo predeterminado
+               // container.setBackgroundResource(R.drawable.fondo_predeterminado)
+            }
+        }
+
+
+
+        val btnReservas = findViewById<LinearLayout>(R.id.btn_reservas)
+        btnReservas.setOnClickListener {
+            mostrarDialogoReservas()
+        }
+
+        val btnFranja = findViewById<LinearLayout>(R.id.btn_franja)
+        btnFranja.setOnClickListener {
+            if (fechaSeleccionada.isEmpty()) {
+                snackbarActivo?.dismiss()
+                snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
+                    .setAction("Seleccionar fecha") { mostrarDialogoFecha() }
+                snackbarActivo?.show()
+            } else {
+                mostrarDialogoHoras()
+            }
+        }
 
         val botonSeleccionarFechaHora = ImageButton(this).apply {
             setImageResource(R.drawable.time)
@@ -146,7 +158,7 @@ class Activity_empleados : AppCompatActivity() {
             ).apply {
                 gravity = Gravity.END
                 marginEnd = 20
-                marginStart= 20
+                marginStart = 20
             }
         }
         toolbar.addView(botonSeleccionarFechaHora)
@@ -177,46 +189,12 @@ class Activity_empleados : AppCompatActivity() {
         contenedorFechaHora.addView(textViewFecha)
         contenedorFechaHora.addView(textViewHora)
         toolbar.addView(contenedorFechaHora)
-
-
-        // Cargar piso automáticamente si se ha guardado o se ha pasado por intent
-        val pisoDesdeIntent = intent.getStringExtra("nombre_piso")
-        val pisoInicial = pisoDesdeIntent ?: sharedPreferences.getString("numero_piso", null)
-
-        if (pisoInicial != null && pisosGuardados.contains(pisoInicial)) {
-            pisoSeleccionado = pisoInicial
-            cargarSalas(pisoSeleccionado)
-            cargarImagenFondo(pisoSeleccionado)
-            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
-            spinnerPisos.setSelection(pisosGuardados.indexOf(pisoSeleccionado))
-        }
     }
+
+
 
     override fun onResume() {
         super.onResume()
-        actualizarSpinnerPisos()
-    }
-
-    private fun actualizarSpinnerPisos() {
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val pisosGuardadosSet = sharedPref.getStringSet("pisos", setOf()) ?: setOf()
-        val pisosGuardados = pisosGuardadosSet.toList()
-            .sortedWith { a, b -> compareNaturalKeys(naturalOrderKey(a), naturalOrderKey(b)) }
-
-        // Actualizar el adaptador del spinner
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, pisosGuardados)
-        spinnerPisos.adapter = adapter
-
-        // Si tienes un piso seleccionado guardado, intenta seleccionarlo
-        val pisoInicial = intent.getStringExtra("nombre_piso") ?: sharedPref.getString("numero_piso", null)
-        if (pisoInicial != null && pisosGuardados.contains(pisoInicial)) {
-            spinnerPisos.setSelection(pisosGuardados.indexOf(pisoInicial))
-        } else if (pisosGuardados.isNotEmpty()) {
-            pisoSeleccionado = pisosGuardados[0]
-            cargarSalas(pisoSeleccionado)
-            cargarImagenFondo(pisoSeleccionado)
-            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
-        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -484,21 +462,24 @@ class Activity_empleados : AppCompatActivity() {
             .getString("nombre_usuario", "Empleado") ?: "Empleado"
 
         lifecycleScope.launch {
+            // Obtener el nombre del piso desde el pisoId
+            val piso = repository.pisoDao.obtenerPisoPorId(sala.pisoId)
+
             // Obtener reservas para la fecha y hora con Room
             val reservas = repository.getReservasPorFechaHora(fechaHora).toMutableList()
 
             val reservaExistente = reservas.find {
                 it.nombreSala == sala.nombre &&
-                        it.piso.trim() == sala.piso.trim() &&
+                        it.piso.trim() == piso?.nombre?.trim() &&
                         it.fechaHora == fechaHora &&
                         it.nombreUsuario == nombreUsuario
             }
 
-            val builder = AlertDialog.Builder(this@Activity_empleados)  // Usa this@TuActivity si es necesario
+            val builder = AlertDialog.Builder(this@Activity_empleados)
             builder.setTitle("Detalles de ${sala.nombre}")
 
             val detalles = """
-            ${sala.piso}
+            Piso: ${piso?.nombre}
             Tamaño: ${sala.tamaño}
             Extras: ${if (sala.extras.isNotEmpty()) sala.extras.joinToString(", ") else "Ninguno"}
             Fecha: $fechaSeleccionada
@@ -520,9 +501,7 @@ class Activity_empleados : AppCompatActivity() {
                 }
             }
 
-            builder.setNegativeButton("Cerrar") { dialog, _ ->
-                dialog.dismiss()
-            }
+            builder.setNegativeButton("Cerrar") { dialog, _ -> dialog.dismiss() }
 
             val dialog = builder.create()
             dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
@@ -535,6 +514,7 @@ class Activity_empleados : AppCompatActivity() {
             dialog.show()
         }
     }
+
 
 
 
@@ -557,47 +537,56 @@ class Activity_empleados : AppCompatActivity() {
     }
 
     private fun cargarImagenFondo(nombrePiso: String) {
-        val sharedPref = getSharedPreferences("DistribucionSalas", MODE_PRIVATE)
-        val fondoUriString = sharedPref.getString("fondo_uri_$nombrePiso", null)
+        lifecycleScope.launch {
+            val piso = repository.pisoDao.obtenerPisoPorNombre(nombrePiso) // DAO debe tener esta función
 
-        if (fondoUriString.isNullOrEmpty()) {
-            // No hay fondo guardado, opcional: establecer un fondo por defecto
-            // container.setBackgroundResource(R.drawable.fondo_predeterminado)
-            return
-        }
+            withContext(Dispatchers.Main) {
+                if (piso == null || piso.uriFondo.isEmpty()) {
+                    // No hay fondo guardado o piso no encontrado
+                    // container.setBackgroundResource(R.drawable.fondo_predeterminado)
+                    return@withContext
+                }
 
-        try {
-            val uri = fondoUriString.toUri()
-            Glide.with(this)
-                .load(uri)
-                .centerCrop()
-                .into(object : CustomTarget<Drawable>() {
-                    override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                        container.background = resource
-                    }
-                    override fun onLoadCleared(placeholder: Drawable?) {
-                        // Opcional: limpiar fondo si es necesario
-                    }
-                })
-        } catch (e: Exception) {
-            e.printStackTrace()
+                try {
+                    val uri = piso.uriFondo.toUri()
+                    Glide.with(this@Activity_empleados)
+                        .load(uri)
+                        .centerCrop()
+                        .into(object : CustomTarget<Drawable>() {
+                            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                                container.background = resource
+                            }
+                            override fun onLoadCleared(placeholder: Drawable?) {
+                                // Opcional: limpiar fondo si es necesario
+                            }
+                        })
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
-
     private fun verificarDisponibilidad(fechaHora: String) {
         lifecycleScope.launch {
-            val reservas = repository.getReservasPorFechaHora(fechaHora)  // llamada suspend
+            val reservas = repository.getReservasPorFechaHora(fechaHora)  // suspend
+
+            // Recolectar el flow para obtener lista
+            val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
+            val mapaPisos = pisos.associate { it.id to it.nombre }
 
             for (i in 0 until container.childCount) {
                 val view = container.getChildAt(i)
                 if (view is Button) {
                     val sala = view.tag as? Salas ?: continue
+                    val nombrePisoSala = mapaPisos[sala.pisoId] ?: ""
+
                     val ocupada = reservas.any {
                         it.nombreSala.equals(sala.nombre, ignoreCase = true) &&
-                                it.piso.trim().equals(sala.piso.trim(), ignoreCase = true) &&
+                                it.piso.trim().equals(nombrePisoSala.trim(), ignoreCase = true) &&
                                 it.fechaHora == fechaHora
                     }
+
                     val color = if (ocupada) Color.RED else Color.GREEN
                     view.background = GradientDrawable().apply {
                         setColor(color)
@@ -607,8 +596,6 @@ class Activity_empleados : AppCompatActivity() {
             }
         }
     }
-
-
 
     private fun reservarSala(nombreSala: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
@@ -622,19 +609,20 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            // Obtener usuario actual desde Room
             val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
             val nombreUsuario = usuarioActual?.nombre ?: "Empleado"
 
-            // Cargar reservas para esa fecha y hora
+            // Obtener todos los pisos
+            val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
+            val nombrePiso = pisos.find { it.id == pisoSeleccionado }?.nombre ?: ""
+
+
             val reservas = repository.getReservasPorFechaHora(fechaHora)
 
-            // Buscar reserva existente para la misma sala, piso y fechaHora
             val reservaExistente = reservas.find {
-                it.nombreSala == nombreSala && it.piso == pisoSeleccionado && it.fechaHora == fechaHora
+                it.nombreSala == nombreSala && it.piso == nombrePiso && it.fechaHora == fechaHora
             }
 
-            // Buscar si el usuario tiene reserva a esa hora en cualquier sala
             val reservaUsuarioMismaHora = reservas.find {
                 it.fechaHora == fechaHora && it.nombreUsuario == nombreUsuario
             }
@@ -666,15 +654,21 @@ class Activity_empleados : AppCompatActivity() {
                 return@launch
             }
 
+
             val dialog = AlertDialog.Builder(this@Activity_empleados)
                 .setTitle("Confirmar reserva")
-                .setMessage("¿Deseas reservar '$nombreSala' en el '$pisoSeleccionado' para '$fechaHora'?")
+                .setMessage("¿Deseas reservar '$nombreSala' en el '$nombrePiso' para '$fechaHora'?")
                 .setPositiveButton("Sí") { _, _ ->
                     lifecycleScope.launch {
-                        val reserva = Reserva(nombreSala, fechaHora, nombreUsuario, pisoSeleccionado)
+                        val reserva = Reserva(
+                            nombreSala = nombreSala,
+                            fechaHora = fechaHora,
+                            nombreUsuario = nombreUsuario,
+                            piso = nombrePiso
+                        )
                         repository.insertarReserva(reserva)
                         verificarDisponibilidad(fechaHora)
-                        Toast.makeText(this@Activity_empleados, "Reserva realizada para $nombreSala en el $pisoSeleccionado", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@Activity_empleados, "Reserva realizada para $nombreSala en el $nombrePiso", Toast.LENGTH_SHORT).show()
                     }
                 }
                 .setNegativeButton("No", null)

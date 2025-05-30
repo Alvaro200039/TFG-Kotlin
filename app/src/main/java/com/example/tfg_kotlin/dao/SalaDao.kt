@@ -9,8 +9,8 @@ interface SalaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(sala: Salas)
 
-    @Query("SELECT * FROM salas WHERE piso = :piso")
-    suspend fun obtenerPorPiso(piso: String): List<Salas>
+    @Query("SELECT * FROM salas WHERE pisoId = :pisoId")
+    suspend fun obtenerPorPiso(pisoId: String): List<Salas>
 
     @Query("SELECT * FROM salas")
     suspend fun obtenerTodas(): List<Salas>
@@ -18,9 +18,9 @@ interface SalaDao {
     @Update
     suspend fun actualizar(sala: Salas)
 
-    @Delete
-    suspend fun eliminar(sala: Salas)
+    @Query("SELECT * FROM salas WHERE nombre = :nombreSala AND pisoId = :pisoId")
+    suspend fun obtenerSalaPorNombreYPiso(nombreSala: String, pisoId: Int): Salas?
 
-    @Query("DELETE FROM salas WHERE piso = :piso")
-    suspend fun eliminarPorPiso(piso: String)
+    @Query("DELETE FROM salas WHERE pisoId = :pisoId")
+    suspend fun eliminarPorPiso(pisoId: Int)
 }

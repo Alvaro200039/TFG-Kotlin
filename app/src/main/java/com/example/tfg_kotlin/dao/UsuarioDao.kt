@@ -9,9 +9,6 @@ interface UsuarioDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(usuario: Usuario)
 
-    @Query("SELECT * FROM usuarios WHERE id = :id")
-    suspend fun obtenerPorId(id: Int): Usuario?
-
     @Query("SELECT * FROM usuarios")
     suspend fun obtenerTodos(): List<Usuario>
 
