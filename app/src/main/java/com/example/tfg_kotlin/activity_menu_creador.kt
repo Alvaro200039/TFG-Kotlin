@@ -16,9 +16,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.database.AppDatabase
 import com.example.tfg_kotlin.repository.AppRepository
@@ -35,9 +32,12 @@ class activity_menu_creador : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val db = AppDatabase.getDatabase(applicationContext)
         repository = AppRepository(
-            db.jefeDao(),
+            db.usuarioDao(),
             db.salaDao(),
-            db.reservaDao()
+            db.reservaDao(),
+            db.franjahorariaDao(),
+            db.pisoDao(),
+            db.empresaDao()
         )
         enableEdgeToEdge()
         setContentView(R.layout.activity_menu_creador)
@@ -237,6 +237,4 @@ class activity_menu_creador : AppCompatActivity() {
             }
         }
     }
-
-
 }

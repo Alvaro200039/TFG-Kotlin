@@ -1,6 +1,8 @@
 package com.example.tfg_kotlin.repository
 
+import com.example.tfg_kotlin.dao.EmpresaDao
 import com.example.tfg_kotlin.dao.FranjaHorariaDao
+import com.example.tfg_kotlin.dao.PisoDao
 import com.example.tfg_kotlin.dao.UsuarioDao
 import com.example.tfg_kotlin.dao.ReservaDao
 import com.example.tfg_kotlin.dao.SalaDao
@@ -11,9 +13,11 @@ import com.example.tfg_kotlin.entities.Salas
 
 class AppRepository(
     internal val usuarioDao: UsuarioDao,
-    private val salaDao: SalaDao,
+    internal val salaDao: SalaDao,
     private val reservaDao: ReservaDao,
-    private val franjaHorariaDao: FranjaHorariaDao
+    internal val franjaHorariaDao: FranjaHorariaDao,
+    internal val pisoDao: PisoDao,
+    internal val empresaDao: EmpresaDao
 ) {
 
     suspend fun getAllUsuarios() = usuarioDao.obtenerTodos()
@@ -54,6 +58,6 @@ class AppRepository(
 
     // Obtener todas las franjas horarias de la BD
     suspend fun getFranjasHorarias(): List<FranjaHoraria> {
-        return franjaHorariaDao.getTodasFranjas()
+        return franjaHorariaDao.getTodasFranjas() as List<FranjaHoraria>
     }
 }

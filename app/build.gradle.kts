@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp) // usa alias definido en libs.versions.toml
+    alias(libs.plugins.ksp)  // Aplica plugin ksp aquí (no en dependencies)
 }
 
 android {
@@ -49,9 +49,12 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    ksp(libs.room.ksp) // usamos KSP
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.ksp)  // solo aquí en dependencies
+
 }
