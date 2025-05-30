@@ -10,7 +10,6 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -38,9 +37,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.graphics.toColorInt
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import androidx.core.content.edit
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.Utils.naturalOrderKey
@@ -55,7 +51,6 @@ import com.example.tfg_kotlin.repository.AppRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -81,6 +76,8 @@ class Activity_creacion : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+
 
         val titleView = findViewById<TextView>(R.id.toolbar_title)
         titleView.text = "Piso nº" // valor provisional hasta que cargue desde Room
@@ -159,25 +156,7 @@ class Activity_creacion : AppCompatActivity() {
     }
 
 
-    private fun EditText.autoAdvanceTo(next: EditText?) {
-        this.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                if (s?.length == 2) {
-                    if (next != null) {
-                        next.requestFocus()
-                    } else {
-                        // Ocultar teclado si es el último campo
-                        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(windowToken, 0)
-                        clearFocus()
-                    }
-                }
-            }
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        })
-    }
 
 private fun mostrarDialogoFranjas() {
     val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
@@ -190,7 +169,10 @@ private fun mostrarDialogoFranjas() {
     val editHoraFin = dialogView.findViewById<EditText>(R.id.etHoraFin)
     val editMinutoFin = dialogView.findViewById<EditText>(R.id.etMinFin)
 
-    // Funciones para avanzar foco etc...
+    editHoraInicio.autoAdvanceTo(editMinutoInicio)
+    editMinutoInicio.autoAdvanceTo(editHoraFin)
+    editHoraFin.autoAdvanceTo(editMinutoFin)
+    editMinutoFin.autoAdvanceTo(null)
 
     val dialog = AlertDialog.Builder(this)
         .setTitle("Añadir franjas horarias")
@@ -324,13 +306,10 @@ private fun openGallery() {
 
 
     private fun showChangeTitleDialog() {
-        if (pisoActual == null) {
-            Toast.makeText(this, "No hay piso cargado", Toast.LENGTH_SHORT).show()
-            return
-        }
+        val piso = pisoActual
 
         val editText = EditText(this).apply {
-            setText(pisoActual!!.nombre)
+            setText(piso?.nombre ?: "")  // Si no hay piso, campo vacío
             setSelection(text.length)
         }
 
@@ -340,27 +319,36 @@ private fun openGallery() {
             addView(editText)
         }
 
+        val title = if (piso == null) "Crear nuevo piso" else "Editar nombre del piso"
+
         val dialog = AlertDialog.Builder(this)
-            .setTitle("Edite el piso al que pertenece")
+            .setTitle(title)
             .setView(layout)
             .setPositiveButton("Guardar") { _, _ ->
                 val maxTitleLength = 11
                 val nuevoTitulo = editText.text.toString().trim().take(maxTitleLength)
 
                 if (nuevoTitulo.isEmpty() || nuevoTitulo.equals("Piso nº", ignoreCase = true) || nuevoTitulo.equals("Piso nº ", ignoreCase = true)) {
-                    Toast.makeText(this, "Por favor, cambie el nombre del piso antes de guardar", Toast.LENGTH_SHORT).show()
+                    showToast("Por favor, cambie el nombre del piso antes de guardar")
                 } else {
-                    val pisoEditado = pisoActual!!.copy(nombre = nuevoTitulo)
-
                     lifecycleScope.launch {
-                        repository.pisoDao.insertarPiso(pisoEditado)
-                        pisoActual = pisoEditado
+                        if (piso == null) {
+                            // Crear un nuevo piso
+                            val nuevoPiso = Piso(nombre = nuevoTitulo)
+                            val id = repository.pisoDao.insertarPiso(nuevoPiso)
+                            pisoActual = nuevoPiso.copy(id = id.toInt()) // Actualizar con ID generado
+                        } else {
+                            // Editar piso existente
+                            val pisoEditado = piso.copy(nombre = nuevoTitulo)
+                            repository.pisoDao.insertarPiso(pisoEditado)
+                            pisoActual = pisoEditado
+                        }
+
                         withContext(Dispatchers.Main) {
                             findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
-                            Toast.makeText(this@Activity_creacion, "Nombre del piso actualizado", Toast.LENGTH_SHORT).show()
+                            showToast(if (piso == null) "Piso creado" else "Nombre del piso actualizado")
                         }
                     }
-
                 }
             }
             .setNegativeButton("Cancelar", null)
@@ -374,6 +362,13 @@ private fun openGallery() {
 
         dialog.show()
     }
+
+
+    private fun showToast(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    }
+
+
 
 
 
@@ -875,6 +870,26 @@ private fun openGallery() {
                 .fitCenter()
                 .into(findViewById(R.id.image_fondo))
         }
+    }
+
+    private fun EditText.autoAdvanceTo(next: EditText?) {
+        this.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                if (s?.length == 2) {
+                    if (next != null) {
+                        next.requestFocus()
+                    } else {
+                        // Ocultar teclado si es el último campo
+                        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.hideSoftInputFromWindow(windowToken, 0)
+                        clearFocus()
+                    }
+                }
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
     }
 
     inner class MovableTouchListener : View.OnTouchListener {

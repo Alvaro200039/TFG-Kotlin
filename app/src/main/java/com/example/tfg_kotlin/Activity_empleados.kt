@@ -541,14 +541,14 @@ class Activity_empleados : AppCompatActivity() {
             val piso = repository.pisoDao.obtenerPisoPorNombre(nombrePiso) // DAO debe tener esta función
 
             withContext(Dispatchers.Main) {
-                if (piso == null || piso.uriFondo.isEmpty()) {
+                if (piso == null || piso.uriFondo?.isEmpty() == true) {
                     // No hay fondo guardado o piso no encontrado
                     // container.setBackgroundResource(R.drawable.fondo_predeterminado)
                     return@withContext
                 }
 
                 try {
-                    val uri = piso.uriFondo.toUri()
+                    val uri = piso.uriFondo?.toUri()
                     Glide.with(this@Activity_empleados)
                         .load(uri)
                         .centerCrop()

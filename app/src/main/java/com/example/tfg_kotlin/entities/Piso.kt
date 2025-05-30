@@ -19,7 +19,8 @@ data class Piso(
     val id: Int = 0,
 
     val nombre: String,
-    val uriFondo: String,
+    val uriImagenFondo: String? = null,
 
-    val empresaId: Int
+    val empresaId: Int = 0,
+    val uriFondo: String? = null
 )
