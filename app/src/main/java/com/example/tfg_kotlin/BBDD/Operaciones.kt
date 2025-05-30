@@ -35,8 +35,12 @@ interface Operaciones {
     fun construirNombreBD(dominio: String): String {
         return "empresa_${dominio.lowercase()}.db"
     }
+
     @Query("UPDATE Empleados SET contrasena = :nuevaPass WHERE correo = :correo")
     fun actualizarContrasena(correo: String, nuevaPass: String)
+
+    @Query("SELECT * FROM Empresa WHERE dominio = :dominio")
+    fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
 
 
 

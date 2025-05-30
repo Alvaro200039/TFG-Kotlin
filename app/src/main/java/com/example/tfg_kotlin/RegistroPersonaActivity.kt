@@ -83,7 +83,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
                 ).allowMainThreadQueries().build()
 
                 // Validar si existe el jefe (empresa)
-                val empresa = dbMaestra .appDao().getEmpresaPorDominio(dominio)
+                val empresa = dbMaestra .appDao().getEmpresaPorDominioEnEmpresa(dominio)
 
                 if (empresa == null) {
                     tilCorreo.error = "No existe ninguna empresa con el dominio @$dominio"

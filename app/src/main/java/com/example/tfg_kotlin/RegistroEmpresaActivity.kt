@@ -81,11 +81,17 @@ class RegistroEmpresaActivity : AppCompatActivity() {
             val empresa = Empresa(nombreEmpresa, dominio, cif)
             dbMaestra.appDao().insertarEmpresa(empresa)
 
-            // Crear base de datos específica de la empresa
+            // Crear base de datos específica de la empresa (y forzar su creación)
             val nombreBD = construirNombreBD(dominio)
-            Room.databaseBuilder(applicationContext, BBDD::class.java, nombreBD)
-                .allowMainThreadQueries()
-                .build()
+            val dbEmpresa = Room.databaseBuilder(
+                applicationContext,
+                BBDD::class.java,
+                nombreBD
+            ).allowMainThreadQueries().build()
+
+            // Forzar acceso a tabla para que Room cree físicamente la base de datos
+            // No insertamos nada, solo lanzamos una consulta dummy
+            dbEmpresa.appDao().buscarEmpleadoPorCorreo("dummy@${dominio}")
 
             Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()
             finish()

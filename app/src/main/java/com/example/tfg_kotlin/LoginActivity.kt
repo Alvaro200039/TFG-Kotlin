@@ -60,6 +60,19 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // Validar que el dominio existe en la base de datos maestra
+            val dbMaestra = Room.databaseBuilder(
+                applicationContext,
+                BBDD::class.java,
+                "maestra_db"
+            ).allowMainThreadQueries().build()
+
+            val empresaExiste = dbMaestra.appDao().getEmpresaPorDominioEnEmpresa(dominioCorreo)
+            if (empresaExiste == null) {
+                mostrarError("No existe ninguna empresa registrada con el dominio @$dominioCorreo")
+                return@setOnClickListener
+            }
+
             // Construimos nombre de la BD según el dominio
             val nombreBD = construirNombreBD(dominioCorreo)
 
