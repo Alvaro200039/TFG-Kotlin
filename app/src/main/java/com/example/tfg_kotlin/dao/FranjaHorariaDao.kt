@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface FranjaHorariaDao {
 
-    @Query("SELECT * FROM franjas_horarias ORDER BY hora")
-    fun getTodasFranjas(): Flow<List<FranjaHoraria>>
+    @Query("SELECT * FROM franjas_horarias")
+    suspend fun getTodasFranjas(): List<FranjaHoraria> // sin Flow
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertarFranja(franjaHoraria: FranjaHoraria)

@@ -1,14 +1,16 @@
 package com.example.tfg_kotlin
 
-import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Looper
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -44,6 +46,7 @@ import com.example.tfg_kotlin.Utils.compareNaturalKeys
 import com.example.tfg_kotlin.dao.PisoDao
 import com.example.tfg_kotlin.dao.SalaDao
 import com.example.tfg_kotlin.database.AppDatabase
+import com.example.tfg_kotlin.entities.Empresa
 import com.example.tfg_kotlin.entities.FranjaHoraria
 import com.example.tfg_kotlin.entities.Piso
 import com.example.tfg_kotlin.entities.Salas
@@ -53,6 +56,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.logging.Handler
+import androidx.core.net.toUri
 
 
 class Activity_creacion : AppCompatActivity() {
@@ -60,6 +65,9 @@ class Activity_creacion : AppCompatActivity() {
     private lateinit var container: ConstraintLayout
     private lateinit var repository: AppRepository
     private var pisoActual: Piso? = null
+    private var empresaId: Int = -1  // Declaras la propiedad aquí
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,7 +79,6 @@ class Activity_creacion : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -94,6 +101,25 @@ class Activity_creacion : AppCompatActivity() {
             db.pisoDao(),
             db.empresaDao()
         )
+
+        lifecycleScope.launch {
+            val empresaPorDefecto = repository.empresaDao.obtenerEmpresaPorId(1)
+            if (empresaPorDefecto == null) {
+                repository.empresaDao.insertarEmpresa(
+                    Empresa(id = 1, nombre = "Empresa por defecto", creadorId = 1)
+                )
+            }
+
+            // Ahora que sabemos que la empresa 1 existe, obtenemos empresaId de prefs o asignamos 1
+            val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
+            var empresaId = prefs.getInt("empresa_id", -1)
+            if (empresaId == -1) empresaId = 1
+
+            // Guardar en variable global para usar en la Activity
+            this@Activity_creacion.empresaId = empresaId
+
+            // Aquí puedes continuar con cualquier carga o inicialización que dependa de empresaId
+        }
 
         lifecycleScope.launch {
             repository.pisoDao.obtenerTodosLosPisos().collectLatest { pisos ->
@@ -126,8 +152,6 @@ class Activity_creacion : AppCompatActivity() {
     }
 
 
-
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
@@ -136,27 +160,37 @@ class Activity_creacion : AppCompatActivity() {
             }
             R.id.action_save -> {
                 lifecycleScope.launch {
-                    val pisoNombre = findViewById<TextView>(R.id.toolbar_title).text.toString()
-                    val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
-                    val empresaId = prefs.getInt("empresa_id", -1)
+                    try {
+                        val pisoNombre = findViewById<TextView>(R.id.toolbar_title).text.toString()
+                        val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
+                        val empresaId = prefs.getInt("empresa_id", 1)
+                        val uriFinal = fondoUri ?: run {
+                            val uriGuardado = pisoActual?.uriFondo
+                            val uriFinal = if (!uriGuardado.isNullOrBlank()) uriGuardado.toUri() else null
 
-                    guardarDistribucion(
-                        empresaId = empresaId,
-                        pisoNombre = pisoNombre,
-                        fondoUri = fondoUri,
-                        container = container,
-                        pisoDao = repository.pisoDao,
-                        salaDao = repository.salaDao
-                    )
+                        }
+
+                        guardarDistribucion(
+                            empresaId = empresaId,
+                            pisoNombre = pisoNombre,
+                            fondoUri = uriFinal as Uri?,
+                            container = container,
+                            pisoDao = repository.pisoDao,
+                            salaDao = repository.salaDao
+                        )
+                    } catch (e: Exception) {
+                        Log.e("Activity_creacion", "Error guardando: ${e.message}", e)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@Activity_creacion, "Error guardando: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-
-
 
 private fun mostrarDialogoFranjas() {
     val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
@@ -217,9 +251,11 @@ private fun mostrarDialogoFranjas() {
 
     // Observar cambios en las franjas con Flow y actualizar UI
     lifecycleScope.launch {
-        repository.franjaHorariaDao.getTodasFranjas().collectLatest { franjas ->
-            actualizarListaFranjasUI(franjas)
+        val franjas = withContext(Dispatchers.IO) {
+            repository.franjaHorariaDao.getTodasFranjas()
+
         }
+        actualizarListaFranjasUI(franjas)
     }
 
     botonAgregar.setOnClickListener {
@@ -237,6 +273,10 @@ private fun mostrarDialogoFranjas() {
         // Insertar nueva franja en DB
         lifecycleScope.launch {
             repository.franjaHorariaDao.insertarFranja(FranjaHoraria(nuevaFranja))
+            val nuevasFranjas = withContext(Dispatchers.IO) {
+                repository.franjaHorariaDao.getTodasFranjas()
+            }
+            actualizarListaFranjasUI(nuevasFranjas)
         }
 
         // Limpiar campos
@@ -255,17 +295,15 @@ private fun openGallery() {
         getImage.launch("image/*")
     }
 
+    private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
+
     private fun addMovableButton() {
-        val piso = pisoActual
-        if (piso == null) {
-            Toast.makeText(this, "No hay piso seleccionado", Toast.LENGTH_SHORT).show()
-            return
-        }
+        // No compruebo pisoActual porque aún no existe piso guardado
 
         val sala = Salas(
             nombre = "Sala",
-            tamaño = "pequeña", // o "grande", según quieras
-            pisoId = piso.id,
+            tamaño = "pequeña", // o "grande"
+            pisoId = -1, // provisional, sin piso asignado aún
             x = 100f,
             y = 100f,
             ancho = 300f,
@@ -273,10 +311,9 @@ private fun openGallery() {
             extras = emptyList()
         )
 
-
         val button = Button(this).apply {
             text = sala.nombre
-            background = android.graphics.drawable.GradientDrawable().apply {
+            background = GradientDrawable().apply {
                 setColor("#BEBEBE".toColorInt())
                 cornerRadius = 50f
             }
@@ -298,18 +335,17 @@ private fun openGallery() {
         }
         button.layoutParams = layoutParams
 
-        // Guardar sala en Room
-        lifecycleScope.launch {
-            repository.salaDao.insertar(sala)
-        }
+        // Guardamos la sala en memoria, no en Room todavía
+        salasEnMemoria.add(sala)
     }
+
 
 
     private fun showChangeTitleDialog() {
         val piso = pisoActual
 
         val editText = EditText(this).apply {
-            setText(piso?.nombre ?: "")  // Si no hay piso, campo vacío
+            setText(piso?.nombre ?: "Piso nº ")  // Si no hay piso, campo inicial
             setSelection(text.length)
         }
 
@@ -331,24 +367,17 @@ private fun openGallery() {
                 if (nuevoTitulo.isEmpty() || nuevoTitulo.equals("Piso nº", ignoreCase = true) || nuevoTitulo.equals("Piso nº ", ignoreCase = true)) {
                     showToast("Por favor, cambie el nombre del piso antes de guardar")
                 } else {
-                    lifecycleScope.launch {
-                        if (piso == null) {
-                            // Crear un nuevo piso
-                            val nuevoPiso = Piso(nombre = nuevoTitulo)
-                            val id = repository.pisoDao.insertarPiso(nuevoPiso)
-                            pisoActual = nuevoPiso.copy(id = id.toInt()) // Actualizar con ID generado
-                        } else {
-                            // Editar piso existente
-                            val pisoEditado = piso.copy(nombre = nuevoTitulo)
-                            repository.pisoDao.insertarPiso(pisoEditado)
-                            pisoActual = pisoEditado
-                        }
-
-                        withContext(Dispatchers.Main) {
-                            findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
-                            showToast(if (piso == null) "Piso creado" else "Nombre del piso actualizado")
-                        }
+                    // SOLO actualizamos el nombre en memoria y en UI, no guardamos en base de datos
+                    pisoActual = if (piso == null) {
+                        // Piso nuevo en memoria, sin ID aún (id=0 o -1)
+                        Piso(id = 0, nombre = nuevoTitulo, uriFondo = "", empresaId = 1)
+                    } else {
+                        piso.copy(nombre = nuevoTitulo)
                     }
+
+                    // Actualizamos el título en la toolbar o donde lo muestres
+                    findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
+                    showToast("Nombre del piso modificado (pendiente de guardar)")
                 }
             }
             .setNegativeButton("Cancelar", null)
@@ -364,13 +393,10 @@ private fun openGallery() {
     }
 
 
+
     private fun showToast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
-
-
-
-
 
     private fun showButtonOptions(button: Button) {
         val options = arrayOf("Editar", "Eliminar", "Cambiar tamaño")
@@ -554,22 +580,29 @@ private fun openGallery() {
             }
         })
 
-        val tamanios = listOf("Grande", "Pequeño")
+        val tamanios = listOf("Pequeño", "Grande")
 
-        var adapter = ArrayAdapter(
+        val adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
             tamanios
-        ).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
 
         val spinnerTamanio = Spinner(this).apply {
-            adapter = adapter
+            this.adapter = adapter
             setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
             background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
             setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 16
+                bottomMargin = 16
+            }
         }
+
 
         val checkWifi = CheckBox(this).apply {
             text = "WiFi"
@@ -632,7 +665,7 @@ private fun openGallery() {
                 // Crear una copia modificada de la sala
                 val salaEditada = sala.copy(
                     nombre = nuevoNombre,
-                    tamaño = spinnerTamanio.selectedItem as String,
+                    tamaño = spinnerTamanio.selectedItem?.toString().toString(),
                     extras = mutableListOf<String>().apply {
                         if (checkWifi.isChecked) add("WiFi")
                         if (checkProyector.isChecked) add("Proyector")
@@ -643,15 +676,12 @@ private fun openGallery() {
                 // Guardar en Room en coroutine
                 lifecycleScope.launch {
                     repository.salaDao.actualizar(salaEditada)
-
-                    // Actualizar UI en hilo principal
-                    runOnUiThread {
-                        actualizarBotonConSala(button, salaEditada)
-                        button.tag = salaEditada
-                        Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
-                        dialog.dismiss()
-                    }
+                    actualizarBotonConSala(button, salaEditada)
+                    button.tag = salaEditada
+                    Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
                 }
+
             }
         }
 
@@ -689,17 +719,16 @@ private fun openGallery() {
     ) {
         val salasGuardadas = mutableListOf<Salas>()
 
-        // Recoger la información de cada vista-sala del contenedor
         for (i in 0 until container.childCount) {
             val view = container.getChildAt(i)
             if (view is Button) {
                 val sala = view.tag as? Salas ?: continue
                 salasGuardadas.add(
                     Salas(
-                        id = sala.id,  // Puede ser 0 si es nueva
+                        id = sala.id,
                         nombre = sala.nombre,
                         tamaño = sala.tamaño,
-                        pisoId = 0,  // Se asignará tras guardar piso
+                        pisoId = -1,
                         x = view.x,
                         y = view.y,
                         ancho = view.width.toFloat(),
@@ -730,54 +759,51 @@ private fun openGallery() {
 
         val uriFondoString = fondoUri?.toString() ?: ""
 
-        // Verificar si ya existe un piso con ese nombre y empresa
-        val pisoExistente = pisoDao.obtenerPisoPorNombre(pisoNombre)
+        // Aquí cambiamos a contexto IO porque accedemos a base de datos
+        withContext(Dispatchers.IO) {
+            val pisoExistente = pisoDao.obtenerPisoPorNombreYEmpresa(pisoNombre, empresaId)
 
-        val pisoId = if (pisoExistente == null) {
-            val nuevoPiso = Piso(
-                nombre = pisoNombre,
-                uriFondo = uriFondoString,
-                empresaId = empresaId
-            )
-            pisoDao.insertarPiso(nuevoPiso).toInt()
-        } else {
-            val pisoActualizado = pisoExistente.copy(
-                uriFondo = uriFondoString,
-                empresaId = empresaId
-            )
-            pisoDao.actualizarPiso(pisoActualizado)
-            pisoExistente.id
+            val pisoId = if (pisoExistente == null) {
+                val nuevoPiso = Piso(
+                    nombre = pisoNombre,
+                    uriFondo = uriFondoString,
+                    empresaId = empresaId
+                )
+                pisoDao.insertarPiso(nuevoPiso).toInt()
+            } else {
+                val pisoActualizado = pisoExistente.copy(
+                    nombre = pisoNombre,
+                    uriFondo = uriFondoString,
+                    empresaId = empresaId
+                )
+                pisoDao.actualizarPiso(pisoActualizado)
+                pisoExistente.id
+            }
+
+            salaDao.eliminarPorPiso(pisoId)
+
+            salasGuardadas.forEach { sala ->
+                sala.pisoId = pisoId
+                salaDao.insertar(sala)
+            }
         }
-
-        // Eliminar salas anteriores asociadas al piso
-        salaDao.eliminarPorPiso(pisoId)
-
-        // Insertar nuevas salas con el pisoId actualizado
-        salasGuardadas.forEach { sala ->
-            sala.pisoId = pisoId
-            salaDao.insertar(sala)
-        }
-
         withContext(Dispatchers.Main) {
             Toast.makeText(container.context, "Distribución guardada correctamente", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun eliminarPisoPorNombre(nombrePiso: String) {
+
+    private fun eliminarPisoPorNombre(nombrePiso: String, empresaId: Int?) {
         lifecycleScope.launch {
-            // 1. Obtener el piso por nombre
-            val piso = repository.pisoDao.obtenerPisoPorNombre(nombrePiso)
+            val piso = repository.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaId)
 
             if (piso != null) {
-                // 2. Eliminar piso (salas se eliminarán automáticamente por ON DELETE CASCADE)
                 repository.pisoDao.eliminarPiso(piso)
 
-                // 3. Actualizar SharedPreferences "mi_preferencia" para piso seleccionado
                 val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
                 val pisoActual = prefNumeroPiso.getString("numero_piso", null)
 
                 if (pisoActual == nombrePiso) {
-                    // Obtener pisos restantes
                     val pisosRestantes = repository.pisoDao.obtenerTodosLosPisos().firstOrNull() ?: emptyList()
                     val nombresPisos = pisosRestantes.map { it.nombre }
 
@@ -793,7 +819,8 @@ private fun openGallery() {
 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@Activity_creacion, "Piso eliminado", Toast.LENGTH_SHORT).show()
-                    // Actualiza UI si usas LiveData/StateFlow
+                    // Aquí volvemos a mostrar el diálogo actualizado
+                    mostrarDialogoEliminarPisos()
                 }
             } else {
                 withContext(Dispatchers.Main) {
@@ -802,6 +829,7 @@ private fun openGallery() {
             }
         }
     }
+
 
     private fun mostrarDialogoEliminarPisos() {
         lifecycleScope.launch {
@@ -815,7 +843,6 @@ private fun openGallery() {
                 return@launch
             }
 
-            // Orden natural
             nombresPisos.sortWith { piso1, piso2 ->
                 val key1 = naturalOrderKey(piso1)
                 val key2 = naturalOrderKey(piso2)
@@ -825,40 +852,40 @@ private fun openGallery() {
             withContext(Dispatchers.Main) {
                 val pisosArray = nombresPisos.toTypedArray()
 
-                AlertDialog.Builder(this@Activity_creacion)
+                val dialogPrincipal = AlertDialog.Builder(this@Activity_creacion)
                     .setTitle("Eliminar piso")
-                    .setItems(pisosArray) { _, which ->
+                    .setItems(pisosArray) { dialogInterface, which ->
                         val pisoSeleccionado = pisosArray[which]
 
-                        val dialog = AlertDialog.Builder(this@Activity_creacion)
+                        val dialogConfirmacion = AlertDialog.Builder(this@Activity_creacion)
                             .setTitle("¿Eliminar '$pisoSeleccionado'?")
                             .setMessage("Esta acción eliminará el piso y todas sus salas.")
-                            .setPositiveButton("Eliminar") { _, _ ->
-                                eliminarPisoPorNombre(pisoSeleccionado)
+                            .setPositiveButton("Eliminar") { dialogConfirm, _ ->
+                                val empresaId = empresaId
+                                eliminarPisoPorNombre(pisoSeleccionado, empresaId)
+                                dialogConfirm.dismiss()
+                                dialogInterface.dismiss()  // Cerramos el diálogo principal también
                             }
                             .setNegativeButton("Cancelar", null)
                             .create()
 
-                        dialog.setOnShowListener {
-                            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                        dialogConfirmacion.setOnShowListener {
+                            dialogConfirmacion.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                            dialogConfirmacion.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
                         }
-                        dialog.show()
+                        dialogConfirmacion.show()
                     }
                     .setNegativeButton("Cancelar", null)
                     .create()
-                    .apply {
-                        setOnShowListener {
-                            window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                            getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
-                        }
-                    }
-                    .show()
+
+                dialogPrincipal.setOnShowListener {
+                    dialogPrincipal.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                    dialogPrincipal.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                }
+                dialogPrincipal.show()
             }
         }
     }
-
-
 
 
     // Aquí es donde gestionas la selección de imagen de fondo
@@ -880,7 +907,7 @@ private fun openGallery() {
                         next.requestFocus()
                     } else {
                         // Ocultar teclado si es el último campo
-                        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                         imm.hideSoftInputFromWindow(windowToken, 0)
                         clearFocus()
                     }

@@ -47,9 +47,6 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     // Room
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -56,8 +56,17 @@ class AppRepository(
         reservaDao.eliminarPasadas(fechaActual)
     }
 
+    suspend fun getSalasPorNombrePiso(nombrePiso: String): List<Salas> {
+        val piso = pisoDao.obtenerPisoPorNombre(nombrePiso)
+        return if (piso != null) {
+            salaDao.obtenerPorPiso(piso.id.toString())
+        } else {
+            emptyList()
+        }
+    }
+
     // Obtener todas las franjas horarias de la BD
     suspend fun getFranjasHorarias(): List<FranjaHoraria> {
-        return franjaHorariaDao.getTodasFranjas() as List<FranjaHoraria>
+        return franjaHorariaDao.getTodasFranjas()
     }
 }

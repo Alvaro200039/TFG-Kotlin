@@ -12,6 +12,7 @@ interface SalaDao {
     @Query("SELECT * FROM salas WHERE pisoId = :pisoId")
     suspend fun obtenerPorPiso(pisoId: String): List<Salas>
 
+
     @Query("SELECT * FROM salas")
     suspend fun obtenerTodas(): List<Salas>
 

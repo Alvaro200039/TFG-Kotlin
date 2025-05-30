@@ -17,10 +17,7 @@ import androidx.room.PrimaryKey
 data class Piso(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-
     val nombre: String,
-    val uriImagenFondo: String? = null,
-
-    val empresaId: Int = 0,
-    val uriFondo: String? = null
+    val empresaId: Int?,
+    val uriFondo: String = ""
 )

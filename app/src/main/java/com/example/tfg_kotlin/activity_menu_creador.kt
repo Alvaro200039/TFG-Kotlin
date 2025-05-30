@@ -19,7 +19,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.database.AppDatabase
 import com.example.tfg_kotlin.repository.AppRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,15 +65,25 @@ class activity_menu_creador : AppCompatActivity() {
         // Botón: Hacer nueva reserva
         val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
         btnNuevaReserva.setOnClickListener {
-            val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-            val nombrePiso = prefNumeroPiso.getString("numero_piso", null)
+            lifecycleScope.launch {
+                val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
 
-            if (!nombrePiso.isNullOrEmpty()) {
-                val intent = Intent(this, Activity_empleados::class.java)
-                intent.putExtra("nombre_piso", nombrePiso)
-                startActivity(intent)
-            } else {
-                Toast.makeText(this, "No se ha seleccionado ningún piso. Crea uno primero.", Toast.LENGTH_SHORT).show()
+                if (pisos.isNotEmpty()) {
+                    val pisoSeleccionado = pisos.last() // O el que quieras, aquí el último piso
+                    val nombrePiso = pisoSeleccionado.nombre
+
+                    val intent = Intent(this@activity_menu_creador, Activity_empleados::class.java)
+                    intent.putExtra("nombre_piso", nombrePiso)
+                    startActivity(intent)
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@activity_menu_creador,
+                            "No se ha creado ningún piso. Crea uno primero.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             }
         }
 
