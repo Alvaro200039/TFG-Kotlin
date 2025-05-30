@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin
 
+import android.R.attr.id
 import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Color
@@ -66,6 +67,7 @@ class Activity_creacion : AppCompatActivity() {
     private lateinit var repository: AppRepository
     private var pisoActual: Piso? = null
     private var empresaId: Int = -1  // Declaras la propiedad aquí
+    private var fondoUri: Uri? = null
 
 
 
@@ -164,16 +166,11 @@ class Activity_creacion : AppCompatActivity() {
                         val pisoNombre = findViewById<TextView>(R.id.toolbar_title).text.toString()
                         val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
                         val empresaId = prefs.getInt("empresa_id", 1)
-                        val uriFinal = fondoUri ?: run {
-                            val uriGuardado = pisoActual?.uriFondo
-                            val uriFinal = if (!uriGuardado.isNullOrBlank()) uriGuardado.toUri() else null
-
-                        }
 
                         guardarDistribucion(
                             empresaId = empresaId,
                             pisoNombre = pisoNombre,
-                            fondoUri = uriFinal as Uri?,
+                            fondoUri = fondoUri,
                             container = container,
                             pisoDao = repository.pisoDao,
                             salaDao = repository.salaDao
@@ -370,7 +367,7 @@ private fun openGallery() {
                     // SOLO actualizamos el nombre en memoria y en UI, no guardamos en base de datos
                     pisoActual = if (piso == null) {
                         // Piso nuevo en memoria, sin ID aún (id=0 o -1)
-                        Piso(id = 0, nombre = nuevoTitulo, uriFondo = "", empresaId = 1)
+                        Piso(id, nombre = nuevoTitulo, uriFondo = fondoUri, empresaId = 1)
                     } else {
                         piso.copy(nombre = nuevoTitulo)
                     }
@@ -706,8 +703,6 @@ private fun openGallery() {
         button.text = builder.toString()
     }
 
-    private var fondoUri: Uri? = null
-
 
     suspend fun guardarDistribucion(
         empresaId: Int,
@@ -757,8 +752,6 @@ private fun openGallery() {
             return
         }
 
-        val uriFondoString = fondoUri?.toString() ?: ""
-
         // Aquí cambiamos a contexto IO porque accedemos a base de datos
         withContext(Dispatchers.IO) {
             val pisoExistente = pisoDao.obtenerPisoPorNombreYEmpresa(pisoNombre, empresaId)
@@ -766,14 +759,14 @@ private fun openGallery() {
             val pisoId = if (pisoExistente == null) {
                 val nuevoPiso = Piso(
                     nombre = pisoNombre,
-                    uriFondo = uriFondoString,
+                    uriFondo = fondoUri,
                     empresaId = empresaId
                 )
                 pisoDao.insertarPiso(nuevoPiso).toInt()
             } else {
                 val pisoActualizado = pisoExistente.copy(
                     nombre = pisoNombre,
-                    uriFondo = uriFondoString,
+                    uriFondo = fondoUri,
                     empresaId = empresaId
                 )
                 pisoDao.actualizarPiso(pisoActualizado)

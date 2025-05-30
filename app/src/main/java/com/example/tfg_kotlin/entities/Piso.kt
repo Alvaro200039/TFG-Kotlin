@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin.entities
 
+import android.net.Uri
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
@@ -19,5 +20,5 @@ data class Piso(
     val id: Int = 0,
     val nombre: String,
     val empresaId: Int?,
-    val uriFondo: String = ""
+    val uriFondo: Uri?
 )

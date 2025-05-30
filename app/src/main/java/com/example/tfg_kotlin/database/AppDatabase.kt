@@ -18,6 +18,7 @@ import com.example.tfg_kotlin.entities.Piso
 import com.example.tfg_kotlin.entities.Usuario
 import com.example.tfg_kotlin.entities.Salas
 import com.example.tfg_kotlin.entities.Reserva
+import com.example.tfg_kotlin.relations.Converters
 
 
 @Database(
@@ -25,7 +26,8 @@ import com.example.tfg_kotlin.entities.Reserva
     version = 1,
     exportSchema = false
 )
-@TypeConverters(ExtrasConverter::class)
+
+@TypeConverters(ExtrasConverter::class, Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun usuarioDao(): UsuarioDao
