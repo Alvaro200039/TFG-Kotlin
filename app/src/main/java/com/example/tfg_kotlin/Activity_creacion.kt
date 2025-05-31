@@ -67,7 +67,6 @@ class Activity_creacion : AppCompatActivity() {
     private lateinit var repository: AppRepository
     private var pisoActual: Piso? = null
     private var empresaId: Int = -1  // Declaras la propiedad aquí
-    private var fondoUri: Uri? = null
 
 
 
@@ -108,7 +107,8 @@ class Activity_creacion : AppCompatActivity() {
             val empresaPorDefecto = repository.empresaDao.obtenerEmpresaPorId(1)
             if (empresaPorDefecto == null) {
                 repository.empresaDao.insertarEmpresa(
-                    Empresa(id = 1, nombre = "Empresa por defecto", cif = "A1111111")
+                    Empresa(
+                        id = 1, nombre = "Empresa por defecto", creadorId = 1, cif = "A1111111")
                 )
             }
 
@@ -221,7 +221,7 @@ private fun mostrarDialogoFranjas() {
             val franjaView = LinearLayout(dialogView.context).apply {
                 orientation = LinearLayout.HORIZONTAL
 
-                var textview = TextView(dialogView.context).apply {
+                val textview = TextView(dialogView.context).apply {
                     text = franja.hora
                     textSize = 16f
                     setPadding(8, 4, 8, 4)
@@ -235,6 +235,11 @@ private fun mostrarDialogoFranjas() {
                     setOnClickListener {
                         lifecycleScope.launch {
                             repository.franjaHorariaDao.eliminarFranja(franja)
+                            // Volver a cargar la lista y actualizar UI
+                            val nuevasFranjas = withContext(Dispatchers.IO) {
+                                repository.franjaHorariaDao.getTodasFranjas()
+                            }
+                            actualizarListaFranjasUI(nuevasFranjas)
                         }
                     }
                 }
@@ -246,6 +251,7 @@ private fun mostrarDialogoFranjas() {
         }
     }
 
+
     // Observar cambios en las franjas con Flow y actualizar UI
     lifecycleScope.launch {
         val franjas = withContext(Dispatchers.IO) {
@@ -256,15 +262,55 @@ private fun mostrarDialogoFranjas() {
     }
 
     botonAgregar.setOnClickListener {
-        val hInicio = editHoraInicio.text.toString()
-        val mInicio = editMinutoInicio.text.toString()
-        val hFin = editHoraFin.text.toString()
-        val mFin = editMinutoFin.text.toString()
+        val hInicioStr = editHoraInicio.text.toString()
+        val mInicioStr = editMinutoInicio.text.toString()
+        val hFinStr = editHoraFin.text.toString()
+        val mFinStr = editMinutoFin.text.toString()
 
-        // Validaciones como antes, luego:
+        // Validar que no estén vacíos
+        if (hInicioStr.isBlank() || mInicioStr.isBlank() || hFinStr.isBlank() || mFinStr.isBlank()) {
+            Toast.makeText(this, "Por favor, rellena todos los campos.", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
 
-        val horaInicioStr = "%02d:%02d".format(hInicio.toInt(), mInicio.toInt())
-        val horaFinStr = "%02d:%02d".format(hFin.toInt(), mFin.toInt())
+        // Convertir a enteros y validar rangos
+        val hInicio = hInicioStr.toIntOrNull()
+        val mInicio = mInicioStr.toIntOrNull()
+        val hFin = hFinStr.toIntOrNull()
+        val mFin = mFinStr.toIntOrNull()
+
+        if (hInicio == null || mInicio == null || hFin == null || mFin == null) {
+            Toast.makeText(this, "Introduce números válidos.", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
+
+        if (hInicio !in 1..24) {
+            Toast.makeText(this, "La hora de inicio debe estar entre 1 y 24.", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
+        if (hFin !in 1..24) {
+            Toast.makeText(this, "La hora de fin debe estar entre 1 y 24.", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
+        if (mInicio !in 0..59) {
+            Toast.makeText(this, "Los minutos de inicio deben estar entre 0 y 59.", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
+        if (mFin !in 0..59) {
+            Toast.makeText(this, "Los minutos de fin deben estar entre 0 y 59.", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
+
+        // Comparar hora inicio y fin
+        val inicioEnMinutos = hInicio * 60 + mInicio
+        val finEnMinutos = hFin * 60 + mFin
+        if (inicioEnMinutos >= finEnMinutos) {
+            Toast.makeText(this, "La hora de inicio debe ser anterior a la hora de fin.", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
+
+        val horaInicioStr = "%02d:%02d".format(hInicio, mInicio)
+        val horaFinStr = "%02d:%02d".format(hFin, mFin)
         val nuevaFranja = "$horaInicioStr - $horaFinStr"
 
         // Insertar nueva franja en DB
@@ -282,6 +328,7 @@ private fun mostrarDialogoFranjas() {
         editHoraFin.text.clear()
         editMinutoFin.text.clear()
     }
+
 
     val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
     btnCerrar.setTextColor(Color.BLACK)

@@ -648,23 +648,27 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun reservarSala(nombreSala: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-
-        //val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-        //val idUsuario = prefs.getInt("usuario_id", -1)  // Mejor usar -1 como default para detectar fallo
         val idUsuario = 123   // id de usuario fijo para pruebas
 
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
         }
-        lifecycleScope.launch {
 
+        lifecycleScope.launch {
             val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
             val nombreUsuario = usuarioActual?.nombre ?: "Juan"
 
             // Obtener todos los pisos
             val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
             val nombrePiso = pisos.find { it.id == pisoSeleccionado }?.nombre ?: ""
+
+            // Obtener la sala con nombreSala y pisoId (pisoSeleccionado)
+            val salaSeleccionada = repository.salaDao.obtenerSalaPorNombreYPiso(nombreSala, pisoSeleccionado)
+            if (salaSeleccionada == null) {
+                Toast.makeText(this@Activity_empleados, "No se encontró la sala para reservar", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
 
             val reservas = repository.getReservasPorFechaHora(fechaHora)
 
@@ -680,7 +684,7 @@ class Activity_empleados : AppCompatActivity() {
 
             if (reservaExistente != null) {
                 if (reservaExistente.idusuario == idUsuario) {
-                    // Es la reserva del mismo usuario -> preguntar si quiere cancelar
+                    // Preguntar si quiere cancelar su reserva
                     val dialog = AlertDialog.Builder(this@Activity_empleados)
                         .setTitle("Cancelar reserva")
                         .setMessage("'$nombreUsuario', ¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
@@ -703,7 +707,6 @@ class Activity_empleados : AppCompatActivity() {
                     dialog.show()
                     dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                 } else {
-                    // Otro usuario ya reservó esa sala a esa hora
                     Toast.makeText(
                         this@Activity_empleados,
                         "Sala ya reservada por ${reservaExistente.nombreUsuario} en este piso",
@@ -732,7 +735,9 @@ class Activity_empleados : AppCompatActivity() {
                             fechaHora = fechaHora,
                             nombreUsuario = nombreUsuario,
                             idusuario = idUsuario,
-                            piso = nombrePiso
+                            piso = nombrePiso,
+                            id = 0,                  // Room generará el id automáticamente
+                            idSala = salaSeleccionada.id  // ID real de la sala
                         )
                         repository.insertarReserva(reserva)
                         verificarDisponibilidad(fechaHora)
@@ -752,6 +757,7 @@ class Activity_empleados : AppCompatActivity() {
             dialog.show()
         }
     }
+
 
 
 }
