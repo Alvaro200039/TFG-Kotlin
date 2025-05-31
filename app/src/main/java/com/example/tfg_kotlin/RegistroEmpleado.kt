@@ -69,28 +69,33 @@ class RegistroEmpleado : AppCompatActivity() {
 
         // Extracción del dominio en el correo
         val dominio = correo.substringAfterLast("@")
+        val dominioarroba = "@$dominio"
 
         lifecycleScope.launch {
             // Accedemos a la BD Maestra
             val dbMaestra = Room.databaseBuilder(
                 applicationContext,
                 DB_Maestra::class.java,
-                "db_masestra")
+                "db_maestra")
                 .build()
 
             // Buscamos si el domninio existe
             val daoMaestra = dbMaestra.userDao()
-            val empresa = daoMaestra.buscarPorDominio("@$dominio")
+            val empresa = daoMaestra.buscarPorDominio(dominioarroba)
 
             //En caso de no existir, volvera a solicitar el correo
             if (empresa == null) {
-                Toast.makeText(this@RegistroEmpleado, "El dominio introducido no existe o lo ha metido de forma incrrecta", Toast.LENGTH_SHORT).show()
-                etCorreo.requestFocus()
+                runOnUiThread {
+                    Toast.makeText(this@RegistroEmpleado, "El dominio introducido no existe o es incorrecto", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
             }
 
             //Creamos el acceso a la bd_individual por empresa
             val dbnombre = "db_${nombre.lowercase().replace(" ", "_")}"
             val dbEmpresa = Room.databaseBuilder(applicationContext,DB_Empresa::class.java, dbnombre).build()
+
+
             val daoEmpleado = dbEmpresa.appDao()
 
             // Verifica si el correo ya está registrado
@@ -98,19 +103,24 @@ class RegistroEmpleado : AppCompatActivity() {
             if (empleadoExistente != null) {
                 runOnUiThread {
                     Toast.makeText(this@RegistroEmpleado, "Correo ya registrado", Toast.LENGTH_SHORT).show()
-                    etCorreo.requestFocus()
                 }
+                return@launch
             }
 
             // Determina si es Jefe
-            val esJefe = empresa?.cif?.equals(etCif) ?: false
+            val esJefe = empresa.cif.equals(etCif)
 
             // Creamos al emprpleado y lo insertamos en la tabla de emplados
             val empleado = TablaEmpleados(correo, nombre, apellidos, contrasena, cif, esJefe)
             daoEmpleado.insertarEmpleado(empleado)
 
             runOnUiThread {
-                Toast.makeText(this@RegistroEmpleado, "Empleado registrado correctamente", Toast.LENGTH_SHORT).show()
+                val mensaje = if (esJefe) {
+                    "Empleado registrado correctamente (ES JEFE)"
+                } else {
+                    "Empleado registrado correctamente (NO ES JEFE)"
+                }
+                Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
                 etCorreo.text.clear()
                 etContrasena.text.clear()
                 etRepetirContrasena.text.clear()

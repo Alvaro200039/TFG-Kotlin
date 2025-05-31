@@ -14,16 +14,16 @@ interface Dao_Empresa {
 
     // Empleados
     @Insert
-    fun insertarEmpleado(empleado: TablaEmpleados)
+    suspend fun insertarEmpleado(empleado: TablaEmpleados)
 
     @Query("SELECT * FROM Empleados WHERE nombre = :nombre AND apellidos = :apellidos")
-    fun buscarEmpleado(nombre: String, apellidos: String): TablaEmpleados?
+    suspend fun buscarEmpleado(nombre: String, apellidos: String): TablaEmpleados?
 
     @Query("SELECT * FROM Empleados WHERE esJefe = 1")
-    fun obtenerJefes(): List<TablaEmpleados>
+    suspend fun obtenerJefes(): List<TablaEmpleados>
 
-    @Query("SELECT * FROM Empleados WHERE correo = :correo")
-    fun obtenerPorCorreo(correo: String): TablaEmpleados?
+    @Query("SELECT * FROM Empleados WHERE correo = :correo LIMIT 1")
+    suspend fun obtenerPorCorreo(correo: String): TablaEmpleados?
 
     // Salas
     @Insert
