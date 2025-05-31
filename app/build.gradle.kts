@@ -42,6 +42,9 @@ dependencies {
     val room_version = "2.7.1"
     implementation("androidx.room:room-runtime:$room_version")
 
+    val material_version = "1.10.0"
+    implementation("com.google.android.material:material:$material_version")
+
     // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
     // See Add the KSP plugin to your project
     ksp("androidx.room:room-compiler:$room_version")
@@ -70,6 +73,5 @@ dependencies {
 
     implementation("androidx.compose.material3:material3:1.2.0") // Para Compose
     implementation("com.google.android.material:material:1.10.0") // Para XML tradicional
-
 
 }

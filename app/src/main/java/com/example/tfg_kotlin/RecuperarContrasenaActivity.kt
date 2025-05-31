@@ -10,6 +10,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
+import com.example.tfg_kotlin.BBDD.BBDDInstance
 import com.example.tfg_kotlin.Validaciones.construirNombreBD
 
 class RecuperarContrasenaActivity : AppCompatActivity() {
@@ -56,9 +57,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
             val dominio = correo.substringAfter("@")
             val nombreBD = construirNombreBD(dominio)
 
-            db = Room.databaseBuilder(applicationContext, BBDD::class.java, nombreBD)
-                .allowMainThreadQueries()
-                .build()
+            db = BBDDInstance.getDatabase(applicationContext, nombreBD)
 
             val usuario = db.appDao().buscarEmpleadoPorCorreo(correo)
 
