@@ -1,9 +1,6 @@
 package com.example.tfg_kotlin.entities
 
-import android.net.Uri
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.*
 
 @Entity(tableName = "pisos",
     foreignKeys = [
