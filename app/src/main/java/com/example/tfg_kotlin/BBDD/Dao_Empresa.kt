@@ -6,7 +6,7 @@ import androidx.room.Query
 
 
 @Dao
-interface Operaciones {
+interface Dao_Empresa {
 
 //Operaciones
     @Query("SELECT * FROM Empleados WHERE nombre = :nombre AND contrasena = :contrasena")
@@ -21,6 +21,9 @@ interface Operaciones {
 
     @Query("SELECT * FROM Empleados WHERE esJefe = 1")
     fun obtenerJefes(): List<TablaEmpleados>
+
+    @Query("SELECT * FROM Empleados WHERE correo = :correo")
+    fun obtenerPorCorreo(correo: String): TablaEmpleados?
 
     // Salas
     @Insert

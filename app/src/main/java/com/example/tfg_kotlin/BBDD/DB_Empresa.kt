@@ -7,5 +7,5 @@ import androidx.room.RoomDatabase
     entities = [TablaEmpleados::class, TablaSalas::class, TablaSalaReservada::class], version = 1
 )
 abstract class DB_Empresa : RoomDatabase() {
-    abstract fun appDao(): Operaciones
+    abstract fun appDao(): Dao_Empresa
 }

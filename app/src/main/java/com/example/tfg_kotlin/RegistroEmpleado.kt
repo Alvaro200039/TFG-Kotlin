@@ -3,13 +3,15 @@ package com.example.tfg_kotlin
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.DB_Empresa
+import com.example.tfg_kotlin.BBDD.DB_Maestra
 import com.example.tfg_kotlin.BBDD.TablaEmpleados
-import com.example.tfg_kotlin.BBDD.Operaciones
+import kotlinx.coroutines.launch
 
 class RegistroEmpleado : AppCompatActivity() {
 
@@ -19,13 +21,12 @@ class RegistroEmpleado : AppCompatActivity() {
     private lateinit var etNombre: EditText
     private lateinit var etApellidos: EditText
     private lateinit var etCif: EditText
-
     private lateinit var btnRegistrar: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro)
-/*
+
         etCorreo = findViewById(R.id.etCorreo)
         etCif = findViewById(R.id.etCif)
         etNombre = findViewById(R.id.etNombre)
@@ -37,9 +38,9 @@ class RegistroEmpleado : AppCompatActivity() {
 
         btnRegistrar.setOnClickListener {
             registrarEmpleados()
-        }*/
+        }
     }
-/*
+
     private fun registrarEmpleados(){
         val correo = etCorreo.text.toString()
         val cif = etCif.text.toString()
@@ -48,50 +49,75 @@ class RegistroEmpleado : AppCompatActivity() {
         val nombre = etNombre.text.toString()
         val apellidos = etApellidos.text.toString()
 
-        if (correo.isEmpty() || contrasena.isEmpty() || nombre.isEmpty() || apellidos.isEmpty() || cif.isEmpty()) {
+        // Validación de campos vacios
+        if (correo.isEmpty() || contrasena.isEmpty() || repetirContrasena.isEmpty() || nombre.isEmpty() || apellidos.isEmpty()) {
             Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
             return
         }
 
+        // Validación formato correo
         if (!correo.contains("@")) {
             Toast.makeText(this, "Correo inválido", Toast.LENGTH_SHORT).show()
             return
         }
 
+        // Validacion contraseñas son iguales
         if (contrasena != repetirContrasena) {
             Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val dominioCorreo = "@" + correo.substringAfter("@")
+        // Extracción del dominio en el correo
+        val dominio = correo.substringAfterLast("@")
 
-        // Obtener empresa desde la BD maestra
-        val dbMaestra = DB_Empresa.getInstance(this)
-        val empresaDao = dbMaestra.appDao()
-        val empresa = empresaDao.buscarPorDominio(dominioCorreo)
+        lifecycleScope.launch {
+            // Accedemos a la BD Maestra
+            val dbMaestra = Room.databaseBuilder(
+                applicationContext,
+                DB_Maestra::class.java,
+                "db_masestra")
+                .build()
 
-        if (empresa == null) {
-            Toast.makeText(this, "No existe una empresa con ese dominio", Toast.LENGTH_SHORT).show()
-            return
+            // Buscamos si el domninio existe
+            val daoMaestra = dbMaestra.userDao()
+            val empresa = daoMaestra.buscarPorDominio("@$dominio")
+
+            //En caso de no existir, volvera a solicitar el correo
+            if (empresa == null) {
+                Toast.makeText(this@RegistroEmpleado, "El dominio introducido no existe o lo ha metido de forma incrrecta", Toast.LENGTH_SHORT).show()
+                etCorreo.requestFocus()
+            }
+
+            //Creamos el acceso a la bd_individual por empresa
+            val dbnombre = "db_${nombre.lowercase().replace(" ", "_")}"
+            val dbEmpresa = Room.databaseBuilder(applicationContext,DB_Empresa::class.java, dbnombre).build()
+            val daoEmpleado = dbEmpresa.appDao()
+
+            // Verifica si el correo ya está registrado
+            val empleadoExistente = daoEmpleado.obtenerPorCorreo(correo)
+            if (empleadoExistente != null) {
+                runOnUiThread {
+                    Toast.makeText(this@RegistroEmpleado, "Correo ya registrado", Toast.LENGTH_SHORT).show()
+                    etCorreo.requestFocus()
+                }
+            }
+
+            // Determina si es Jefe
+            val esJefe = empresa?.cif?.equals(etCif) ?: false
+
+            // Creamos al emprpleado y lo insertamos en la tabla de emplados
+            val empleado = TablaEmpleados(correo, nombre, apellidos, contrasena, cif, esJefe)
+            daoEmpleado.insertarEmpleado(empleado)
+
+            runOnUiThread {
+                Toast.makeText(this@RegistroEmpleado, "Empleado registrado correctamente", Toast.LENGTH_SHORT).show()
+                etCorreo.text.clear()
+                etContrasena.text.clear()
+                etRepetirContrasena.text.clear()
+                etNombre.text.clear()
+                etApellidos.text.clear()
+                etCif.text.clear()
+            }
         }
-
-        // Verificar si el CIF coincide
-        val esJefe = empresa.cif == cif
-
-        val nuevoEmpleado = TablaEmpleados(
-            correo = correo,
-            cif = cif,
-            contrasena = contrasena,
-            nombre = nombre,
-            apellidos = apellidos,
-            esJefe = esJefe
-        )
-
-        val dao = dbMaestra.appDao()
-        dao.insertarEmpleado(nuevoEmpleado)
-        Toast.makeText(this, "Usuario registrado", Toast.LENGTH_SHORT).show()
-        startActivity(Intent(this, LoginActivity::class.java))
-        finish()
     }
-*/
 }

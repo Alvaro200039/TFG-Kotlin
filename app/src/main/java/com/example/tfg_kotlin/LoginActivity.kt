@@ -6,10 +6,10 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.tfg_kotlin.BBDD.Operaciones
+import com.example.tfg_kotlin.BBDD.Dao_Empresa
 
 class LoginActivity : AppCompatActivity() {
-    lateinit var database: Operaciones
+    lateinit var database: Dao_Empresa
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
