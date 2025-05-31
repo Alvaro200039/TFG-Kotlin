@@ -71,6 +71,14 @@ class RegistroPersonaActivity : AppCompatActivity() {
 
 
             if (esValido) {
+
+                val contrasena = etContrasena.text.toString().trim()
+                if (contrasena.length < 4) {
+                    tilContrasena.error = "Debe tener al menos 4 caracteres"
+                    etContrasena.requestFocus()
+                    return@setOnClickListener
+                }
+
                 val correo = etCorreo.text.toString().trim()
                 val dominio = correo.substringAfter("@").lowercase()
                 val cifInput = etCif.text.toString().trim().uppercase()

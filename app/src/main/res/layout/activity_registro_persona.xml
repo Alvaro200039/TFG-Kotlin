@@ -135,7 +135,8 @@
                 android:background="@android:color/transparent"
                 android:hint="@string/contraseña"
                 android:paddingTop="16dp"
-                android:paddingBottom="0dp" />
+                android:paddingBottom="0dp"
+                android:minEms="4"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Repetir contraseña -->
@@ -162,7 +163,8 @@
                 android:background="@android:color/transparent"
                 android:hint="@string/repetir_contraseña"
                 android:paddingTop="16dp"
-                android:paddingBottom="0dp" />
+                android:paddingBottom="0dp"
+                android:minEms="4"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Número de empresa -->

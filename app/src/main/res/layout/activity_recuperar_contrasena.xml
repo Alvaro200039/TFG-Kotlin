@@ -146,7 +146,8 @@
                     android:background="@android:color/transparent"
                     android:hint="Nueva contraseña"
                     android:paddingTop="16dp"
-                    android:paddingBottom="0dp" />
+                    android:paddingBottom="0dp"
+                    android:minEms="4"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -174,7 +175,8 @@
                     android:background="@android:color/transparent"
                     android:hint="Repite la nueva contraseña"
                     android:paddingTop="16dp"
-                    android:paddingBottom="0dp" />
+                    android:paddingBottom="0dp"
+                    android:minEms="4"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
