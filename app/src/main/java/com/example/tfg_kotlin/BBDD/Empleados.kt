@@ -9,7 +9,6 @@ data class Empleados(
     val nombre: String,
     val apellidos: String = "",
     val correo: String,
-    val dominio: String,
     val contrasena: String,
     val cif: String = "",
     val esJefe: Boolean

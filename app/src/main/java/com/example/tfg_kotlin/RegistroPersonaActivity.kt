@@ -122,7 +122,6 @@ class RegistroPersonaActivity : AppCompatActivity() {
                     nombre = etNombre.text.toString(),
                     apellidos = etApellidos.text.toString(),
                     correo = correo,
-                    dominio = dominio,
                     contrasena = etContrasena.text.toString(),
                     cif = if (esJefe) cifInput else "",
                     esJefe = esJefe

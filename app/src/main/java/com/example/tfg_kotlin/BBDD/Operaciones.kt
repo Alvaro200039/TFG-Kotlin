@@ -32,8 +32,8 @@ interface Operaciones {
     @Query("SELECT * FROM Empresa WHERE cif = :cif")
     fun getEmpresaPorCif(cif: String): Empresa?
 
-    fun construirNombreBD(dominio: String): String {
-        return "empresa_${dominio.lowercase()}.db"
+    fun construirNombreBD(correo: String: String): String {
+        return "empresa_${correo.lowercase()}.db"
     }
 
     @Query("UPDATE Empleados SET contrasena = :nuevaPass WHERE correo = :correo")
