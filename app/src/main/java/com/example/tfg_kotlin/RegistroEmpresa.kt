@@ -8,9 +8,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
-import com.example.tfg_kotlin.BBDD.database.DB_Empresa
-import com.example.tfg_kotlin.BBDD.database.DB_Maestra
-import com.example.tfg_kotlin.BBDD.entities.TablaEmpresa
+import com.example.tfg_kotlin.BBDD_Global.database.DB_Empresa
+import com.example.tfg_kotlin.BBDD_Master.database.DB_Maestra
+import com.example.tfg_kotlin.BBDD_Master.entities.Empresa
 import kotlinx.coroutines.launch
 
 class RegistroEmpresa : AppCompatActivity() {
@@ -61,7 +61,7 @@ class RegistroEmpresa : AppCompatActivity() {
         }
 
         //Definición de los datos a introducir en la tabla Empleados -> BD_Maestra
-        val empresa = TablaEmpresa(cif, nombre, dominio)
+        val empresa = Empresa(cif, nombre, dominio)
 
         // Room puede tardar vastante tiempo en acceder o realizar acciones en bd incluso puede congelar la aplicacoón
         // Para que esto no suceda, dejamos que la interfaz gráfica se ejecute en un hilo principal

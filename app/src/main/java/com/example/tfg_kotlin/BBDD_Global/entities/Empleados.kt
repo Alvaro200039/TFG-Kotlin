@@ -1,10 +1,10 @@
-package com.example.tfg_kotlin.BBDD.entities
+package com.example.tfg_kotlin.BBDD_Global.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "Empleados")
-data class TablaEmpleados(
+data class Empleados(
     @PrimaryKey (autoGenerate = true) val id: Int = 0,
     val correo: String,
     val nombre: String,

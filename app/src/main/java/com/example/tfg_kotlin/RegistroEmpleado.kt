@@ -7,9 +7,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
-import com.example.tfg_kotlin.BBDD.database.DB_Empresa
-import com.example.tfg_kotlin.BBDD.database.DB_Maestra
-import com.example.tfg_kotlin.BBDD.entities.TablaEmpleados
+import com.example.tfg_kotlin.BBDD_Global.database.DB_Empresa
+import com.example.tfg_kotlin.BBDD_Master.database.DB_Maestra
+import com.example.tfg_kotlin.BBDD_Global.entities.Empleados
 import kotlinx.coroutines.launch
 
 class RegistroEmpleado : AppCompatActivity() {
@@ -96,7 +96,7 @@ class RegistroEmpleado : AppCompatActivity() {
                 DB_Empresa::class.java, dbnombre).build()
 
 
-            val daoEmpleado = dbEmpresa.appDao()
+            val daoEmpleado = dbEmpresa.empresaDao()
 
             // Verifica si el correo ya está registrado
             val empleadoExistente = daoEmpleado.obtenerPorCorreo(correo)
@@ -111,7 +111,7 @@ class RegistroEmpleado : AppCompatActivity() {
             val esJefe = empresa.cif.equals(etCif)
 
             // Creamos al emprpleado y lo insertamos en la tabla de emplados
-            val empleado = TablaEmpleados(
+            val empleado = Empleados(
                 correo = correo,
                 nombre = nombre,
                 apellidos = apellidos,
