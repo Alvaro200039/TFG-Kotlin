@@ -108,7 +108,7 @@ class Activity_creacion : AppCompatActivity() {
             val empresaPorDefecto = repository.empresaDao.obtenerEmpresaPorId(1)
             if (empresaPorDefecto == null) {
                 repository.empresaDao.insertarEmpresa(
-                    Empresa(id = 1, nombre = "Empresa por defecto", creadorId = 1)
+                    Empresa(id = 1, nombre = "Empresa por defecto", cif = "A1111111")
                 )
             }
 

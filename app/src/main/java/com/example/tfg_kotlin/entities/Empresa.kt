@@ -5,10 +5,10 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "empresas")
 data class Empresa(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey()
+    val cif: String,
+
     val id: Int = 0,
 
     val nombre: String,
-
-    val creadorId: Int  // Usuario jefe que creó la empresa
 )
