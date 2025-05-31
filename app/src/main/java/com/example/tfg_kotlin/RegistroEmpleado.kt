@@ -1,6 +1,5 @@
 package com.example.tfg_kotlin
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -8,9 +7,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
-import com.example.tfg_kotlin.BBDD.DB_Empresa
-import com.example.tfg_kotlin.BBDD.DB_Maestra
-import com.example.tfg_kotlin.BBDD.TablaEmpleados
+import com.example.tfg_kotlin.BBDD.database.DB_Empresa
+import com.example.tfg_kotlin.BBDD.database.DB_Maestra
+import com.example.tfg_kotlin.BBDD.entities.TablaEmpleados
 import kotlinx.coroutines.launch
 
 class RegistroEmpleado : AppCompatActivity() {
@@ -93,7 +92,8 @@ class RegistroEmpleado : AppCompatActivity() {
 
             //Creamos el acceso a la bd_individual por empresa
             val dbnombre = "db_${nombre.lowercase().replace(" ", "_")}"
-            val dbEmpresa = Room.databaseBuilder(applicationContext,DB_Empresa::class.java, dbnombre).build()
+            val dbEmpresa = Room.databaseBuilder(applicationContext,
+                DB_Empresa::class.java, dbnombre).build()
 
 
             val daoEmpleado = dbEmpresa.appDao()

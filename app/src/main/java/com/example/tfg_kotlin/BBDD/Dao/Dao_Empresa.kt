@@ -1,8 +1,11 @@
-package com.example.tfg_kotlin.BBDD
+package com.example.tfg_kotlin.BBDD.Dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.tfg_kotlin.BBDD.entities.TablaEmpleados
+import com.example.tfg_kotlin.BBDD.entities.TablaSalaReservada
+import com.example.tfg_kotlin.BBDD.entities.TablaSalas
 
 
 @Dao

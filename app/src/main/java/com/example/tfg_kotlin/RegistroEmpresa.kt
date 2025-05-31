@@ -8,9 +8,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
-import com.example.tfg_kotlin.BBDD.DB_Empresa
-import com.example.tfg_kotlin.BBDD.DB_Maestra
-import com.example.tfg_kotlin.BBDD.TablaEmpresa
+import com.example.tfg_kotlin.BBDD.database.DB_Empresa
+import com.example.tfg_kotlin.BBDD.database.DB_Maestra
+import com.example.tfg_kotlin.BBDD.entities.TablaEmpresa
 import kotlinx.coroutines.launch
 
 class RegistroEmpresa : AppCompatActivity() {
