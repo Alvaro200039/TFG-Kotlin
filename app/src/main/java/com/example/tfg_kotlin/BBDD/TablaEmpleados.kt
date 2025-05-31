@@ -5,7 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "Empleados")
 data class TablaEmpleados(
-    @PrimaryKey val correo: String,
+    @PrimaryKey (autoGenerate = true) val id: Int = 0,
+    val correo: String,
     val nombre: String,
     val apellidos: String,
     val contrasena: String,

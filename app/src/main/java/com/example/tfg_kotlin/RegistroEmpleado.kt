@@ -111,14 +111,22 @@ class RegistroEmpleado : AppCompatActivity() {
             val esJefe = empresa.cif.equals(etCif)
 
             // Creamos al emprpleado y lo insertamos en la tabla de emplados
-            val empleado = TablaEmpleados(correo, nombre, apellidos, contrasena, cif, esJefe)
-            daoEmpleado.insertarEmpleado(empleado)
+            val empleado = TablaEmpleados(
+                correo = correo,
+                nombre = nombre,
+                apellidos = apellidos,
+                contrasena = contrasena,
+                cif = cif,
+                esJefe = esJefe
+            )
+
+            val id = daoEmpleado.insertarEmpleado(empleado)
 
             runOnUiThread {
                 val mensaje = if (esJefe) {
-                    "Empleado registrado correctamente (ES JEFE)"
+                    "Empleado registrado como Jefe (ID: $id)"
                 } else {
-                    "Empleado registrado correctamente (NO ES JEFE)"
+                    "Empleado registrado (ID: $id)"
                 }
                 Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
                 etCorreo.text.clear()
