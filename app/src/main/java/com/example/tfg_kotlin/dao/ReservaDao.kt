@@ -12,6 +12,9 @@ interface ReservaDao {
     @Query("SELECT * FROM reservas")
     suspend fun obtenerTodasReservas(): List<Reserva>
 
+    @Query("SELECT * FROM reservas WHERE idusuario = :idUsuario")
+    suspend fun getReservasPorUsuario(idUsuario: Int): List<Reserva>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarReserva(reserva: Reserva)
 

@@ -130,15 +130,28 @@ class activity_menu_creador : AppCompatActivity() {
         limpiarReservasPasadas()
         mostrarSiguienteReserva()
 
+        val idUsuario = 123 // Igual que en reservarSala, o cambia para obtenerlo dinámico
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         lifecycleScope.launch {
+            val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
+            val nombreUsuario = usuarioActual?.nombre ?: "Juan"
+
             val reservas = repository.getAllReservas().toMutableList()
 
-            if (reservas.isEmpty()) {
+            // Filtrar solo las reservas del usuario actual
+            val reservasUsuario = reservas.filter { it.idusuario == idUsuario }
+
+            if (reservasUsuario.isEmpty()) {
                 Toast.makeText(this@activity_menu_creador, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
                 return@launch
             }
 
-            val reservasPorPiso = reservas.groupBy { it.piso }
+            val reservasPorPiso = reservasUsuario.groupBy { it.piso }
             val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
             val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
 
@@ -208,8 +221,6 @@ class activity_menu_creador : AppCompatActivity() {
         }
     }
 
-
-
     private fun limpiarReservasPasadas() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val ahora = formato.format(Date()) // Lo convertimos a String porque Room usa fechaHora como String
@@ -223,9 +234,9 @@ class activity_menu_creador : AppCompatActivity() {
         val textView = findViewById<TextView>(R.id.textProximaReserva)
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val ahora = Date()
-
+        val idUsuario = 123
         lifecycleScope.launch {
-            val reservas = repository.getAllReservas()
+            val reservas = repository.getReservasPorUsuario(idUsuario)
 
             val reservasFuturas = reservas.filter {
                 try {

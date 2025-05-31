@@ -36,6 +36,10 @@ class AppRepository(
 
     suspend fun getAllReservas() = reservaDao.obtenerTodasReservas()
 
+    suspend fun getReservasPorUsuario(idUsuario: Int): List<Reserva> {
+        return reservaDao.getReservasPorUsuario(idUsuario)
+    }
+
     suspend fun getReservasPorPiso(piso: String) = reservaDao.obtenerPorPiso(piso)
 
     suspend fun getReservasPorFechaHora(fechaHora: String) = reservaDao.obtenerReservasPorFechaHora(fechaHora)

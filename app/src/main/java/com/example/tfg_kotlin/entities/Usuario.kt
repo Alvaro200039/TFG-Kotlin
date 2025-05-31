@@ -10,6 +10,7 @@ data class Usuario(
 
     val nombre: String,
     val email: String,
+    val contrasena: String,
     val esJefe: Boolean = false
 )
 

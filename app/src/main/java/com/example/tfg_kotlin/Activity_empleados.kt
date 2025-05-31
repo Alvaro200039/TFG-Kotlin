@@ -1,8 +1,11 @@
 package com.example.tfg_kotlin
 
 import android.app.DatePickerDialog
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -32,6 +35,7 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.example.tfg_kotlin.activity_menu_creador
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -273,9 +277,10 @@ class Activity_empleados : AppCompatActivity() {
 
 
     private suspend fun cargarImagenFondo(nombrePiso: String, empresaId: Int?) {
+        val contentLayout = findViewById<ConstraintLayout>(R.id.contentLayout)
         if (empresaId == null) {
             withContext(Dispatchers.Main) {
-                container.setBackgroundResource(R.drawable.wallpaper)
+                contentLayout.setBackgroundResource(R.drawable.wallpaper)
             }
             return
         }
@@ -283,32 +288,34 @@ class Activity_empleados : AppCompatActivity() {
         val piso = repository.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaId)
 
         withContext(Dispatchers.Main) {
-            if (piso == null || piso.uriFondo.isEmpty()) {
-                container.setBackgroundResource(R.drawable.wallpaper)
+            if (piso == null || piso.imagen == null) {
+                contentLayout.setBackgroundResource(R.drawable.wallpaper)
                 return@withContext
             }
 
             try {
-                val uri = piso.uriFondo.toUri()
+                val imagenBytes = piso.imagen
+                val bitmap = BitmapFactory.decodeByteArray(imagenBytes, 0, imagenBytes.size)
+
                 Glide.with(this@Activity_empleados)
-                    .load(uri)
+                    .asBitmap()
+                    .load(bitmap)
                     .centerCrop()
-                    .into(object : CustomTarget<Drawable>() {
-                        override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                            container.background = resource
+                    .into(object : CustomTarget<Bitmap>() {
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            contentLayout.background = BitmapDrawable(resources, resource)
                         }
 
                         override fun onLoadCleared(placeholder: Drawable?) {
-                            // limpiar fondo si es necesario
+                            // Opcional: limpia el fondo si quieres
                         }
                     })
             } catch (e: Exception) {
                 e.printStackTrace()
-                container.setBackgroundResource(R.drawable.wallpaper)
+                contentLayout.setBackgroundResource(R.drawable.wallpaper)
             }
         }
     }
-
 
     private fun mostrarDialogoFecha() {
         snackbarActivo?.dismiss()
@@ -340,15 +347,28 @@ class Activity_empleados : AppCompatActivity() {
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
 
+        val idUsuario = 123 // Igual que en reservarSala, o cambia para obtenerlo dinámico
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         lifecycleScope.launch {
+            val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
+            val nombreUsuario = usuarioActual?.nombre ?: "Juan"
+
             val reservas = repository.getAllReservas().toMutableList()
 
-            if (reservas.isEmpty()) {
+            // Filtrar solo las reservas del usuario actual
+            val reservasUsuario = reservas.filter { it.idusuario == idUsuario }
+
+            if (reservasUsuario.isEmpty()) {
                 Toast.makeText(this@Activity_empleados, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
                 return@launch
             }
 
-            val reservasPorPiso = reservas.groupBy { it.piso }
+            val reservasPorPiso = reservasUsuario.groupBy { it.piso }
             val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
             val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
 
@@ -500,36 +520,49 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun mostrarDialogoDetallesSala(sala: Salas) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-        val nombreUsuario = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-            .getString("nombre_usuario", "Empleado") ?: "Empleado"
+        val idUsuario = 123 // O recuperarlo de SharedPreferences
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         lifecycleScope.launch {
-            // Obtener el nombre del piso desde el pisoId
-            val piso = repository.pisoDao.obtenerPisoPorId(sala.pisoId)
+            val usuario = repository.usuarioDao.getUsuarioById(idUsuario)
+            val nombreUsuario = usuario?.nombre ?: "Juan"
 
-            // Obtener reservas para la fecha y hora con Room
+            val piso = repository.pisoDao.obtenerPisoPorId(sala.pisoId)
             val reservas = repository.getReservasPorFechaHora(fechaHora).toMutableList()
 
             val reservaExistente = reservas.find {
                 it.nombreSala == sala.nombre &&
                         it.piso.trim() == piso?.nombre?.trim() &&
-                        it.fechaHora == fechaHora &&
-                        it.nombreUsuario == nombreUsuario
+                        it.fechaHora == fechaHora
             }
 
             val builder = AlertDialog.Builder(this@Activity_empleados)
             builder.setTitle("Detalles de ${sala.nombre}")
 
-            val detalles = """
-            Piso: ${piso?.nombre}
-            Tamaño: ${sala.tamaño}
-            Extras: ${if (sala.extras.isNotEmpty()) sala.extras.joinToString(", ") else "Ninguno"}
-            Fecha: $fechaSeleccionada
-            Hora: $horaSeleccionada
-        """.trimIndent()
-            builder.setMessage(detalles)
+            // Inflar layout personalizado
+            val dialogView = layoutInflater.inflate(R.layout.dialog_detalles_sala, null)
 
-            if (reservaExistente != null) {
+            // Referencias a TextViews
+            val tvPiso = dialogView.findViewById<TextView>(R.id.tvValorPiso)
+            val tvTamano = dialogView.findViewById<TextView>(R.id.tvValorTamano)
+            val tvExtras = dialogView.findViewById<TextView>(R.id.tvValorExtras)
+            val tvFecha = dialogView.findViewById<TextView>(R.id.tvValorFecha)
+            val tvHora = dialogView.findViewById<TextView>(R.id.tvValorHora)
+
+            // Asignar valores
+            tvPiso.text = piso?.nombre ?: "Desconocido"
+            tvTamano.text = sala.tamaño
+            tvExtras.text = if (sala.extras.isNotEmpty()) sala.extras.joinToString(", ") else "Ninguno"
+            tvFecha.text = fechaSeleccionada
+            tvHora.text = horaSeleccionada
+
+            builder.setView(dialogView)
+
+            if (reservaExistente != null && reservaExistente.nombreUsuario == nombreUsuario) {
                 builder.setPositiveButton("Cancelar reserva") { _, _ ->
                     lifecycleScope.launch {
                         repository.eliminarReserva(reservaExistente)
@@ -537,10 +570,12 @@ class Activity_empleados : AppCompatActivity() {
                         Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
                     }
                 }
-            } else {
+            } else if (reservaExistente == null) {
                 builder.setPositiveButton("Reservar") { _, _ ->
                     reservarSala(sala.nombre)
                 }
+            } else {
+                builder.setPositiveButton("Reservada") { _, _ -> }
             }
 
             builder.setNegativeButton("Cerrar") { dialog, _ -> dialog.dismiss() }
@@ -548,15 +583,21 @@ class Activity_empleados : AppCompatActivity() {
             val dialog = builder.create()
             dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
             dialog.setOnShowListener {
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                    ?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                    ?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                negativeButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
+
+                if (reservaExistente != null && reservaExistente.nombreUsuario != nombreUsuario) {
+                    positiveButton?.isEnabled = false
+                    positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.grey))
+                    Toast.makeText(this@Activity_empleados, "Reservada por ${reservaExistente.nombreUsuario} a esta hora", Toast.LENGTH_SHORT).show()
+                }
             }
             dialog.show()
         }
     }
-
     private fun formatearTextoSala(sala: Salas): String {
         val builder = StringBuilder().append(sala.nombre)
         if (sala.extras.isNotEmpty()) {
@@ -608,38 +649,41 @@ class Activity_empleados : AppCompatActivity() {
     private fun reservarSala(nombreSala: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
 
-        val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-        val idUsuario = prefs.getInt("usuario_id", -1)
+        //val prefs = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+        //val idUsuario = prefs.getInt("usuario_id", -1)  // Mejor usar -1 como default para detectar fallo
+        val idUsuario = 123   // id de usuario fijo para pruebas
 
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
         }
-
         lifecycleScope.launch {
+
             val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
-            val nombreUsuario = usuarioActual?.nombre ?: "Empleado"
+            val nombreUsuario = usuarioActual?.nombre ?: "Juan"
 
             // Obtener todos los pisos
             val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
             val nombrePiso = pisos.find { it.id == pisoSeleccionado }?.nombre ?: ""
 
-
             val reservas = repository.getReservasPorFechaHora(fechaHora)
 
+            // Buscar reserva en la misma sala, mismo piso y fechaHora
             val reservaExistente = reservas.find {
                 it.nombreSala == nombreSala && it.piso == nombrePiso && it.fechaHora == fechaHora
             }
 
+            // Buscar si el usuario ya tiene reserva a esa hora, sin importar la sala o piso
             val reservaUsuarioMismaHora = reservas.find {
-                it.fechaHora == fechaHora && it.nombreUsuario == nombreUsuario
+                it.fechaHora == fechaHora && it.idusuario == idUsuario
             }
 
             if (reservaExistente != null) {
-                if (reservaExistente.nombreUsuario == nombreUsuario) {
+                if (reservaExistente.idusuario == idUsuario) {
+                    // Es la reserva del mismo usuario -> preguntar si quiere cancelar
                     val dialog = AlertDialog.Builder(this@Activity_empleados)
                         .setTitle("Cancelar reserva")
-                        .setMessage("¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
+                        .setMessage("'$nombreUsuario', ¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
                         .setPositiveButton("Sí") { _, _ ->
                             lifecycleScope.launch {
                                 repository.eliminarReserva(reservaExistente)
@@ -649,19 +693,34 @@ class Activity_empleados : AppCompatActivity() {
                         }
                         .setNegativeButton("No", null)
                         .create()
+                    dialog.setOnShowListener {
+                        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                        val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                        positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                        negativeButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
+                    }
                     dialog.show()
                     dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                 } else {
-                    Toast.makeText(this@Activity_empleados, "Ya reservada por ${reservaExistente.nombreUsuario} en este piso", Toast.LENGTH_SHORT).show()
+                    // Otro usuario ya reservó esa sala a esa hora
+                    Toast.makeText(
+                        this@Activity_empleados,
+                        "Sala ya reservada por ${reservaExistente.nombreUsuario} en este piso",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 return@launch
             }
 
             if (reservaUsuarioMismaHora != null) {
-                Toast.makeText(this@Activity_empleados, "Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora.nombreSala}' (${reservaUsuarioMismaHora.piso})", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@Activity_empleados,
+                    "Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora.nombreSala}' (${reservaUsuarioMismaHora.piso})",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@launch
             }
-
 
             val dialog = AlertDialog.Builder(this@Activity_empleados)
                 .setTitle("Confirmar reserva")
@@ -672,6 +731,7 @@ class Activity_empleados : AppCompatActivity() {
                             nombreSala = nombreSala,
                             fechaHora = fechaHora,
                             nombreUsuario = nombreUsuario,
+                            idusuario = idUsuario,
                             piso = nombrePiso
                         )
                         repository.insertarReserva(reserva)
@@ -692,5 +752,6 @@ class Activity_empleados : AppCompatActivity() {
             dialog.show()
         }
     }
+
 
 }

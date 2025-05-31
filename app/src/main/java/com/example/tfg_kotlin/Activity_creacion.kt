@@ -170,7 +170,7 @@ class Activity_creacion : AppCompatActivity() {
                         guardarDistribucion(
                             empresaId = empresaId,
                             pisoNombre = pisoNombre,
-                            fondoUri = fondoUri,
+                            imagen = imagen,
                             container = container,
                             pisoDao = repository.pisoDao,
                             salaDao = repository.salaDao
@@ -367,7 +367,7 @@ private fun openGallery() {
                     // SOLO actualizamos el nombre en memoria y en UI, no guardamos en base de datos
                     pisoActual = if (piso == null) {
                         // Piso nuevo en memoria, sin ID aún (id=0 o -1)
-                        Piso(id, nombre = nuevoTitulo, uriFondo = fondoUri, empresaId = 1)
+                        Piso(id, nombre = nuevoTitulo, imagen = imagen, empresaId = 1)
                     } else {
                         piso.copy(nombre = nuevoTitulo)
                     }
@@ -707,7 +707,7 @@ private fun openGallery() {
     suspend fun guardarDistribucion(
         empresaId: Int,
         pisoNombre: String,
-        fondoUri: Uri?,
+        imagen: ByteArray?,
         container: ViewGroup,
         pisoDao: PisoDao,
         salaDao: SalaDao
@@ -759,15 +759,15 @@ private fun openGallery() {
             val pisoId = if (pisoExistente == null) {
                 val nuevoPiso = Piso(
                     nombre = pisoNombre,
-                    uriFondo = fondoUri,
-                    empresaId = empresaId
+                    empresaId = empresaId,
+                    imagen = imagen // ← CAMBIADO
                 )
                 pisoDao.insertarPiso(nuevoPiso).toInt()
             } else {
                 val pisoActualizado = pisoExistente.copy(
                     nombre = pisoNombre,
-                    uriFondo = fondoUri,
-                    empresaId = empresaId
+                    empresaId = empresaId,
+                    imagen = imagen // ← CAMBIADO
                 )
                 pisoDao.actualizarPiso(pisoActualizado)
                 pisoExistente.id
@@ -881,10 +881,13 @@ private fun openGallery() {
     }
 
 
-    // Aquí es donde gestionas la selección de imagen de fondo
+
+    private var imagen: ByteArray? = null // esto lo usarás al guardar en la base de datos
+
     private val getImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            fondoUri = uri // Guarda la URI seleccionada
+            imagen = contentResolver.openInputStream(uri)?.use { it.readBytes() } // convierte a byte array
+
             Glide.with(this)
                 .load(uri)
                 .fitCenter()
