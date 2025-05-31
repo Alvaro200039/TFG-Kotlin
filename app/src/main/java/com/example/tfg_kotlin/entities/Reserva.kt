@@ -9,5 +9,6 @@ data class Reserva(
     val nombreSala: String,
     val fechaHora: String,
     val nombreUsuario: String,
+    val idusuario: Int,
     val piso: String
 )
