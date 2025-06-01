@@ -30,28 +30,29 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
 import java.util.Calendar
-import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import com.example.tfg_kotlin.activity_menu_creador
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.example.tfg_kotlin.database.AppDatabase
-import com.example.tfg_kotlin.entities.Piso
-import com.example.tfg_kotlin.entities.Reserva
-import com.example.tfg_kotlin.entities.Salas
+import com.example.tfg_kotlin.database.MasterDatabase
+import com.example.tfg_kotlin.entitiesApp.Piso
+import com.example.tfg_kotlin.entitiesApp.Reserva
+import com.example.tfg_kotlin.entitiesApp.Salas
 import com.example.tfg_kotlin.repository.AppRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.tfg_kotlin.repository.MasterRepository
 
 
 class Activity_empleados : AppCompatActivity() {
-    private lateinit var repository: AppRepository
+    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryMaster: MasterRepository
     private lateinit var container: ConstraintLayout
     private var fechaSeleccionada: String = ""
     private var horaSeleccionada: String = ""
@@ -66,14 +67,19 @@ class Activity_empleados : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        repositoryMaster = MasterRepository(
+            masterDb.empresaDao()
+        )
+
         val db = AppDatabase.getDatabase(applicationContext)
-        repository = AppRepository(
+        repositoryApp = AppRepository(
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),
             db.franjahorariaDao(),
-            db.pisoDao(),
-            db.empresaDao()
+            db.pisoDao()
         )
         enableEdgeToEdge()
         setContentView(R.layout.activity_empleados)
@@ -106,7 +112,7 @@ class Activity_empleados : AppCompatActivity() {
 
         // Cargar pisos desde Room y asignar adapter
         lifecycleScope.launch {
-            repository.pisoDao.obtenerTodosLosPisos().collect { pisos ->
+            repositoryApp.pisoDao.obtenerTodosLosPisos().collect { pisos ->
                 listaPisos = pisos
                 val nombresPisos = pisos.map { it.nombre }
                 val adapter = ArrayAdapter(this@Activity_empleados, android.R.layout.simple_spinner_item, nombresPisos)
@@ -120,7 +126,7 @@ class Activity_empleados : AppCompatActivity() {
                 val piso = listaPisos[position]
                 pisoSeleccionado = piso.id
                 val nombrePiso = piso.nombre
-                val empresaId: Int? = piso.empresaId
+                val empresaId: String = piso.empresaCif
 
                 // Carga las salas (sin cargar imagen)
                 cargarSalas(
@@ -221,12 +227,12 @@ class Activity_empleados : AppCompatActivity() {
         }
     }
 
-    private fun cargarSalas(nombrePiso: String, empresaId: Int?) {
+    private fun cargarSalas(nombrePiso: String, empresaId: String) {
         container.removeAllViews()
 
         lifecycleScope.launch {
             try {
-                val salas = repository.getSalasPorNombrePiso(nombrePiso)
+                val salas = repositoryApp.getSalasPorNombrePiso(nombrePiso)
                 withContext(Dispatchers.Main) {
                     for (sala in salas) {
                         val salaButton = Button(this@Activity_empleados).apply {
@@ -276,7 +282,7 @@ class Activity_empleados : AppCompatActivity() {
     }
 
 
-    private suspend fun cargarImagenFondo(nombrePiso: String, empresaId: Int?) {
+    private suspend fun cargarImagenFondo(nombrePiso: String, empresaId: String) {
         val contentLayout = findViewById<ConstraintLayout>(R.id.contentLayout)
         if (empresaId == null) {
             withContext(Dispatchers.Main) {
@@ -285,7 +291,7 @@ class Activity_empleados : AppCompatActivity() {
             return
         }
 
-        val piso = repository.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaId)
+        val piso = repositoryApp.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaId)
 
         withContext(Dispatchers.Main) {
             if (piso == null || piso.imagen == null) {
@@ -355,10 +361,10 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
+            val usuarioActual = repositoryApp.usuarioDao.getUsuarioById(idUsuario)
             val nombreUsuario = usuarioActual?.nombre ?: "Juan"
 
-            val reservas = repository.getAllReservas().toMutableList()
+            val reservas = repositoryApp.getAllReservas().toMutableList()
 
             // Filtrar solo las reservas del usuario actual
             val reservasUsuario = reservas.filter { it.idusuario == idUsuario }
@@ -395,7 +401,7 @@ class Activity_empleados : AppCompatActivity() {
                                 .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
                                 .setPositiveButton("Sí") { _, _ ->
                                     lifecycleScope.launch {
-                                        repository.eliminarReserva(reserva)
+                                        repositoryApp.eliminarReserva(reserva)
 
                                         dialog.dismiss()
                                         mostrarDialogoReservas() // Recargar reservas
@@ -443,7 +449,7 @@ class Activity_empleados : AppCompatActivity() {
         val ahora = formato.format(Date()) // Lo convertimos a String porque Room usa fechaHora como String
 
         lifecycleScope.launch {
-            repository.limpiarReservasAntiguas(ahora)
+            repositoryApp.limpiarReservasAntiguas(ahora)
         }
     }
 
@@ -458,7 +464,7 @@ class Activity_empleados : AppCompatActivity() {
             try {
                 // Obtén la lista desde Room
                 val franjas = withContext(Dispatchers.IO) {
-                    repository.getFranjasHorarias()
+                    repositoryApp.getFranjasHorarias()
                 }
                 val franjasOriginales = franjas.map { it.hora }
 
@@ -528,11 +534,11 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val usuario = repository.usuarioDao.getUsuarioById(idUsuario)
+            val usuario = repositoryApp.usuarioDao.getUsuarioById(idUsuario)
             val nombreUsuario = usuario?.nombre ?: "Juan"
 
-            val piso = repository.pisoDao.obtenerPisoPorId(sala.pisoId)
-            val reservas = repository.getReservasPorFechaHora(fechaHora).toMutableList()
+            val piso = repositoryApp.pisoDao.obtenerPisoPorId(sala.pisoId)
+            val reservas = repositoryApp.getReservasPorFechaHora(fechaHora).toMutableList()
 
             val reservaExistente = reservas.find {
                 it.nombreSala == sala.nombre &&
@@ -565,7 +571,7 @@ class Activity_empleados : AppCompatActivity() {
             if (reservaExistente != null && reservaExistente.nombreUsuario == nombreUsuario) {
                 builder.setPositiveButton("Cancelar reserva") { _, _ ->
                     lifecycleScope.launch {
-                        repository.eliminarReserva(reservaExistente)
+                        repositoryApp.eliminarReserva(reservaExistente)
                         verificarDisponibilidad(fechaHora)
                         Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
                     }
@@ -618,10 +624,10 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun verificarDisponibilidad(fechaHora: String) {
         lifecycleScope.launch {
-            val reservas = repository.getReservasPorFechaHora(fechaHora)  // suspend
+            val reservas = repositoryApp.getReservasPorFechaHora(fechaHora)  // suspend
 
             // Recolectar el flow para obtener lista
-            val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
+            val pisos = repositoryApp.pisoDao.obtenerTodosLosPisos().first()
             val mapaPisos = pisos.associate { it.id to it.nombre }
 
             for (i in 0 until container.childCount) {
@@ -656,21 +662,21 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
+            val usuarioActual = repositoryApp.usuarioDao.getUsuarioById(idUsuario)
             val nombreUsuario = usuarioActual?.nombre ?: "Juan"
 
             // Obtener todos los pisos
-            val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
+            val pisos = repositoryApp.pisoDao.obtenerTodosLosPisos().first()
             val nombrePiso = pisos.find { it.id == pisoSeleccionado }?.nombre ?: ""
 
             // Obtener la sala con nombreSala y pisoId (pisoSeleccionado)
-            val salaSeleccionada = repository.salaDao.obtenerSalaPorNombreYPiso(nombreSala, pisoSeleccionado)
+            val salaSeleccionada = repositoryApp.salaDao.obtenerSalaPorNombreYPiso(nombreSala, pisoSeleccionado)
             if (salaSeleccionada == null) {
                 Toast.makeText(this@Activity_empleados, "No se encontró la sala para reservar", Toast.LENGTH_SHORT).show()
                 return@launch
             }
 
-            val reservas = repository.getReservasPorFechaHora(fechaHora)
+            val reservas = repositoryApp.getReservasPorFechaHora(fechaHora)
 
             // Buscar reserva en la misma sala, mismo piso y fechaHora
             val reservaExistente = reservas.find {
@@ -690,7 +696,7 @@ class Activity_empleados : AppCompatActivity() {
                         .setMessage("'$nombreUsuario', ¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
                         .setPositiveButton("Sí") { _, _ ->
                             lifecycleScope.launch {
-                                repository.eliminarReserva(reservaExistente)
+                                repositoryApp.eliminarReserva(reservaExistente)
                                 verificarDisponibilidad(fechaHora)
                                 Toast.makeText(this@Activity_empleados, "Reserva cancelada para $nombreSala", Toast.LENGTH_SHORT).show()
                             }
@@ -739,7 +745,7 @@ class Activity_empleados : AppCompatActivity() {
                             id = 0,                  // Room generará el id automáticamente
                             idSala = salaSeleccionada.id  // ID real de la sala
                         )
-                        repository.insertarReserva(reserva)
+                        repositoryApp.insertarReserva(reserva)
                         verificarDisponibilidad(fechaHora)
                         Toast.makeText(this@Activity_empleados, "Reserva realizada para $nombreSala en el $nombrePiso", Toast.LENGTH_SHORT).show()
                     }

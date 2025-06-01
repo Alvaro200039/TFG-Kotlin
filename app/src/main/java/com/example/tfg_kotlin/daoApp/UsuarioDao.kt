@@ -1,7 +1,12 @@
-package com.example.tfg_kotlin.dao
+package com.example.tfg_kotlin.daoApp
 
-import androidx.room.*
-import com.example.tfg_kotlin.entities.Usuario
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.example.tfg_kotlin.entitiesApp.Usuario
 
 @Dao
 interface UsuarioDao {

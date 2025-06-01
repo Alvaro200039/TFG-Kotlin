@@ -1,8 +1,7 @@
-package com.example.tfg_kotlin.dao
+package com.example.tfg_kotlin.daoApp
 
 import androidx.room.*
-import com.example.tfg_kotlin.entities.FranjaHoraria
-import kotlinx.coroutines.flow.Flow
+import com.example.tfg_kotlin.entitiesApp.FranjaHoraria
 
 @Dao
 interface FranjaHorariaDao {

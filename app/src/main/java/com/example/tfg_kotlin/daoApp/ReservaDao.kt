@@ -1,7 +1,7 @@
-package com.example.tfg_kotlin.dao
+package com.example.tfg_kotlin.daoApp
 
 import androidx.room.*
-import com.example.tfg_kotlin.entities.Reserva
+import com.example.tfg_kotlin.entitiesApp.Reserva
 
 @Dao
 interface ReservaDao {

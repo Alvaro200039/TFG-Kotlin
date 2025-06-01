@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.os.Looper
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
@@ -42,36 +41,53 @@ import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
+import androidx.room.Room
 import com.example.tfg_kotlin.Utils.naturalOrderKey
 import com.example.tfg_kotlin.Utils.compareNaturalKeys
-import com.example.tfg_kotlin.dao.PisoDao
-import com.example.tfg_kotlin.dao.SalaDao
+import com.example.tfg_kotlin.daoApp.PisoDao
+import com.example.tfg_kotlin.daoApp.SalaDao
 import com.example.tfg_kotlin.database.AppDatabase
-import com.example.tfg_kotlin.entities.Empresa
-import com.example.tfg_kotlin.entities.FranjaHoraria
-import com.example.tfg_kotlin.entities.Piso
-import com.example.tfg_kotlin.entities.Salas
+import com.example.tfg_kotlin.database.MasterDatabase
+import com.example.tfg_kotlin.entitiesApp.FranjaHoraria
+import com.example.tfg_kotlin.entitiesApp.Piso
+import com.example.tfg_kotlin.entitiesApp.Salas
+import com.example.tfg_kotlin.entitiesMaster.Empresa
 import com.example.tfg_kotlin.repository.AppRepository
+import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.logging.Handler
-import androidx.core.net.toUri
 
 
 class Activity_creacion : AppCompatActivity() {
 
     private lateinit var container: ConstraintLayout
-    private lateinit var repository: AppRepository
+    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryMaster: MasterRepository
     private var pisoActual: Piso? = null
-    private var empresaId: Int = -1  // Declaras la propiedad aquí
+    private var empresaCif: String = ""
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        repositoryMaster = MasterRepository(
+            masterDb.empresaDao()
+        )
+
+        val db = AppDatabase.getDatabase(applicationContext)
+        repositoryApp = AppRepository(
+            db.usuarioDao(),
+            db.salaDao(),
+            db.reservaDao(),
+            db.franjahorariaDao(),
+            db.pisoDao()
+        )
+
         setContentView(R.layout.activity_creacion)
 
         enableEdgeToEdge()
@@ -93,38 +109,31 @@ class Activity_creacion : AppCompatActivity() {
             showChangeTitleDialog()
         }
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        repository = AppRepository(
-            db.usuarioDao(),
-            db.salaDao(),
-            db.reservaDao(),
-            db.franjahorariaDao(),
-            db.pisoDao(),
-            db.empresaDao()
-        )
-
         lifecycleScope.launch {
-            val empresaPorDefecto = repository.empresaDao.obtenerEmpresaPorId(1)
+            val empresaPorDefecto = repositoryMaster.empresaDao.obtenerEmpresaPorCif("A1111111")
             if (empresaPorDefecto == null) {
-                repository.empresaDao.insertarEmpresa(
+                repositoryMaster.empresaDao.insertarEmpresa(
                     Empresa(
-                        id = 1, nombre = "Empresa por defecto", creadorId = 1, cif = "A1111111")
+                        cif = "A1111111",
+                        dominio = "@empresa.es",
+                        nombre = "empresa"
+                    )
                 )
             }
 
             // Ahora que sabemos que la empresa 1 existe, obtenemos empresaId de prefs o asignamos 1
             val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
-            var empresaId = prefs.getInt("empresa_id", -1)
-            if (empresaId == -1) empresaId = 1
+            var empresaCIF = prefs.getString("empresa_CIF", "A1111111")
+            if (empresaCIF.equals("")) empresaCIF = "A1111111"
 
             // Guardar en variable global para usar en la Activity
-            this@Activity_creacion.empresaId = empresaId
+            this@Activity_creacion.empresaCif = empresaCif
 
             // Aquí puedes continuar con cualquier carga o inicialización que dependa de empresaId
         }
 
         lifecycleScope.launch {
-            repository.pisoDao.obtenerTodosLosPisos().collectLatest { pisos ->
+            repositoryApp.pisoDao.obtenerTodosLosPisos().collectLatest { pisos ->
                 if (pisos.isNotEmpty()) {
                     pisoActual = pisos.last()
                     titleView.text = pisoActual?.nombre ?: "Sin piso"
@@ -165,15 +174,15 @@ class Activity_creacion : AppCompatActivity() {
                     try {
                         val pisoNombre = findViewById<TextView>(R.id.toolbar_title).text.toString()
                         val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
-                        val empresaId = prefs.getInt("empresa_id", 1)
+                        val empresaCif = prefs.getString("empresa_cif", "A1111111")
 
                         guardarDistribucion(
-                            empresaId = empresaId,
+                            empresaCif = empresaCif.toString(),
                             pisoNombre = pisoNombre,
                             imagen = imagen,
                             container = container,
-                            pisoDao = repository.pisoDao,
-                            salaDao = repository.salaDao
+                            pisoDao = repositoryApp.pisoDao,
+                            salaDao = repositoryApp.salaDao
                         )
                     } catch (e: Exception) {
                         Log.e("Activity_creacion", "Error guardando: ${e.message}", e)
@@ -234,10 +243,10 @@ private fun mostrarDialogoFranjas() {
                     setPadding(16, 0, 16, 0)
                     setOnClickListener {
                         lifecycleScope.launch {
-                            repository.franjaHorariaDao.eliminarFranja(franja)
+                            repositoryApp.franjaHorariaDao.eliminarFranja(franja)
                             // Volver a cargar la lista y actualizar UI
                             val nuevasFranjas = withContext(Dispatchers.IO) {
-                                repository.franjaHorariaDao.getTodasFranjas()
+                                repositoryApp.franjaHorariaDao.getTodasFranjas()
                             }
                             actualizarListaFranjasUI(nuevasFranjas)
                         }
@@ -255,7 +264,7 @@ private fun mostrarDialogoFranjas() {
     // Observar cambios en las franjas con Flow y actualizar UI
     lifecycleScope.launch {
         val franjas = withContext(Dispatchers.IO) {
-            repository.franjaHorariaDao.getTodasFranjas()
+            repositoryApp.franjaHorariaDao.getTodasFranjas()
 
         }
         actualizarListaFranjasUI(franjas)
@@ -315,9 +324,9 @@ private fun mostrarDialogoFranjas() {
 
         // Insertar nueva franja en DB
         lifecycleScope.launch {
-            repository.franjaHorariaDao.insertarFranja(FranjaHoraria(nuevaFranja))
+            repositoryApp.franjaHorariaDao.insertarFranja(FranjaHoraria(nuevaFranja))
             val nuevasFranjas = withContext(Dispatchers.IO) {
-                repository.franjaHorariaDao.getTodasFranjas()
+                repositoryApp.franjaHorariaDao.getTodasFranjas()
             }
             actualizarListaFranjasUI(nuevasFranjas)
         }
@@ -414,7 +423,7 @@ private fun openGallery() {
                     // SOLO actualizamos el nombre en memoria y en UI, no guardamos en base de datos
                     pisoActual = if (piso == null) {
                         // Piso nuevo en memoria, sin ID aún (id=0 o -1)
-                        Piso(id, nombre = nuevoTitulo, imagen = imagen, empresaId = 1)
+                        Piso(id, nombre = nuevoTitulo, imagen = imagen, empresaCif = "A1111111")
                     } else {
                         piso.copy(nombre = nuevoTitulo)
                     }
@@ -578,13 +587,13 @@ private fun openGallery() {
         val pisoId = pisoActual?.id ?: return
 
         lifecycleScope.launch {
-            val sala = repository.salaDao.obtenerSalaPorNombreYPiso(nombreSala, pisoId)
+            val sala = repositoryApp.salaDao.obtenerSalaPorNombreYPiso(nombreSala, pisoId)
             if (sala != null && (sala.ancho != nuevoAncho.toFloat() || sala.alto != nuevoAlto.toFloat())) {
                 val salaActualizada = sala.copy(
                     ancho = nuevoAncho.toFloat(),
                     alto = nuevoAlto.toFloat()
                 )
-                repository.salaDao.actualizar(salaActualizada)
+                repositoryApp.salaDao.actualizar(salaActualizada)
             }
         }
     }
@@ -719,7 +728,7 @@ private fun openGallery() {
 
                 // Guardar en Room en coroutine
                 lifecycleScope.launch {
-                    repository.salaDao.actualizar(salaEditada)
+                    repositoryApp.salaDao.actualizar(salaEditada)
                     actualizarBotonConSala(button, salaEditada)
                     button.tag = salaEditada
                     Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
@@ -752,7 +761,7 @@ private fun openGallery() {
 
 
     suspend fun guardarDistribucion(
-        empresaId: Int,
+        empresaCif: String,
         pisoNombre: String,
         imagen: ByteArray?,
         container: ViewGroup,
@@ -801,20 +810,34 @@ private fun openGallery() {
 
         // Aquí cambiamos a contexto IO porque accedemos a base de datos
         withContext(Dispatchers.IO) {
-            val pisoExistente = pisoDao.obtenerPisoPorNombreYEmpresa(pisoNombre, empresaId)
+            // Obtener la base de datos maestra (donde está la empresa)
+            val masterDb = MasterDatabase.getDatabase(container.context)
+            val empresaDao = masterDb.empresaDao()
+
+            // Supongamos que obtienes el cif de la empresa actual (por nombre, por prefs, etc.)
+            val empresa = empresaDao.obtenerTodasLasEmpresas().firstOrNull()
+            val empresaCif = empresa?.cif ?: run {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(container.context, "No se encontró empresa", Toast.LENGTH_SHORT).show()
+                }
+                return@withContext
+            }
+
+            // Comprobamos si ya existe un piso con ese nombre para esta empresa
+            val pisoExistente = pisoDao.obtenerPisoPorNombreYEmpresa(pisoNombre, empresaCif)
 
             val pisoId = if (pisoExistente == null) {
                 val nuevoPiso = Piso(
                     nombre = pisoNombre,
-                    empresaId = empresaId,
-                    imagen = imagen // ← CAMBIADO
+                    empresaCif = empresaCif,
+                    imagen = imagen
                 )
                 pisoDao.insertarPiso(nuevoPiso).toInt()
             } else {
                 val pisoActualizado = pisoExistente.copy(
                     nombre = pisoNombre,
-                    empresaId = empresaId,
-                    imagen = imagen // ← CAMBIADO
+                    empresaCif = empresaCif,
+                    imagen = imagen
                 )
                 pisoDao.actualizarPiso(pisoActualizado)
                 pisoExistente.id
@@ -827,24 +850,25 @@ private fun openGallery() {
                 salaDao.insertar(sala)
             }
         }
+
         withContext(Dispatchers.Main) {
             Toast.makeText(container.context, "Distribución guardada correctamente", Toast.LENGTH_SHORT).show()
         }
     }
 
 
-    private fun eliminarPisoPorNombre(nombrePiso: String, empresaId: Int?) {
+    private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
         lifecycleScope.launch {
-            val piso = repository.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaId)
+            val piso = repositoryApp.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaCif)
 
             if (piso != null) {
-                repository.pisoDao.eliminarPiso(piso)
+                repositoryApp.pisoDao.eliminarPiso(piso)
 
                 val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
                 val pisoActual = prefNumeroPiso.getString("numero_piso", null)
 
                 if (pisoActual == nombrePiso) {
-                    val pisosRestantes = repository.pisoDao.obtenerTodosLosPisos().firstOrNull() ?: emptyList()
+                    val pisosRestantes = repositoryApp.pisoDao.obtenerTodosLosPisos().firstOrNull() ?: emptyList()
                     val nombresPisos = pisosRestantes.map { it.nombre }
 
                     prefNumeroPiso.edit().apply {
@@ -873,7 +897,7 @@ private fun openGallery() {
 
     private fun mostrarDialogoEliminarPisos() {
         lifecycleScope.launch {
-            val pisos = repository.pisoDao.obtenerTodosLosPisos().firstOrNull() ?: emptyList()
+            val pisos = repositoryApp.pisoDao.obtenerTodosLosPisos().firstOrNull() ?: emptyList()
             val nombresPisos = pisos.map { it.nombre }.toMutableList()
 
             if (nombresPisos.isEmpty()) {
@@ -901,8 +925,8 @@ private fun openGallery() {
                             .setTitle("¿Eliminar '$pisoSeleccionado'?")
                             .setMessage("Esta acción eliminará el piso y todas sus salas.")
                             .setPositiveButton("Eliminar") { dialogConfirm, _ ->
-                                val empresaId = empresaId
-                                eliminarPisoPorNombre(pisoSeleccionado, empresaId)
+                                val empresaCif = empresaCif
+                                eliminarPisoPorNombre(pisoSeleccionado, empresaCif)
                                 dialogConfirm.dismiss()
                                 dialogInterface.dismiss()  // Cerramos el diálogo principal también
                             }

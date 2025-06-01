@@ -2,8 +2,8 @@ package com.example.tfg_kotlin.relations
 
 import androidx.room.Embedded
 import androidx.room.Relation
-import com.example.tfg_kotlin.entities.Piso
-import com.example.tfg_kotlin.entities.Salas
+import com.example.tfg_kotlin.entitiesApp.Piso
+import com.example.tfg_kotlin.entitiesApp.Salas
 
 data class PisoConSalas(
     @Embedded val piso: Piso,
