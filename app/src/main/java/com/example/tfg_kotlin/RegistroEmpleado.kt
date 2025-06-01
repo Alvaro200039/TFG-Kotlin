@@ -40,7 +40,7 @@ class RegistroEmpleado : AppCompatActivity() {
         }
     }
 
-    private fun registrarEmpleados(){
+    private fun registrarEmpleados() {
         val correo = etCorreo.text.toString()
         val cif = etCif.text.toString()
         val contrasena = etContrasena.text.toString()
@@ -75,8 +75,8 @@ class RegistroEmpleado : AppCompatActivity() {
             val dbMaestra = Room.databaseBuilder(
                 applicationContext,
                 DB_Maestra::class.java,
-                "db_maestra.db")
-                .build()
+                "db_maestra.db"
+            ).build()
 
             // Buscamos si el domninio existe
             val daoMaestra = dbMaestra.userDao()
@@ -90,11 +90,24 @@ class RegistroEmpleado : AppCompatActivity() {
                 return@launch
             }
 
-            //Creamos el acceso a la bd_individual por empresa
-            val dbnombre = "db_${nombre.lowercase().replace(" ", "_")}"
-            val dbEmpresa = Room.databaseBuilder(applicationContext,
-                DB_Empresa::class.java, "$dbnombre.db").build()
+            // Si se introdujo un CIF, validar que coincide con el de la empresa
+            if (cif.isNotEmpty()) {
+                val cifValido = empresa.cif.equals(cif, ignoreCase = true)
+                if (!cifValido) {
+                    runOnUiThread {
+                        Toast.makeText(this@RegistroEmpleado, "El CIF no coincide con el dominio. Corrígelo para continuar.", Toast.LENGTH_SHORT).show()
+                        etCif.requestFocus()
+                    }
+                    return@launch
+                }
+            }
 
+            //Creamos el acceso a la bd_individual por empresa
+            val dbnombre = "db_${empresa.nombre.lowercase().replace(" ", "_")}"
+            val dbEmpresa = Room.databaseBuilder(
+                applicationContext,
+                DB_Empresa::class.java, "$dbnombre.db"
+            ).build()
 
             val daoEmpleado = dbEmpresa.empresaDao()
 
@@ -102,13 +115,17 @@ class RegistroEmpleado : AppCompatActivity() {
             val empleadoExistente = daoEmpleado.obtenerPorCorreo(correo)
             if (empleadoExistente != null) {
                 runOnUiThread {
-                    Toast.makeText(this@RegistroEmpleado, "Correo ya registrado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@RegistroEmpleado,
+                        "Correo ya registrado",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 return@launch
             }
 
             // Determina si es Jefe
-            val esJefe = empresa.cif.equals(etCif)
+            val esJefe = empresa.cif.lowercase() == cif.lowercase()
 
             // Creamos al emprpleado y lo insertamos en la tabla de emplados
             val empleado = Empleados(
@@ -119,16 +136,14 @@ class RegistroEmpleado : AppCompatActivity() {
                 cif = cif,
                 esJefe = esJefe
             )
-
-            val id = daoEmpleado.insertarEmpleado(empleado)
+            daoEmpleado.insertarEmpleado(empleado)
 
             runOnUiThread {
-                val mensaje = if (esJefe) {
-                    "Empleado registrado como Jefe (ID: $id)"
+                if (esJefe) {
+                    Toast.makeText(this@RegistroEmpleado, "Empleado registrado como Jefe", Toast.LENGTH_SHORT).show()
                 } else {
-                    "Empleado registrado (ID: $id)"
+                    Toast.makeText(this@RegistroEmpleado, "Empleado registrado", Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
                 etCorreo.text.clear()
                 etContrasena.text.clear()
                 etRepetirContrasena.text.clear()
@@ -139,3 +154,4 @@ class RegistroEmpleado : AppCompatActivity() {
         }
     }
 }
+

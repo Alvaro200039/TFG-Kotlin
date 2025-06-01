@@ -5,11 +5,9 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
-import com.example.tfg_kotlin.BBDD_Global.Dao.Dao_Empresa
 import com.example.tfg_kotlin.BBDD_Global.database.DB_Empresa
 import com.example.tfg_kotlin.BBDD_Master.database.DB_Maestra
 import kotlinx.coroutines.launch
@@ -19,7 +17,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var etContrasena: EditText
     private lateinit var btnLogin: Button
     private lateinit var btnRegistro: Button
-    val registro = Intent(this, RegistroEmpleado::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +32,7 @@ class LoginActivity : AppCompatActivity() {
            iniciarSesion()
         }
         btnRegistro.setOnClickListener{
+            val registro = Intent(this, RegistroEmpleado::class.java)
             startActivity(registro)
 
         }
