@@ -55,7 +55,10 @@ class RegistroEmpresaActivity : AppCompatActivity() {
 
         private fun registrarEmpresa() {
             val nombre = etNombreEmpresa.text.toString().trim()
-            val dominio = etDominioEmpresa.text.toString().trim().lowercase()
+            var dominio = etDominioEmpresa.text.toString().trim().lowercase()
+            if (!dominio.startsWith("@")) {
+                dominio = "@$dominio"
+            }
             val cif = etCif.text.toString().trim().uppercase()
 
             if (!validarCampos(nombre, dominio, cif)) return
@@ -68,11 +71,19 @@ class RegistroEmpresaActivity : AppCompatActivity() {
                 etDominioEmpresa.requestFocus()
                 return
             }
+            val empresaConMismoCif = dbMaestra.empresaDao().getEmpresaPorCif(cif)
+            if (empresaConMismoCif != null) {
+                tilCif.error = "El CIF ya está registrado"
+                etCif.requestFocus()
+                return
+            }
 
             val nuevaEmpresa = Empresa(nombre = nombre, dominio = dominio, cif = cif)
             dbMaestra.empresaDao().insertarEmpresa(nuevaEmpresa)
 
             val nombreBD = "empresa_${dominio.replace(".", "_")}"
+
+
             BBDDInstance.getDatabase(this, nombreBD)
 
             Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()

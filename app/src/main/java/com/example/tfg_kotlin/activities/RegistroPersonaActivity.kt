@@ -108,7 +108,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
 
     private fun registrarPersona() {
         val correo = etCorreo.text.toString().trim()
-        val dominio = correo.substringAfter("@").lowercase()
+        val dominio = "@" + correo.substringAfter("@").lowercase()
         val cifInput = etCif.text.toString().trim().uppercase()
 
         Log.d("REGISTRO_PERSONA", "Dominio buscado: $dominio")

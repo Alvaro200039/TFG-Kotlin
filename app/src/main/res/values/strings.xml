@@ -9,7 +9,7 @@
     <string name="nombre_empresa">Introduce el nombre del grupo corporativo</string>
     <string name="apellidos">Introduce tus apellidos</string>
     <string name="correo">Introduce un correo</string>
-    <string name="dominio">Introduce el dominio de la empresa</string>
+    <string name="dominio">Introduce el dominio de la empresa (@ejemplo.com)</string>
     <string name="contraseña">Introduce una contraseña</string>
     <string name="repetir_contraseña">Vuelve a introducir la contraseña</string>
     <string name="num_empresa">CIF (Código de Identificación Fiscal)</string>

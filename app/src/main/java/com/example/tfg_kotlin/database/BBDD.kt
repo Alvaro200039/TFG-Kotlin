@@ -19,16 +19,3 @@ abstract class BBDD : RoomDatabase() {
     abstract fun loginDao(): LoginDao
     abstract fun recuperarContrasenaDao(): RecuperarContrasenaDao
 }
-
-
-// Para conectar a la bases de datos en las activity debemos pegar el siguiente código
-
-// Antes del Override fun OnCreate
-//  lateinit var database: Operaciones
-
-// dentro del OnCreate
-/*
-database = Room.databaseBuilder(
-            applicationContext, BBDD::class.java, "reservas_db"
-            ).allowMainThreadQueries().build().appDao()
-*/

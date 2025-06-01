@@ -13,4 +13,8 @@ interface EmpresaDao {
 
     @Query("SELECT * FROM Empresa WHERE dominio = :dominio")
     fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
+
+    @Query("SELECT * FROM Empresa WHERE cif = :cif LIMIT 1")
+    fun getEmpresaPorCif(cif: String): Empresa?
+
 }

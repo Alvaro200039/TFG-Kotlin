@@ -72,7 +72,7 @@ class LoginActivity : AppCompatActivity() {
         btnFinalizarLogin.setOnClickListener {
             val correo = etCorreo.text.toString().trim()
             val contrasena = etContrasena.text.toString().trim()
-            val dominioCorreo = correo.substringAfter("@")
+            val dominioCorreo = "@" + correo.substringAfter("@").lowercase()
 
             if (correo.isEmpty() || contrasena.isEmpty()) {
                 mostrarError("Rellena todos los campos")
