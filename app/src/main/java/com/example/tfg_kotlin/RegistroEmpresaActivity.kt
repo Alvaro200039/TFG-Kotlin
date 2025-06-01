@@ -1,103 +1,113 @@
 package com.example.tfg_kotlin
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.room.Room
-import com.example.tfg_kotlin.BBDD.BBDD
 import com.example.tfg_kotlin.BBDD.BBDDInstance
-import com.example.tfg_kotlin.BBDD.Empleados
 import com.example.tfg_kotlin.BBDD.Empresa
-import com.example.tfg_kotlin.Validaciones.construirNombreBD
-import com.example.tfg_kotlin.Validaciones.validarRegistroEmpresa
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
 class RegistroEmpresaActivity : AppCompatActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_registro_empresa)
+        private lateinit var tilNombreEmpresa: TextInputLayout
+        private lateinit var etNombreEmpresa: TextInputEditText
+        private lateinit var tilDominioEmpresa: TextInputLayout
+        private lateinit var etDominioEmpresa: TextInputEditText
+        private lateinit var tilCif: TextInputLayout
+        private lateinit var etCif: TextInputEditText
+        private lateinit var btnFinalizarRegistroEmpresa: Button
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.registroempresa)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            setContentView(R.layout.activity_registro_empresa)
+
+            // Toolbar
+            val toolbar = findViewById<Toolbar>(R.id.toolbar)
+            setSupportActionBar(toolbar)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+            inicializarVistas()
+            configurarBotonFinalizar()
         }
 
-        // Toolbar
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        private fun inicializarVistas() {
+            tilNombreEmpresa = findViewById(R.id.tilNombreEmpresa)
+            etNombreEmpresa = findViewById(R.id.etNombreEmpresa)
+            tilDominioEmpresa = findViewById(R.id.tilDominio)
+            etDominioEmpresa = findViewById(R.id.etDominio)
+            tilCif = findViewById(R.id.tilNumEmpresa)
+            etCif = findViewById(R.id.etNumEmpresa)
+            btnFinalizarRegistroEmpresa = findViewById(R.id.btnFinalizarRegistroEmpresa)
+        }
 
-        // Referencias a vistas
-        val btnFinalizarRegistro = findViewById<Button>(R.id.btnFinalizarRegistroEmpresa)
+        private fun configurarBotonFinalizar() {
+            btnFinalizarRegistroEmpresa.setOnClickListener {
+                registrarEmpresa()
+            }
+        }
 
-        val tilNombreEmpresa = findViewById<TextInputLayout>(R.id.tilNombreEmpresa)
-        val tilDominio = findViewById<TextInputLayout>(R.id.tilDominio)
-        val tilNumEmpresa = findViewById<TextInputLayout>(R.id.tilNumEmpresa)
+        private fun registrarEmpresa() {
+            val nombre = etNombreEmpresa.text.toString().trim()
+            val dominio = etDominioEmpresa.text.toString().trim().lowercase()
+            val cif = etCif.text.toString().trim().uppercase()
 
-        val etNombreEmpresa = findViewById<TextInputEditText>(R.id.etNombreEmpresa)
-        val etDominio = findViewById<TextInputEditText>(R.id.etDominio)
-        val etNumEmpresa = findViewById<TextInputEditText>(R.id.etNumEmpresa)
-
-        btnFinalizarRegistro.setOnClickListener {
-            val nombreEmpresa = etNombreEmpresa.text.toString().trim()
-            val cif = etNumEmpresa.text.toString().trim().uppercase()
-            val dominio = etDominio.text.toString().trim().lowercase()
-
-            Log.d("REGISTRO_EMPRESA", "Dominio guardado: $dominio")
-
-            // Validaciones
-            val esValido = validarRegistroEmpresa(
-                tilNombreEmpresa, etNombreEmpresa,
-                tilDominio, etDominio,
-                tilNumEmpresa, etNumEmpresa,
-            )
-
-            if (!esValido) return@setOnClickListener
+            if (!validarCampos(nombre, dominio, cif)) return
 
             val dbMaestra = BBDDInstance.getDatabase(this, "maestra_db")
+            val empresaExistente = dbMaestra.empresaDao().getEmpresaPorDominioEnEmpresa(dominio)
 
-            // Comprobar si ya existe ese CIF
-            val empresaExistente = dbMaestra.appDao().getEmpresaPorCif(cif)
             if (empresaExistente != null) {
-                tilNumEmpresa.error = "Ya existe una empresa con este CIF"
-                return@setOnClickListener
+                tilDominioEmpresa.error = "El dominio ya está registrado"
+                etDominioEmpresa.requestFocus()
+                return
             }
 
-            // Guardar la empresa
-            val empresa = Empresa(nombreEmpresa, dominio, cif)
-            dbMaestra.appDao().insertarEmpresa(empresa)
+            val nuevaEmpresa = Empresa(nombre = nombre, dominio = dominio, cif = cif)
+            dbMaestra.empresaDao().insertarEmpresa(nuevaEmpresa)
 
-            // Crear base de datos específica de la empresa (y forzar su creación)
-            val nombreBD = construirNombreBD(dominio)
-            val dbEmpresa = BBDDInstance.getDatabase(this, nombreBD)
-
-
-            // Forzar acceso a tabla para que Room cree físicamente la base de datos
-            // No insertamos nada, solo lanzamos una consulta dummy
-            dbEmpresa.appDao().buscarEmpleadoPorCorreo("dummy@${dominio}")
+            val nombreBD = "empresa_${dominio.replace(".", "_")}"
+            BBDDInstance.getDatabase(this, nombreBD)
 
             Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()
-            val empresas = dbMaestra.appDao().getTodasLasEmpresas()
-            for (e in empresas) {
-                Log.d("EMPRESA_INSERTADA", "Dominio registrado: '${e.dominio}', CIF: ${e.cif}")
-            }
+            Log.i("Empresa", "Registrada: $nombre, dominio: $dominio")
+
+            startActivity(Intent(this, RegistroPersonaActivity::class.java))
             finish()
         }
-    }
 
+        private fun validarCampos(nombre: String, dominio: String, cif: String): Boolean {
+            var esValido = true
 
+            if (nombre.isEmpty()) {
+                tilNombreEmpresa.error = "Este campo no puede estar vacío"
+                esValido = false
+            } else {
+                tilNombreEmpresa.error = null
+            }
 
+            if (dominio.isEmpty() || !dominio.contains(".")) {
+                tilDominioEmpresa.error = "Dominio no válido"
+                esValido = false
+            } else {
+                tilDominioEmpresa.error = null
+            }
+
+            if (cif.length != 9) {
+                tilCif.error = "CIF inválido"
+                esValido = false
+            } else {
+                tilCif.error = null
+            }
+
+            return esValido
+        }
     // Flecha "Atrás"
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId) {
@@ -108,4 +118,6 @@ class RegistroEmpresaActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 }
+

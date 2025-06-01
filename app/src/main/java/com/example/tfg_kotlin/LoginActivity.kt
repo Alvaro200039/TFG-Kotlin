@@ -13,11 +13,19 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
+import com.example.tfg_kotlin.BBDD.BBDDInstance
 import com.example.tfg_kotlin.Validaciones.construirNombreBD
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
 class LoginActivity : AppCompatActivity() {
+
+    private lateinit var btnFinalizarLogin: Button
+    private lateinit var tilCorreo: TextInputLayout
+    private lateinit var tilContrasena: TextInputLayout
+    private lateinit var etCorreo: TextInputEditText
+    private lateinit var etContrasena: TextInputEditText
+    private lateinit var tvOlvidarContrasena: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,59 +38,62 @@ class LoginActivity : AppCompatActivity() {
             insets
         }
 
-        // Asocia Toolbar como ActionBar
+        // Toolbar
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Referencias a vistas
-        val btnFinalizarLogin = findViewById<Button>(R.id.btnFinalizarLogin)
-        val tilCorreo = findViewById<TextInputLayout>(R.id.tilCorreo)
-        val tilContrasena = findViewById<TextInputLayout>(R.id.tilContrasena)
+        inicializarVistas()
+        configurarRecuperarContrasena()
+        configurarLogin()
+    }
 
+    private fun inicializarVistas() {
+        btnFinalizarLogin = findViewById(R.id.btnFinalizarLogin)
+        tilCorreo = findViewById(R.id.tilCorreo)
+        tilContrasena = findViewById(R.id.tilContrasena)
+        etCorreo = findViewById(R.id.etCorreo)
+        etContrasena = findViewById(R.id.etContrasena)
+        tvOlvidarContrasena = findViewById(R.id.tvOlvidarContrasena)
+    }
 
-        val etCorreo = findViewById<TextInputEditText>(R.id.etCorreo)
-        val etContrasena = findViewById<TextInputEditText>(R.id.etContrasena)
+    private fun configurarToolbar() {
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
 
-        //Conexion para activity recuperar la contraseña
-        findViewById<TextView>(R.id.tvOlvidarContrasena).setOnClickListener {
+    private fun configurarRecuperarContrasena() {
+        tvOlvidarContrasena.setOnClickListener {
             startActivity(Intent(this, RecuperarContrasenaActivity::class.java))
         }
+    }
 
-
+    private fun configurarLogin() {
         btnFinalizarLogin.setOnClickListener {
             val correo = etCorreo.text.toString().trim()
             val contrasena = etContrasena.text.toString().trim()
             val dominioCorreo = correo.substringAfter("@")
 
             if (correo.isEmpty() || contrasena.isEmpty()) {
-                Toast.makeText(this, "Rellena todos los campos", Toast.LENGTH_SHORT).show()
+                mostrarError("Rellena todos los campos")
                 return@setOnClickListener
             }
 
-            // Validar que el dominio existe en la base de datos maestra
-            val dbMaestra = Room.databaseBuilder(
-                applicationContext,
-                BBDD::class.java,
-                "maestra_db"
-            ).allowMainThreadQueries().build()
+            val dbMaestra = BBDDInstance.getDatabase(applicationContext, "maestra_db")
 
-            val empresaExiste = dbMaestra.appDao().getEmpresaPorDominioEnEmpresa(dominioCorreo)
+
+            val empresaExiste = dbMaestra.loginDao().getEmpresaPorDominioEnEmpresa(dominioCorreo)
             if (empresaExiste == null) {
                 mostrarError("No existe ninguna empresa registrada con el dominio @$dominioCorreo")
                 return@setOnClickListener
             }
 
-            // Construimos nombre de la BD según el dominio
             val nombreBD = construirNombreBD(dominioCorreo)
 
-            val db = Room.databaseBuilder(
-                applicationContext,
-                BBDD::class.java,
-                nombreBD
-            ).allowMainThreadQueries().build()
+            val db = BBDDInstance.getDatabase(applicationContext, nombreBD)
 
-            val usuario = db.appDao().loginUsuario(correo, contrasena)
+            val usuario = db.loginDao().loginUsuario(correo, contrasena)
 
             if (usuario != null) {
                 Toast.makeText(
@@ -91,7 +102,6 @@ class LoginActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                // Aquí rediriges según tipo
                 val destino =
                     if (usuario.esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
                 startActivity(Intent(this, destino))
@@ -101,14 +111,14 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun mostrarError(mensaje: String) {
         Toast.makeText(this, mensaje, Toast.LENGTH_SHORT).show()
     }
 
-
-    // Flecha TOOLBAR "ATRÁS"
+    // Flecha "Atrás"
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
+        return when(item.itemId) {
             android.R.id.home -> {
                 onBackPressed()
                 true

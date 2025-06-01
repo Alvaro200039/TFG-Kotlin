@@ -8,7 +8,10 @@ import androidx.room.RoomDatabase
     version = 1
 )
 abstract class BBDD : RoomDatabase() {
-    abstract fun appDao(): Operaciones
+    abstract fun empleadoDao(): EmpleadoDao
+    abstract fun empresaDao(): EmpresaDao
+    abstract fun loginDao(): LoginDao
+    abstract fun recuperarContrasenaDao(): RecuperarContrasenaDao
 }
 
 

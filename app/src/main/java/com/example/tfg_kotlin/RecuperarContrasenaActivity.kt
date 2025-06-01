@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.room.Room
 import com.example.tfg_kotlin.BBDD.BBDD
 import com.example.tfg_kotlin.BBDD.BBDDInstance
 import com.example.tfg_kotlin.Validaciones.construirNombreBD
@@ -17,6 +16,12 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
     private lateinit var layoutPaso1: LinearLayout
     private lateinit var layoutPaso2: LinearLayout
+    private lateinit var etCorreo: EditText
+    private lateinit var btnEnviarCodigo: Button
+    private lateinit var etCodigo: EditText
+    private lateinit var etNuevaPass: EditText
+    private lateinit var etRepetirPass: EditText
+    private lateinit var btnCambiar: Button
 
     private var codigoGenerado: String = ""
     private var correo: String = ""
@@ -26,29 +31,40 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_recuperar_contrasena)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.recuperarcontrasena)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
+        // Toolbar
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        inicializarVistas()
+        configurarPaso1()
+        configurarPaso2()
+    }
+
+    private fun inicializarVistas() {
         layoutPaso1 = findViewById(R.id.layoutPaso1)
         layoutPaso2 = findViewById(R.id.layoutPaso2)
 
-        val etCorreo = findViewById<EditText>(R.id.etCorreoRec)
-        val btnEnviarCodigo = findViewById<Button>(R.id.btnEnviarCodigo)
+        etCorreo = findViewById(R.id.etCorreoRec)
+        btnEnviarCodigo = findViewById(R.id.btnEnviarCodigo)
 
-        val etCodigo = findViewById<EditText>(R.id.etCodigo)
-        val etNuevaPass = findViewById<EditText>(R.id.etNuevaPass)
-        val etRepetirPass = findViewById<EditText>(R.id.etRepetirPass)
-        val btnCambiar = findViewById<Button>(R.id.btnCambiarPass)
+        etCodigo = findViewById(R.id.etCodigo)
+        etNuevaPass = findViewById(R.id.etNuevaPass)
+        etRepetirPass = findViewById(R.id.etRepetirPass)
+        btnCambiar = findViewById(R.id.btnCambiarPass)
+    }
 
+
+    private fun configurarPaso1() {
         btnEnviarCodigo.setOnClickListener {
             correo = etCorreo.text.toString().trim()
+
             if (correo.isEmpty() || !correo.contains("@")) {
                 etCorreo.error = "Introduce un correo válido"
                 return@setOnClickListener
@@ -58,22 +74,22 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
             val nombreBD = construirNombreBD(dominio)
 
             db = BBDDInstance.getDatabase(applicationContext, nombreBD)
-
-            val usuario = db.appDao().buscarEmpleadoPorCorreo(correo)
+            val usuario = db.recuperarContrasenaDao().buscarEmpleadoPorCorreo(correo)
 
             if (usuario == null) {
                 etCorreo.error = "No hay ninguna cuenta con este correo"
                 return@setOnClickListener
             }
 
-            // Simular envío del código
             codigoGenerado = (100000..999999).random().toString()
             Toast.makeText(this, "Tu código es: $codigoGenerado", Toast.LENGTH_LONG).show()
 
             layoutPaso1.visibility = LinearLayout.GONE
             layoutPaso2.visibility = LinearLayout.VISIBLE
         }
+    }
 
+    private fun configurarPaso2() {
         btnCambiar.setOnClickListener {
             val codigoIngresado = etCodigo.text.toString().trim()
             val nuevaPass = etNuevaPass.text.toString().trim()
@@ -94,12 +110,13 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            db.appDao().actualizarContrasena(correo, nuevaPass)
+            db.recuperarContrasenaDao().actualizarContrasena(correo, nuevaPass)
             Toast.makeText(this, "Contraseña actualizada correctamente", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
 
+    // Flecha "Atrás"
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId) {
             android.R.id.home -> {
