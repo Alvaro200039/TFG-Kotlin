@@ -1,7 +1,7 @@
-package com.example.tfg_kotlin.dao
+package com.example.tfg_kotlin.daoApp
 
 import androidx.room.*
-import com.example.tfg_kotlin.entities.Salas
+import com.example.tfg_kotlin.entitiesApp.Salas
 
 @Dao
 interface SalaDao {

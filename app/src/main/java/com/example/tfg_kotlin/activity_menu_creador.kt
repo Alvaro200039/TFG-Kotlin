@@ -18,10 +18,11 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.database.AppDatabase
+import com.example.tfg_kotlin.database.MasterDatabase
 import com.example.tfg_kotlin.repository.AppRepository
+import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -30,18 +31,24 @@ import java.util.Locale
 
 class activity_menu_creador : AppCompatActivity() {
 
-    private lateinit var repository: AppRepository
+    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryMaster: MasterRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        repositoryMaster = MasterRepository(
+            masterDb.empresaDao()
+        )
+
         val db = AppDatabase.getDatabase(applicationContext)
-        repository = AppRepository(
+        repositoryApp = AppRepository(
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),
             db.franjahorariaDao(),
-            db.pisoDao(),
-            db.empresaDao()
+            db.pisoDao()
         )
         enableEdgeToEdge()
         setContentView(R.layout.activity_menu_creador)
@@ -66,7 +73,7 @@ class activity_menu_creador : AppCompatActivity() {
         val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
         btnNuevaReserva.setOnClickListener {
             lifecycleScope.launch {
-                val pisos = repository.pisoDao.obtenerTodosLosPisos().first()
+                val pisos = repositoryApp.pisoDao.obtenerTodosLosPisos().first()
 
                 if (pisos.isNotEmpty()) {
                     val pisoSeleccionado = pisos.last() // O el que quieras, aquí el último piso
@@ -138,10 +145,10 @@ class activity_menu_creador : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val usuarioActual = repository.usuarioDao.getUsuarioById(idUsuario)
+            val usuarioActual = repositoryApp.usuarioDao.getUsuarioById(idUsuario)
             val nombreUsuario = usuarioActual?.nombre ?: "Juan"
 
-            val reservas = repository.getAllReservas().toMutableList()
+            val reservas = repositoryApp.getAllReservas().toMutableList()
 
             // Filtrar solo las reservas del usuario actual
             val reservasUsuario = reservas.filter { it.idusuario == idUsuario }
@@ -178,7 +185,7 @@ class activity_menu_creador : AppCompatActivity() {
                                 .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
                                 .setPositiveButton("Sí") { _, _ ->
                                     lifecycleScope.launch {
-                                        repository.eliminarReserva(reserva)
+                                        repositoryApp.eliminarReserva(reserva)
 
                                         dialog.dismiss()
                                         mostrarDialogoReservas() // Recargar reservas
@@ -226,7 +233,7 @@ class activity_menu_creador : AppCompatActivity() {
         val ahora = formato.format(Date()) // Lo convertimos a String porque Room usa fechaHora como String
 
         lifecycleScope.launch {
-            repository.limpiarReservasAntiguas(ahora)
+            repositoryApp.limpiarReservasAntiguas(ahora)
         }
     }
 
@@ -236,7 +243,7 @@ class activity_menu_creador : AppCompatActivity() {
         val ahora = Date()
         val idUsuario = 123
         lifecycleScope.launch {
-            val reservas = repository.getReservasPorUsuario(idUsuario)
+            val reservas = repositoryApp.getReservasPorUsuario(idUsuario)
 
             val reservasFuturas = reservas.filter {
                 try {

@@ -1,15 +1,14 @@
 package com.example.tfg_kotlin.repository
 
-import com.example.tfg_kotlin.dao.EmpresaDao
-import com.example.tfg_kotlin.dao.FranjaHorariaDao
-import com.example.tfg_kotlin.dao.PisoDao
-import com.example.tfg_kotlin.dao.UsuarioDao
-import com.example.tfg_kotlin.dao.ReservaDao
-import com.example.tfg_kotlin.dao.SalaDao
-import com.example.tfg_kotlin.entities.FranjaHoraria
-import com.example.tfg_kotlin.entities.Usuario
-import com.example.tfg_kotlin.entities.Reserva
-import com.example.tfg_kotlin.entities.Salas
+import com.example.tfg_kotlin.daoApp.FranjaHorariaDao
+import com.example.tfg_kotlin.daoApp.PisoDao
+import com.example.tfg_kotlin.daoApp.ReservaDao
+import com.example.tfg_kotlin.daoApp.SalaDao
+import com.example.tfg_kotlin.daoApp.UsuarioDao
+import com.example.tfg_kotlin.entitiesApp.FranjaHoraria
+import com.example.tfg_kotlin.entitiesApp.Reserva
+import com.example.tfg_kotlin.entitiesApp.Salas
+import com.example.tfg_kotlin.entitiesApp.Usuario
 
 class AppRepository(
     internal val usuarioDao: UsuarioDao,
@@ -17,7 +16,6 @@ class AppRepository(
     private val reservaDao: ReservaDao,
     internal val franjaHorariaDao: FranjaHorariaDao,
     internal val pisoDao: PisoDao,
-    internal val empresaDao: EmpresaDao
 ) {
 
     suspend fun getAllUsuarios() = usuarioDao.obtenerTodos()

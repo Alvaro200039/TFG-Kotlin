@@ -18,7 +18,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.database.AppDatabase
+import com.example.tfg_kotlin.database.MasterDatabase
 import com.example.tfg_kotlin.repository.AppRepository
+import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -26,19 +28,24 @@ import java.util.Locale
 
 class activity_menu_empleado : AppCompatActivity() {
 
-    private lateinit var repository: AppRepository
+    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryMaster: MasterRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        repositoryMaster = MasterRepository(
+            masterDb.empresaDao()
+        )
+
         val db = AppDatabase.getDatabase(applicationContext)
-        repository = AppRepository(
+        repositoryApp = AppRepository(
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),
             db.franjahorariaDao(),
-            db.pisoDao(),
-            db.empresaDao()
+            db.pisoDao()
         )
 
         enableEdgeToEdge()
@@ -112,7 +119,7 @@ class activity_menu_empleado : AppCompatActivity() {
         mostrarSiguienteReserva()
 
         lifecycleScope.launch {
-            val reservas = repository.getAllReservas().toMutableList()
+            val reservas = repositoryApp.getAllReservas().toMutableList()
 
             if (reservas.isEmpty()) {
                 Toast.makeText(this@activity_menu_empleado, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
@@ -146,7 +153,7 @@ class activity_menu_empleado : AppCompatActivity() {
                                 .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
                                 .setPositiveButton("Sí") { _, _ ->
                                     lifecycleScope.launch {
-                                        repository.eliminarReserva(reserva)
+                                        repositoryApp.eliminarReserva(reserva)
 
                                         dialog.dismiss()
                                         mostrarDialogoReservas() // Recargar reservas
@@ -195,7 +202,7 @@ class activity_menu_empleado : AppCompatActivity() {
         val ahora = formato.format(Date()) // Lo convertimos a String porque Room usa fechaHora como String
 
         lifecycleScope.launch {
-            repository.limpiarReservasAntiguas(ahora)
+            repositoryApp.limpiarReservasAntiguas(ahora)
         }
     }
 
@@ -205,7 +212,7 @@ class activity_menu_empleado : AppCompatActivity() {
         val ahora = Date()
 
         lifecycleScope.launch {
-            val reservas = repository.getAllReservas()
+            val reservas = repositoryApp.getAllReservas()
 
             val reservasFuturas = reservas.filter {
                 try {

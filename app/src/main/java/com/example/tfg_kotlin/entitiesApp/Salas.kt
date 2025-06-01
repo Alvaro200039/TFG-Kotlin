@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.entities
+package com.example.tfg_kotlin.entitiesApp
 
 import androidx.room.*
 

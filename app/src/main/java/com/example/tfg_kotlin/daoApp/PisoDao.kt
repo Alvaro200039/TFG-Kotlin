@@ -1,7 +1,7 @@
-package com.example.tfg_kotlin.dao
+package com.example.tfg_kotlin.daoApp
 
 import androidx.room.*
-import com.example.tfg_kotlin.entities.Piso
+import com.example.tfg_kotlin.entitiesApp.Piso
 import com.example.tfg_kotlin.relations.PisoConSalas
 import kotlinx.coroutines.flow.Flow
 
@@ -29,10 +29,10 @@ interface PisoDao {
     @Query("""
     SELECT * FROM pisos
     WHERE nombre = :nombre
-    AND (:empresaId IS NULL AND empresaId IS NULL OR empresaId = :empresaId)
+    AND (:empresaCif IS NULL AND empresaCif IS NULL OR empresaCif = :empresaCif)
     LIMIT 1
 """)
-    suspend fun obtenerPisoPorNombreYEmpresa(nombre: String, empresaId: Int?): Piso?
+    suspend fun obtenerPisoPorNombreYEmpresa(nombre: String, empresaCif: String?): Piso?
 
     @Transaction
     @Query("SELECT * FROM pisos WHERE id = :pisoId")
