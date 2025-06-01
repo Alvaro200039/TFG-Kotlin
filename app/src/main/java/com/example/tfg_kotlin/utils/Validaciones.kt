@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin
+package com.example.tfg_kotlin.utils
 
 import android.util.Patterns
 import com.google.android.material.textfield.TextInputEditText

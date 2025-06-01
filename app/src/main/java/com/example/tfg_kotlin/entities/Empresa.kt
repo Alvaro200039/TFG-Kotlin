@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.BBDD
+package com.example.tfg_kotlin.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

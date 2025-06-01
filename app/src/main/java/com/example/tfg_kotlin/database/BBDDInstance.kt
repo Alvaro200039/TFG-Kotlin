@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.BBDD
+package com.example.tfg_kotlin.database
 
 
 import android.content.Context

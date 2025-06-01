@@ -1,8 +1,9 @@
-package com.example.tfg_kotlin.BBDD
+package com.example.tfg_kotlin.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.tfg_kotlin.entities.Empresa
 
 @Dao
 interface EmpresaDao {

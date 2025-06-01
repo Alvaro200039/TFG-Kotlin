@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin
+package com.example.tfg_kotlin.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,9 +8,9 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import com.example.tfg_kotlin.BBDD.BBDDInstance
-import com.example.tfg_kotlin.BBDD.Empresa
-import com.google.android.material.appbar.MaterialToolbar
+import com.example.tfg_kotlin.R
+import com.example.tfg_kotlin.database.BBDDInstance
+import com.example.tfg_kotlin.entities.Empresa
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 

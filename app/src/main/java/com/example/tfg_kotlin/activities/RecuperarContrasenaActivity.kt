@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin
+package com.example.tfg_kotlin.activities
 
 import android.os.Bundle
 import android.view.MenuItem
@@ -8,9 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.tfg_kotlin.BBDD.BBDD
-import com.example.tfg_kotlin.BBDD.BBDDInstance
-import com.example.tfg_kotlin.Validaciones.construirNombreBD
+import com.example.tfg_kotlin.R
+import com.example.tfg_kotlin.database.BBDDInstance
+import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
+import com.example.tfg_kotlin.database.BBDD
 
 class RecuperarContrasenaActivity : AppCompatActivity() {
 
