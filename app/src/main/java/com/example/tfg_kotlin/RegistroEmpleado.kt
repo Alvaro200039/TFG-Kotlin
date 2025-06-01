@@ -75,7 +75,7 @@ class RegistroEmpleado : AppCompatActivity() {
             val dbMaestra = Room.databaseBuilder(
                 applicationContext,
                 DB_Maestra::class.java,
-                "db_maestra")
+                "db_maestra.db")
                 .build()
 
             // Buscamos si el domninio existe
@@ -93,7 +93,7 @@ class RegistroEmpleado : AppCompatActivity() {
             //Creamos el acceso a la bd_individual por empresa
             val dbnombre = "db_${nombre.lowercase().replace(" ", "_")}"
             val dbEmpresa = Room.databaseBuilder(applicationContext,
-                DB_Empresa::class.java, dbnombre).build()
+                DB_Empresa::class.java, "$dbnombre.db").build()
 
 
             val daoEmpleado = dbEmpresa.empresaDao()

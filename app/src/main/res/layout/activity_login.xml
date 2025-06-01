@@ -7,10 +7,10 @@
     android:gravity="center">
 
     <EditText
-        android:id="@+id/etNombre"
+        android:id="@+id/etCorreo"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:hint="Nombre de usuario"
+        android:hint="Introduzca su correo"
         android:inputType="textPersonName"
         android:layout_marginBottom="16dp" />
 

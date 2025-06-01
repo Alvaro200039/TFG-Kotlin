@@ -22,6 +22,12 @@
             android:name=".RegistroEmpleado"
             android:exported="false" />
         <activity
+            android:name=".PantallaEmpleadoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PantallaJefeActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

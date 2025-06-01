@@ -24,5 +24,5 @@ data class Salas(
     var y: Float,
     var ancho: Float,
     var alto: Float,
-    var extras: List<String>
+   // var extras: List<String>
 )

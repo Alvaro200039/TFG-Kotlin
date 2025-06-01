@@ -43,7 +43,7 @@ class RegistroEmpresa : AppCompatActivity() {
         //Definición - creación BD_Maestra
         val db = Room.databaseBuilder(
             applicationContext,
-            DB_Maestra::class.java, "db_maestra"
+            DB_Maestra::class.java, "db_maestra.db"
         ).build()
 
         val dao = db.userDao()
@@ -94,13 +94,13 @@ class RegistroEmpresa : AppCompatActivity() {
                 val dbGlobal = Room.databaseBuilder(
                     applicationContext,
                     DB_Empresa::class.java,
-                    dbnombre
+                    "$dbnombre.db"
                 ).build()
 
                 //Room como tal no crea la bd, por ello hay que realizar alguna acción para que estas se creen
                 //Con esta acción accedemos a la bd individual y se crea
                 dbGlobal.openHelper.writableDatabase
-                Log.d("DB_LOG", "BD de empresa creada $dbnombre")
+                Log.d("DB_LOG", "BD de empresa creada $dbnombre.db")
 
                 // Como hemos dicho, room se está ejecutando en un hilo secundario
                 // Lo que hace esta línea es volvernos a dejar ejecutar acciones en el hilo principal

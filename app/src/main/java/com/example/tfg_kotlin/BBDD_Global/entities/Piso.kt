@@ -5,16 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import com.example.tfg_kotlin.BBDD_Master.entities.Empresa
 
-@Entity(tableName = "pisos",
-    foreignKeys = [
-        ForeignKey(
-            entity = Empresa::class,
-            parentColumns = ["id"],
-            childColumns = ["empresaId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
+@Entity(tableName = "pisos")
 data class Piso(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
