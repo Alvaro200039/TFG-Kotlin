@@ -5,14 +5,14 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : AppCompatActivity() {
+class Principal : AppCompatActivity() {
     private lateinit var btnEmpresa: Button
     private lateinit var btnEmpleado: Button
     private lateinit var btnLogin: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_principal)
 
         btnEmpresa = findViewById(R.id.btnRegistroEmpresa)
         btnEmpleado = findViewById(R.id.btnRegistroEmpleado)
