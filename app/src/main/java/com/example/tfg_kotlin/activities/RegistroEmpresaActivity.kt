@@ -53,6 +53,7 @@ class RegistroEmpresaActivity : AppCompatActivity() {
             }
         }
 
+
         private fun registrarEmpresa() {
             val nombre = etNombreEmpresa.text.toString().trim()
             var dominio = etDominioEmpresa.text.toString().trim().lowercase()
