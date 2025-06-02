@@ -61,7 +61,7 @@ class RegistroEmpresa : AppCompatActivity() {
         }
 
         //Definición de los datos a introducir en la tabla Empleados -> BD_Maestra
-        val empresa = Empresa(cif, nombre, dominio)
+        val empresa = Empresa(cif=cif, dominio=dominio,nombre=nombre)
 
         // Room puede tardar vastante tiempo en acceder o realizar acciones en bd incluso puede congelar la aplicacoón
         // Para que esto no suceda, dejamos que la interfaz gráfica se ejecute en un hilo principal
