@@ -95,6 +95,7 @@ class LoginActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this@LoginActivity, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
                     // Aquí podrías redirigir al registro si quisieras, por ejemplo
+
                     // startActivity(registro)
                 }
             }

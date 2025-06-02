@@ -23,15 +23,6 @@ class GlobalRepository(
         usuarioDao.insertarUsuario(usuario)
     }
 
-   /* suspend fun buscarUsuario(usuario: Usuario){
-        usuarioDao.buscarEmpleado(nombre)
-    }
-
-    suspend fun buscarJefe(usuario: Usuario){
-        usuarioDao.buscarJefes(esJefe)
-    }
-    */
-
     suspend fun getAllUsuarios() = usuarioDao.obtenerTodos()
 
 

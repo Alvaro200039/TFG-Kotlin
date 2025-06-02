@@ -21,9 +21,9 @@ class MasterRepository(internal val empresaDao: MasterDao) {
         return empresaDao.buscarPorCif(cif)
     }
 
-   /* suspend fun buscarPorDominio(dominio: String): Empresa?{
-        return empresaDao.buscarPorDominio(email)
-    }*/
+    suspend fun buscarPorDominio(dominio: String): Empresa?{
+        return empresaDao.buscarPorDominio(dominio)
+    }
 
     suspend fun obtenerTodasLasEmpresas(): List<Empresa> {
         return empresaDao.obtenerTodasLasEmpresas()
