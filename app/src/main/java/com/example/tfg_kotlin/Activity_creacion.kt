@@ -107,29 +107,7 @@ class Activity_creacion : AppCompatActivity() {
         titleView.setOnClickListener {
             showChangeTitleDialog()
         }
-
-        lifecycleScope.launch {
-            val empresaPorDefecto = repositoryMaster.empresaDao.buscarPorCif("A1111111")
-            if (empresaPorDefecto == null) {
-                repositoryMaster.empresaDao.insertarEmpresa(
-                    Empresa(
-                        cif = "A1111111",
-                        dominio = "@empresa.es",
-                        nombre = "empresa"
-                    )
-                )
-            }
-
-            // Ahora que sabemos que la empresa 1 existe, obtenemos empresaId de prefs o asignamos 1
-            val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
-            var empresaCIF = prefs.getString("empresa_CIF", "A1111111")
-            if (empresaCIF.equals("")) empresaCIF = "A1111111"
-
-            // Guardar en variable global para usar en la Activity
-            this@Activity_creacion.empresaCif = empresaCif
-
-            // Aquí puedes continuar con cualquier carga o inicialización que dependa de empresaId
-        }
+        
 
         lifecycleScope.launch {
             repositoryApp.pisoDao.obtenerTodosLosPisos().collectLatest { pisos ->

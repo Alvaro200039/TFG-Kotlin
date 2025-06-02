@@ -8,9 +8,7 @@ import com.example.tfg_kotlin.BBDD_Maestra.Dao.MasterDao
 import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
 
 @Database(
-    entities = [Empresa::class],
-    version = 1,
-    exportSchema = false
+    entities = [Empresa::class], version = 1
 )
 abstract class MasterDB : RoomDatabase() {
     abstract fun empresaDao(): MasterDao

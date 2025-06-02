@@ -14,6 +14,7 @@ import androidx.room.Room
 import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
 import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
 import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
+import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.launch
 
 class RegistroEmpresa : AppCompatActivity() {
@@ -21,6 +22,9 @@ class RegistroEmpresa : AppCompatActivity() {
     private lateinit var editDominio: EditText
     private lateinit var editCif: EditText
     private lateinit var btnRegistrar: Button
+
+    // Acceso a la bd_maestra
+    private lateinit var dao: MasterRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,13 +46,6 @@ class RegistroEmpresa : AppCompatActivity() {
         val dominio = editDominio.text.toString().trim()
         val cif = editCif.text.toString().trim().uppercase()
 
-        //Definición - creación BD_Maestra
-        val db = Room.databaseBuilder(
-            applicationContext,
-            MasterDB::class.java, "db_maestra.db"
-        ).build()
-
-        val dao = db.empresaDao()
 
         // Validacion comprobacion todos los dato en los textView
         if (nombre.isEmpty() || dominio.isEmpty() || cif.isEmpty()) {
@@ -71,7 +68,7 @@ class RegistroEmpresa : AppCompatActivity() {
         // Para ello usamos esta opcón
         lifecycleScope.launch {
 
-            val cifExiste = dao.buscarPorCif(cif)
+            val cifExiste =dao.buscarPorCif(cif)
             val dominioExiste = dao.buscarPorDominio(dominio)
 
             // Validación de cif existente
