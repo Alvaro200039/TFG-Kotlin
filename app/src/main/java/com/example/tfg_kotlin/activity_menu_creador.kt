@@ -28,6 +28,24 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.content.pm.PackageManager
+import android.Manifest
+import android.os.Build
+import android.view.LayoutInflater
+import android.view.Menu
+import android.widget.NumberPicker
+import android.widget.Switch
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
+import androidx.core.graphics.drawable.toDrawable
+import com.google.android.material.materialswitch.MaterialSwitch
+
+
 
 class activity_menu_creador : AppCompatActivity() {
 
@@ -113,6 +131,22 @@ class activity_menu_creador : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+            }
+        }
     }
 
     override fun onResume(){
@@ -121,15 +155,77 @@ class activity_menu_creador : AppCompatActivity() {
         limpiarReservasPasadas()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_principal, menu)
+        return true
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
                 true
             }
+            R.id.action_options -> {
+                mostrarDialogoNotificaciones() // tu función para mostrar el diálogo
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == 1001) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permiso concedido
+            } else {
+                Toast.makeText(this, "No se podrán mostrar notificaciones de reservas.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun mostrarDialogoNotificaciones() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_notificaciones, null)
+
+        val switch = dialogView.findViewById<MaterialSwitch>(R.id.switchNotificaciones)
+        val picker = dialogView.findViewById<NumberPicker>(R.id.pickerMinutos)
+
+        val prefs = getSharedPreferences("ajustes_usuario", MODE_PRIVATE)
+        val notificacionesActivadas = prefs.getBoolean("notificaciones_activadas", true)
+        val minutosAntes = prefs.getInt("minutos_antes", 10)
+
+        switch.isChecked = notificacionesActivadas
+        picker.minValue = 1
+        picker.maxValue = 60
+        picker.value = minutosAntes
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Notificaciones")
+            .setView(dialogView)
+            .setPositiveButton("Guardar") { _, _ ->
+                val editor = prefs.edit()
+                editor.putBoolean("notificaciones_activadas", switch.isChecked)
+                editor.putInt("minutos_antes", picker.value)
+                editor.apply()
+                Toast.makeText(this, "Preferencias guardadas", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancelar", null)
+            .create()
+
+        // Fondo transparente para que solo se vea tu diseño personalizado
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(ContextCompat.getColor(this, R.color.black))
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(ContextCompat.getColor(this, R.color.red))
     }
 
 
@@ -242,6 +338,7 @@ class activity_menu_creador : AppCompatActivity() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val ahora = Date()
         val idUsuario = 123
+
         lifecycleScope.launch {
             val reservas = repositoryApp.getReservasPorUsuario(idUsuario)
 
@@ -263,9 +360,44 @@ class activity_menu_creador : AppCompatActivity() {
                 formato.parse(it.fechaHora)?.time ?: Long.MAX_VALUE
             }
 
-            siguienteReserva?.let {
-                val texto = "Siguiente reserva: ${it.piso} \n${it.nombreSala} el ${it.fechaHora}"
+            siguienteReserva?.let { reserva ->
+                val texto =
+                    "Siguiente reserva: ${reserva.piso} \n${reserva.nombreSala} el ${reserva.fechaHora}"
                 textView.text = texto
+
+                val fechaReserva = formato.parse(reserva.fechaHora)
+                fechaReserva?.let { fecha ->
+                    val tiempoRestante = fecha.time - System.currentTimeMillis()
+
+                    val prefs = getSharedPreferences("ajustes_usuario", MODE_PRIVATE)
+                    val notificacionesActivadas = prefs.getBoolean("notificaciones_activadas", true)
+                    val minutosAntes = prefs.getInt("minutos_antes", 10)
+
+                    if (notificacionesActivadas) {
+                        val tiempoAntes = TimeUnit.MINUTES.toMillis(minutosAntes.toLong())
+                        val delay = tiempoRestante - tiempoAntes
+
+                        if (delay > 0) {
+                            val inputData = Data.Builder()
+                                .putString("hora_reserva", reserva.fechaHora)
+                                .putString("nombre_sala", reserva.nombreSala)
+                                .build()
+
+                            val workRequest = OneTimeWorkRequestBuilder<ReservaWorker>()
+                                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                                .setInputData(inputData)
+                                .build()
+
+                            val workName = "recordatorio_reserva_${reserva.nombreSala}_${reserva.fechaHora}"
+
+                            WorkManager.getInstance(this@activity_menu_creador).enqueueUniqueWork(
+                                workName,
+                                ExistingWorkPolicy.REPLACE,
+                                workRequest
+                            )
+                        }
+                    }
+                }
             }
         }
     }

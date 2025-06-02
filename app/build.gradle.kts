@@ -52,6 +52,9 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    ksp(libs.room.ksp)  // solo aquí en dependencies
+    ksp(libs.room.ksp)
+
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+
 
 }
