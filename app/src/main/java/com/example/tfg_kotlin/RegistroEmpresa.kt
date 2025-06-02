@@ -23,9 +23,6 @@ class RegistroEmpresa : AppCompatActivity() {
     private lateinit var editCif: EditText
     private lateinit var btnRegistrar: Button
 
-    // Acceso a la bd_maestra
-    private lateinit var dao: MasterRepository
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registro_empresa)
@@ -45,6 +42,14 @@ class RegistroEmpresa : AppCompatActivity() {
         val nombre = editNombre.text.toString().trim()
         val dominio = editDominio.text.toString().trim()
         val cif = editCif.text.toString().trim().uppercase()
+
+        //Definición - creación BD_Maestra
+        val db = Room.databaseBuilder(
+            applicationContext,
+            MasterDB::class.java, "db_maestra.db"
+        ).build()
+
+        val dao = db.empresaDao()
 
 
         // Validacion comprobacion todos los dato en los textView
