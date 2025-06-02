@@ -11,7 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.tfg_kotlin.R
 import com.example.tfg_kotlin.database.BBDDInstance
 import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
-import com.example.tfg_kotlin.database.BBDD
+import com.example.tfg_kotlin.database.BBDDMaestra
 
 class RecuperarContrasenaActivity : AppCompatActivity() {
 
@@ -26,7 +26,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
     private var codigoGenerado: String = ""
     private var correo: String = ""
-    private lateinit var db: BBDD
+    private lateinit var db: BBDDMaestra
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

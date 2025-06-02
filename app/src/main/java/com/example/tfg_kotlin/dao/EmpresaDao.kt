@@ -9,12 +9,16 @@ import com.example.tfg_kotlin.entities.Empresa
 interface EmpresaDao {
 
     @Insert
-    fun insertarEmpresa(empresa: Empresa)
+    suspend fun insertarEmpresa(empresa: Empresa): Long
 
     @Query("SELECT * FROM Empresa WHERE dominio = :dominio")
-    fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
+    suspend fun getEmpresaPorDominio(dominio: String): Empresa?
 
     @Query("SELECT * FROM Empresa WHERE cif = :cif LIMIT 1")
-    fun getEmpresaPorCif(cif: String): Empresa?
+    suspend fun getEmpresaPorCif(cif: String): Empresa?
+
+    @Query("SELECT * FROM Empresa")
+    suspend fun obtenerTodasLasEmpresas(): List<Empresa> // agregado
+
 
 }

@@ -13,6 +13,8 @@ import com.example.tfg_kotlin.database.BBDDInstance
 import com.example.tfg_kotlin.entities.Empresa
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class RegistroEmpresaActivity : AppCompatActivity() {
 
@@ -64,34 +66,38 @@ class RegistroEmpresaActivity : AppCompatActivity() {
 
             if (!validarCampos(nombre, dominio, cif)) return
 
-            val dbMaestra = BBDDInstance.getDatabase(this, "maestra_db")
-            val empresaExistente = dbMaestra.empresaDao().getEmpresaPorDominioEnEmpresa(dominio)
+            // Forma recomendada de lanzar corrutinas
+            lifecycleScope.launch {
 
-            if (empresaExistente != null) {
-                tilDominioEmpresa.error = "El dominio ya está registrado"
-                etDominioEmpresa.requestFocus()
-                return
+                val dbMaestra = BBDDInstance.getDatabase(this@RegistroEmpresaActivity, "maestra_db")
+                val empresaExistente = dbMaestra.empresaDao().getEmpresaPorDominio(dominio)
+
+                if (empresaExistente != null) {
+                    tilDominioEmpresa.error = "El dominio ya está registrado"
+                    etDominioEmpresa.requestFocus()
+                    return@launch
+                }
+                val empresaConMismoCif = dbMaestra.empresaDao().getEmpresaPorCif(cif)
+                if (empresaConMismoCif != null) {
+                    tilCif.error = "El CIF ya está registrado"
+                    etCif.requestFocus()
+                    return@launch
+                }
+
+                val nuevaEmpresa = Empresa(nombre = nombre, dominio = dominio, cif = cif)
+                dbMaestra.empresaDao().insertarEmpresa(nuevaEmpresa)
+
+                val nombreBD = "empresa_${dominio.replace(".", "_")}"
+
+
+                BBDDInstance.getDatabase(this@RegistroEmpresaActivity, nombreBD)
+
+                Toast.makeText(this@RegistroEmpresaActivity, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()
+                Log.i("Empresa", "Registrada: $nombre, dominio: $dominio")
+
+                startActivity(Intent(this@RegistroEmpresaActivity, RegistroPersonaActivity::class.java))
+                finish()
             }
-            val empresaConMismoCif = dbMaestra.empresaDao().getEmpresaPorCif(cif)
-            if (empresaConMismoCif != null) {
-                tilCif.error = "El CIF ya está registrado"
-                etCif.requestFocus()
-                return
-            }
-
-            val nuevaEmpresa = Empresa(nombre = nombre, dominio = dominio, cif = cif)
-            dbMaestra.empresaDao().insertarEmpresa(nuevaEmpresa)
-
-            val nombreBD = "empresa_${dominio.replace(".", "_")}"
-
-
-            BBDDInstance.getDatabase(this, nombreBD)
-
-            Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()
-            Log.i("Empresa", "Registrada: $nombre, dominio: $dominio")
-
-            startActivity(Intent(this, RegistroPersonaActivity::class.java))
-            finish()
         }
 
         private fun validarCampos(nombre: String, dominio: String, cif: String): Boolean {

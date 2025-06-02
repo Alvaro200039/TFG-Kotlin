@@ -5,13 +5,13 @@ import android.content.Context
 import androidx.room.Room
 
 object BBDDInstance {
-    private val instancias = mutableMapOf<String, BBDD>()
+    private val instancias = mutableMapOf<String, BBDDMaestra>()
 
-    fun getDatabase(context: Context, nombreBD: String = "maestra_db"): BBDD {
+    fun getDatabase(context: Context, nombreBD: String = "maestra_db"): BBDDMaestra {
         if (!instancias.containsKey(nombreBD)) {
             val instancia = Room.databaseBuilder(
                 context.applicationContext,
-                BBDD::class.java,
+                BBDDMaestra::class.java,
                 nombreBD
             ).allowMainThreadQueries().build()
             instancias[nombreBD] = instancia

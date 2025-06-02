@@ -12,10 +12,15 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.tfg_kotlin.R
+import com.example.tfg_kotlin.database.AppDatabase
 import com.example.tfg_kotlin.database.BBDDInstance
+import com.example.tfg_kotlin.database.BBDDMaestra
+import com.example.tfg_kotlin.repository.AppRepository
 import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
@@ -56,12 +61,6 @@ class LoginActivity : AppCompatActivity() {
         tvOlvidarContrasena = findViewById(R.id.tvOlvidarContrasena)
     }
 
-    private fun configurarToolbar() {
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-    }
-
     private fun configurarRecuperarContrasena() {
         tvOlvidarContrasena.setOnClickListener {
             startActivity(Intent(this, RecuperarContrasenaActivity::class.java))
@@ -79,34 +78,38 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val dbMaestra = BBDDInstance.getDatabase(applicationContext, "maestra_db")
+            lifecycleScope.launch {
 
+                val dbMaestra = BBDDMaestra.getInstance(applicationContext)
+                val empresaExiste = dbMaestra.empresaDao().getEmpresaPorDominio(dominioCorreo)
 
-            val empresaExiste = dbMaestra.loginDao().getEmpresaPorDominioEnEmpresa(dominioCorreo)
-            if (empresaExiste == null) {
-                mostrarError("No existe ninguna empresa registrada con el dominio @$dominioCorreo")
-                return@setOnClickListener
-            }
+                if (empresaExiste == null) {
+                    mostrarError("No existe ninguna empresa registrada con el dominio @$dominioCorreo")
+                    return@launch
+                }
 
-            val nombreBD = construirNombreBD(dominioCorreo)
+                // Base de datos específica de la empresa
+                val dominioSinArroba = dominioCorreo.substringAfter("@")
 
-            val db = BBDDInstance.getDatabase(applicationContext, nombreBD)
+                val dbEmpresa = AppDatabase.getInstance(applicationContext, dominioSinArroba)
+                val loginDao = dbEmpresa.loginDao()
+                val appRepository = AppRepository(dbEmpresa.empleadoDao(), loginDao)
+                val usuario = appRepository.loginUsuario(correo, contrasena)
 
-            val usuario = db.loginDao().loginUsuario(correo, contrasena)
+                if (usuario != null) {
+                    Toast.makeText(
+                        this@LoginActivity,
+                        if (usuario.esJefe) "Bienvenido jefe" else "Bienvenido empleado",
+                        Toast.LENGTH_SHORT
+                    ).show()
 
-            if (usuario != null) {
-                Toast.makeText(
-                    this,
-                    if (usuario.esJefe) "Bienvenido jefe" else "Bienvenido empleado",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                val destino =
-                    if (usuario.esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
-                startActivity(Intent(this, destino))
-                finish()
-            } else {
-                mostrarError("Correo o contraseña incorrectos o empresa no registrada")
+                    val destino =
+                        if (usuario.esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
+                    startActivity(Intent(this@LoginActivity, destino))
+                    finish()
+                } else {
+                    mostrarError("Correo o contraseña incorrectos o empresa no registrada")
+                }
             }
         }
     }

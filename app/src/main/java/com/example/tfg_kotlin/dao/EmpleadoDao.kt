@@ -11,14 +11,16 @@ import com.example.tfg_kotlin.entities.Empresa
 interface EmpleadoDao {
 
     @Insert
-    fun insertarEmpleado(empleado: Empleados)
+    suspend fun insertarEmpleado(empleado: Empleados)
 
     @Query("SELECT * FROM Empleados WHERE correo = :correo")
-    fun buscarEmpleadoPorCorreo(correo: String): Empleados?
+    suspend fun buscarEmpleadoPorCorreo(correo: String): Empleados?
 
     @Query("SELECT * FROM Empresa WHERE dominio = :dominio")
-    fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
+    suspend fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
 
-    @Query("SELECT * FROM Empresa WHERE cif = :cif")
-    fun getEmpresaPorCIF(cif: String): Empresa?
+
+    @Query("SELECT * FROM Empleados")
+    suspend fun getAllEmpleados(): List<Empleados>
+
 }
