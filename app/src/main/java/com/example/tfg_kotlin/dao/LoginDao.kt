@@ -10,8 +10,8 @@ import com.example.tfg_kotlin.entities.Empresa
 interface LoginDao {
 
     @Query("SELECT * FROM Empresa WHERE dominio = :dominio")
-    fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
+    suspend fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
 
     @Query("SELECT * FROM Empleados WHERE correo = :correo AND contrasena = :contrasena")
-    fun loginUsuario(correo: String, contrasena: String): Empleados?
+    suspend fun loginUsuario(correo: String, contrasena: String): Empleados?
 }

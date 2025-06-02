@@ -8,8 +8,8 @@ import com.example.tfg_kotlin.entities.Empleados
 interface RecuperarContrasenaDao {
 
     @Query("SELECT * FROM Empleados WHERE correo = :correo")
-    fun buscarEmpleadoPorCorreo(correo: String): Empleados?
+    suspend fun buscarEmpleadoPorCorreo(correo: String): Empleados?
 
     @Query("UPDATE Empleados SET contrasena = :nuevaContrasena WHERE correo = :correo")
-    fun actualizarContrasena(correo: String, nuevaContrasena: String)
+    suspend fun actualizarContrasena(correo: String, nuevaContrasena: String)
 }

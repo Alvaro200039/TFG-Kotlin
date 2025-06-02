@@ -8,12 +8,16 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.ViewModelProvider
 import com.example.tfg_kotlin.R
-import com.example.tfg_kotlin.database.BBDDInstance
 import com.example.tfg_kotlin.entities.Empresa
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import androidx.lifecycle.lifecycleScope
+import com.example.tfg_kotlin.database.BBDDMaestra
+import com.example.tfg_kotlin.repository.MasterRepository
+import com.example.tfg_kotlin.viewmodel.RegistroEmpresaViewModel
+import com.example.tfg_kotlin.viewmodel.RegistroEmpresaViewModelFactory
 import kotlinx.coroutines.launch
 
 class RegistroEmpresaActivity : AppCompatActivity() {
@@ -63,42 +67,37 @@ class RegistroEmpresaActivity : AppCompatActivity() {
                 dominio = "@$dominio"
             }
             val cif = etCif.text.toString().trim().uppercase()
+            val db = BBDDMaestra.getInstance(applicationContext)
+            val repository = MasterRepository(db.empresaDao())
+            val factory = RegistroEmpresaViewModelFactory(repository)
+            val viewModel = ViewModelProvider(this, factory)[RegistroEmpresaViewModel::class.java]
+
 
             if (!validarCampos(nombre, dominio, cif)) return
 
-            // Forma recomendada de lanzar corrutinas
-            lifecycleScope.launch {
-
-                val dbMaestra = BBDDInstance.getDatabase(this@RegistroEmpresaActivity, "maestra_db")
-                val empresaExistente = dbMaestra.empresaDao().getEmpresaPorDominio(dominio)
-
-                if (empresaExistente != null) {
-                    tilDominioEmpresa.error = "El dominio ya está registrado"
-                    etDominioEmpresa.requestFocus()
-                    return@launch
+            val empresa = Empresa(
+                cif = etCif.text.toString().trim().uppercase(),
+                nombre = etNombreEmpresa.text.toString().trim(),
+                dominio = etDominioEmpresa.text.toString().trim().lowercase()
+            )
+            viewModel.registroExitoso.observe(this) { ok ->
+                if (ok) {
+                    Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT)
+                        .show()
+                    finish()
                 }
-                val empresaConMismoCif = dbMaestra.empresaDao().getEmpresaPorCif(cif)
-                if (empresaConMismoCif != null) {
-                    tilCif.error = "El CIF ya está registrado"
-                    etCif.requestFocus()
-                    return@launch
-                }
-
-                val nuevaEmpresa = Empresa(nombre = nombre, dominio = dominio, cif = cif)
-                dbMaestra.empresaDao().insertarEmpresa(nuevaEmpresa)
-
-                val nombreBD = "empresa_${dominio.replace(".", "_")}"
-
-
-                BBDDInstance.getDatabase(this@RegistroEmpresaActivity, nombreBD)
-
-                Toast.makeText(this@RegistroEmpresaActivity, "Empresa registrada correctamente", Toast.LENGTH_SHORT).show()
-                Log.i("Empresa", "Registrada: $nombre, dominio: $dominio")
-
-                startActivity(Intent(this@RegistroEmpresaActivity, RegistroPersonaActivity::class.java))
-                finish()
             }
-        }
+            viewModel.error.observe(this) { mensaje ->
+                if (mensaje != null) {
+                    tilCif.error = mensaje
+                    viewModel.limpiarEstado()
+                }
+            }
+
+            viewModel.registrarEmpresa(empresa)
+
+            }
+
 
         private fun validarCampos(nombre: String, dominio: String, cif: String): Boolean {
             var esValido = true

@@ -38,6 +38,7 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.lifecycle.viewmodel.android)
     // Room - bd
     val room_version = "2.7.1"
     implementation("androidx.room:room-runtime:$room_version")
@@ -73,5 +74,8 @@ dependencies {
 
     implementation("androidx.compose.material3:material3:1.2.0") // Para Compose
     implementation("com.google.android.material:material:1.10.0") // Para XML tradicional
+
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
 
 }

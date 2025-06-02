@@ -16,9 +16,6 @@ interface EmpleadoDao {
     @Query("SELECT * FROM Empleados WHERE correo = :correo")
     suspend fun buscarEmpleadoPorCorreo(correo: String): Empleados?
 
-    @Query("SELECT * FROM Empresa WHERE dominio = :dominio")
-    suspend fun getEmpresaPorDominioEnEmpresa(dominio: String): Empresa?
-
 
     @Query("SELECT * FROM Empleados")
     suspend fun getAllEmpleados(): List<Empleados>

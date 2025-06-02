@@ -12,12 +12,20 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.tfg_kotlin.R
+import com.example.tfg_kotlin.database.AppDatabase
 import com.example.tfg_kotlin.utils.Validaciones
-import com.example.tfg_kotlin.database.BBDDInstance
+import com.example.tfg_kotlin.database.BBDDMaestra
 import com.example.tfg_kotlin.entities.Empleados
 import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModelProvider
+import com.example.tfg_kotlin.viewmodel.RegistroPersonaViewModel
+import com.example.tfg_kotlin.viewmodel.RegistroPersonaViewModelFactory
+import com.example.tfg_kotlin.repository.EmpleadoRepository
+
 
 class RegistroPersonaActivity : AppCompatActivity() {
 
@@ -35,6 +43,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
     private lateinit var tilCif: TextInputLayout
     private lateinit var etCif: TextInputEditText
     private lateinit var btnFinalizarRegistro: Button
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,48 +122,51 @@ class RegistroPersonaActivity : AppCompatActivity() {
 
         Log.d("REGISTRO_PERSONA", "Dominio buscado: $dominio")
 
-        val dbMaestra = BBDDInstance.getDatabase(this, "maestra_db")
-        val empresa = dbMaestra.empleadoDao().getEmpresaPorDominioEnEmpresa(dominio)
+        lifecycleScope.launch {
+            val dbMaestra = BBDDMaestra.getInstance(applicationContext)
+            val empresa = dbMaestra.empresaDao().getEmpresaPorDominio(dominio)
 
-        if (empresa == null) {
-            tilCorreo.error = "No existe ninguna empresa con el dominio @$dominio"
-            etCorreo.requestFocus()
-            return
+            if (empresa == null) {
+                tilCorreo.error = "No existe ninguna empresa con el dominio @$dominio"
+                etCorreo.requestFocus()
+                return@launch
+            }
+
+            val nombreBD = construirNombreBD(dominio)
+            val dbEmpresa = AppDatabase.getInstance(applicationContext, nombreBD)
+            val repository = EmpleadoRepository(dbEmpresa.empleadoDao())
+            val factory = RegistroPersonaViewModelFactory(repository)
+            val viewModel = ViewModelProvider(this@RegistroPersonaActivity, factory)[RegistroPersonaViewModel::class.java]
+
+            val esJefe = cifInput.isNotEmpty() && cifInput == empresa.cif
+
+            val empleado = Empleados(
+                nombre = etNombre.text.toString(),
+                apellidos = etApellidos.text.toString(),
+                correo = correo,
+                contrasena = etContrasena.text.toString(),
+                cif = if (esJefe) cifInput else "",
+                esJefe = esJefe
+            )
+
+            viewModel.registroExitoso.observe(this@RegistroPersonaActivity) { ok ->
+                if (ok) {
+                    val intent = if (esJefe) Intent(this@RegistroPersonaActivity, JefeActivity::class.java)
+                    else Intent(this@RegistroPersonaActivity, EmpleadoActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+            }
+
+            viewModel.error.observe(this@RegistroPersonaActivity) { mensaje ->
+                if (mensaje != null) {
+                    tilCorreo.error = mensaje
+                    viewModel.limpiarEstado()
+                }
+            }
+
+            viewModel.registrarEmpleado(empleado)
         }
-
-        val nombreBD = construirNombreBD(dominio)
-        val dbEmpresa = BBDDInstance.getDatabase(this, nombreBD)
-        val usuarioExistente = dbEmpresa.empleadoDao().buscarEmpleadoPorCorreo(correo)
-
-        if (usuarioExistente != null) {
-            tilCorreo.error = "Este correo ya está registrado"
-            etCorreo.requestFocus()
-            return
-        }
-
-        val esJefe = cifInput.isNotEmpty() && cifInput == empresa.cif
-
-        val empleado = Empleados(
-            nombre = etNombre.text.toString(),
-            apellidos = etApellidos.text.toString(),
-            correo = correo,
-            contrasena = etContrasena.text.toString(),
-            cif = if (esJefe) cifInput else "",
-            esJefe = esJefe
-        )
-
-        dbEmpresa.empleadoDao().insertarEmpleado(empleado)
-
-        Toast.makeText(this, "Registro completado", Toast.LENGTH_SHORT).show()
-
-        val intent = if (esJefe) {
-            Intent(this, JefeActivity::class.java)
-        } else {
-            Intent(this, EmpleadoActivity::class.java)
-        }
-
-        startActivity(intent)
-        finish()
     }
 
     // Flecha "Atrás"

@@ -11,15 +11,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
 import com.example.tfg_kotlin.R
 import com.example.tfg_kotlin.database.AppDatabase
-import com.example.tfg_kotlin.database.BBDDInstance
 import com.example.tfg_kotlin.database.BBDDMaestra
-import com.example.tfg_kotlin.repository.AppRepository
-import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
+import com.example.tfg_kotlin.repository.EmpleadoRepository
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import androidx.lifecycle.lifecycleScope
+import com.example.tfg_kotlin.repository.LoginRepository
+import com.example.tfg_kotlin.viewmodel.LoginViewModel
+import com.example.tfg_kotlin.viewmodel.LoginViewModelFactory
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -90,29 +92,41 @@ class LoginActivity : AppCompatActivity() {
 
                 // Base de datos específica de la empresa
                 val dominioSinArroba = dominioCorreo.substringAfter("@")
-
                 val dbEmpresa = AppDatabase.getInstance(applicationContext, dominioSinArroba)
-                val loginDao = dbEmpresa.loginDao()
-                val appRepository = AppRepository(dbEmpresa.empleadoDao(), loginDao)
-                val usuario = appRepository.loginUsuario(correo, contrasena)
+                val loginRepository = LoginRepository(dbEmpresa.loginDao())
+                val viewModelFactory = LoginViewModelFactory(loginRepository)
+                val viewModel = ViewModelProvider(
+                    this@LoginActivity,
+                    viewModelFactory
+                )[LoginViewModel::class.java]
 
-                if (usuario != null) {
-                    Toast.makeText(
-                        this@LoginActivity,
-                        if (usuario.esJefe) "Bienvenido jefe" else "Bienvenido empleado",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    val destino =
-                        if (usuario.esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
-                    startActivity(Intent(this@LoginActivity, destino))
-                    finish()
-                } else {
-                    mostrarError("Correo o contraseña incorrectos o empresa no registrada")
+                viewModel.usuario.observe(this@LoginActivity) { usuario ->
+                    usuario?.let {
+                        val destino =
+                            if (it.esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "Bienvenido ${if (it.esJefe) "jefe" else "empleado"}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        startActivity(Intent(this@LoginActivity, destino))
+                        finish()
+                    }
                 }
+
+                viewModel.error.observe(this@LoginActivity) { error ->
+                    error?.let {
+                        mostrarError(it)
+                        viewModel.limpiarEstado()
+                    }
+                }
+
+                viewModel.login(correo, contrasena)
             }
         }
     }
+
+
 
     private fun mostrarError(mensaje: String) {
         Toast.makeText(this, mensaje, Toast.LENGTH_SHORT).show()
