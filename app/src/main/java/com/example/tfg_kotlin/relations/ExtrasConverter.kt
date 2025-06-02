@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.entitiesApp
+package com.example.tfg_kotlin.relations
 
 import androidx.room.TypeConverter
 import com.google.gson.Gson

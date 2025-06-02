@@ -37,12 +37,12 @@ import com.bumptech.glide.request.transition.Transition
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.example.tfg_kotlin.database.AppDatabase
-import com.example.tfg_kotlin.database.MasterDatabase
-import com.example.tfg_kotlin.entitiesApp.Piso
-import com.example.tfg_kotlin.entitiesApp.Reserva
-import com.example.tfg_kotlin.entitiesApp.Salas
-import com.example.tfg_kotlin.repository.AppRepository
+import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
+import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
+import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
+import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
+import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
+import com.example.tfg_kotlin.repository.GlobalRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -51,7 +51,7 @@ import com.example.tfg_kotlin.repository.MasterRepository
 
 
 class Activity_empleados : AppCompatActivity() {
-    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryApp: GlobalRepository
     private lateinit var repositoryMaster: MasterRepository
     private lateinit var container: ConstraintLayout
     private var fechaSeleccionada: String = ""
@@ -68,13 +68,13 @@ class Activity_empleados : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        val masterDb = MasterDB.getDatabase(applicationContext)
         repositoryMaster = MasterRepository(
             masterDb.empresaDao()
         )
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        repositoryApp = AppRepository(
+        val db = GlobalDB.getDatabase(applicationContext)
+        repositoryApp = GlobalRepository(
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),

@@ -41,18 +41,17 @@ import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
 import com.example.tfg_kotlin.Utils.naturalOrderKey
 import com.example.tfg_kotlin.Utils.compareNaturalKeys
-import com.example.tfg_kotlin.daoApp.PisoDao
-import com.example.tfg_kotlin.daoApp.SalaDao
-import com.example.tfg_kotlin.database.AppDatabase
-import com.example.tfg_kotlin.database.MasterDatabase
-import com.example.tfg_kotlin.entitiesApp.FranjaHoraria
-import com.example.tfg_kotlin.entitiesApp.Piso
-import com.example.tfg_kotlin.entitiesApp.Salas
-import com.example.tfg_kotlin.entitiesMaster.Empresa
-import com.example.tfg_kotlin.repository.AppRepository
+import com.example.tfg_kotlin.BBDD_Global.Dao.PisoDao
+import com.example.tfg_kotlin.BBDD_Global.Dao.SalaDao
+import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
+import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
+import com.example.tfg_kotlin.BBDD_Global.Entities.FranjaHoraria
+import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
+import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
+import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
+import com.example.tfg_kotlin.repository.GlobalRepository
 import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -64,7 +63,7 @@ import kotlinx.coroutines.withContext
 class Activity_creacion : AppCompatActivity() {
 
     private lateinit var container: ConstraintLayout
-    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryApp: GlobalRepository
     private lateinit var repositoryMaster: MasterRepository
     private var pisoActual: Piso? = null
     private var empresaCif: String = ""
@@ -74,13 +73,13 @@ class Activity_creacion : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        val masterDb = MasterDB.getDatabase(applicationContext)
         repositoryMaster = MasterRepository(
             masterDb.empresaDao()
         )
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        repositoryApp = AppRepository(
+        val db = GlobalDB.getDatabase(applicationContext)
+        repositoryApp = GlobalRepository(
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),
@@ -110,7 +109,7 @@ class Activity_creacion : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val empresaPorDefecto = repositoryMaster.empresaDao.obtenerEmpresaPorCif("A1111111")
+            val empresaPorDefecto = repositoryMaster.empresaDao.buscarPorCif("A1111111")
             if (empresaPorDefecto == null) {
                 repositoryMaster.empresaDao.insertarEmpresa(
                     Empresa(
@@ -811,7 +810,7 @@ private fun openGallery() {
         // Aquí cambiamos a contexto IO porque accedemos a base de datos
         withContext(Dispatchers.IO) {
             // Obtener la base de datos maestra (donde está la empresa)
-            val masterDb = MasterDatabase.getDatabase(container.context)
+            val masterDb = MasterDB.getDatabase(container.context)
             val empresaDao = masterDb.empresaDao()
 
             // Supongamos que obtienes el cif de la empresa actual (por nombre, por prefs, etc.)

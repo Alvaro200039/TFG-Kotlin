@@ -1,7 +1,7 @@
-package com.example.tfg_kotlin.daoApp
+package com.example.tfg_kotlin.BBDD_Global.Dao
 
 import androidx.room.*
-import com.example.tfg_kotlin.entitiesApp.Salas
+import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
 
 @Dao
 interface SalaDao {
@@ -11,7 +11,6 @@ interface SalaDao {
 
     @Query("SELECT * FROM salas WHERE pisoId = :pisoId")
     suspend fun obtenerPorPiso(pisoId: String): List<Salas>
-
 
     @Query("SELECT * FROM salas")
     suspend fun obtenerTodas(): List<Salas>

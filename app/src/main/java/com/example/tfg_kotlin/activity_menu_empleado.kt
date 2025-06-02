@@ -17,9 +17,9 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.database.AppDatabase
-import com.example.tfg_kotlin.database.MasterDatabase
-import com.example.tfg_kotlin.repository.AppRepository
+import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
+import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
+import com.example.tfg_kotlin.repository.GlobalRepository
 import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -28,19 +28,19 @@ import java.util.Locale
 
 class activity_menu_empleado : AppCompatActivity() {
 
-    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryApp: GlobalRepository
     private lateinit var repositoryMaster: MasterRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        val masterDb = MasterDB.getDatabase(applicationContext)
         repositoryMaster = MasterRepository(
             masterDb.empresaDao()
         )
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        repositoryApp = AppRepository(
+        val db = GlobalDB.getDatabase(applicationContext)
+        repositoryApp = GlobalRepository(
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),

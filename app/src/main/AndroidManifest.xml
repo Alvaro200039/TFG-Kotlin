@@ -15,6 +15,9 @@
         android:theme="@style/Theme.TFGKotlin"
         tools:targetApi="31">
         <activity
+            android:name=".Principal"
+            android:exported="false" />
+        <activity
             android:name=".activity_menu_empleado"
             android:exported="false" />
         <activity

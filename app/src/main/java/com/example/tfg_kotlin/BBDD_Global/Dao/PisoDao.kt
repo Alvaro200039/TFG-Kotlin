@@ -1,7 +1,7 @@
-package com.example.tfg_kotlin.daoApp
+package com.example.tfg_kotlin.BBDD_Global.Dao
 
 import androidx.room.*
-import com.example.tfg_kotlin.entitiesApp.Piso
+import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.relations.PisoConSalas
 import kotlinx.coroutines.flow.Flow
 

@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.daoApp
+package com.example.tfg_kotlin.BBDD_Global.Dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,13 +6,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.example.tfg_kotlin.entitiesApp.Usuario
+import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 
 @Dao
 interface UsuarioDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertar(usuario: Usuario)
+    @Insert
+    suspend fun insertarUsuario(usuario: Usuario)
 
     @Query("SELECT * FROM usuarios")
     suspend fun obtenerTodos(): List<Usuario>
@@ -34,5 +34,14 @@ interface UsuarioDao {
 
     @Query("SELECT * FROM usuarios LIMIT 1")
     suspend fun getPrimerUsuario(): Usuario?
+
+    @Query("SELECT * FROM usuarios WHERE nombre = :nombre AND apellidos = :apellidos")
+    suspend fun buscarEmpleado(nombre: String, apellidos: String): Usuario?
+
+    @Query("SELECT * FROM usuarios WHERE esJefe = 1")
+    suspend fun buscarJefes(): List<Usuario>
+
+    @Query("SELECT * FROM usuarios WHERE email = :correo LIMIT 1")
+    suspend fun obtenerPorCorreo(correo: String): Usuario?
 
 }

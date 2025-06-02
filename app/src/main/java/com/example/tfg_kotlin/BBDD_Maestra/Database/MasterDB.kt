@@ -1,29 +1,29 @@
-package com.example.tfg_kotlin.database
+package com.example.tfg_kotlin.BBDD_Maestra.Database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.tfg_kotlin.daoMaster.EmpresaDao
-import com.example.tfg_kotlin.entitiesMaster.Empresa
+import com.example.tfg_kotlin.BBDD_Maestra.Dao.MasterDao
+import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
 
 @Database(
     entities = [Empresa::class],
     version = 1,
     exportSchema = false
 )
-abstract class MasterDatabase : RoomDatabase() {
-    abstract fun empresaDao(): EmpresaDao
+abstract class MasterDB : RoomDatabase() {
+    abstract fun empresaDao(): MasterDao
 
     companion object {
         @Volatile
-        private var INSTANCE: MasterDatabase? = null
+        private var INSTANCE: MasterDB? = null
 
-        fun getDatabase(context: Context): MasterDatabase {
+        fun getDatabase(context: Context): MasterDB {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    MasterDatabase::class.java,
+                    MasterDB::class.java,
                     "master_database"
                 ).build()
                 INSTANCE = instance

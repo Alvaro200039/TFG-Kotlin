@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.daoMaster
+package com.example.tfg_kotlin.BBDD_Maestra.Dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,12 +6,12 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.example.tfg_kotlin.entitiesMaster.Empresa
+import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
 
 @Dao
-interface EmpresaDao {
+interface MasterDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertarEmpresa(empresa: Empresa): Long
 
     @Update
@@ -20,8 +20,11 @@ interface EmpresaDao {
     @Delete
     suspend fun eliminarEmpresa(empresa: Empresa)
 
+    @Query("SELECT * FROM Empresas WHERE dominio = :dominio")
+    suspend fun buscarPorDominio(dominio: String): Empresa?
+
     @Query("SELECT * FROM empresas WHERE cif = :cif")
-    suspend fun obtenerEmpresaPorCif(cif: String): Empresa?
+    suspend fun buscarPorCif(cif: String): Empresa?
 
     @Query("SELECT * FROM empresas")
     suspend fun obtenerTodasLasEmpresas(): List<Empresa>

@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.entitiesApp
+package com.example.tfg_kotlin.BBDD_Global.Entities
 
 import androidx.room.*
 
@@ -6,10 +6,11 @@ import androidx.room.*
 data class Usuario(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-
-    val nombre: String,
     val email: String,
+    val nombre: String,
+    val apellidos: String,
     val contrasena: String,
-    val esJefe: Boolean = false
+    val cif: String,
+    val esJefe: Boolean
 )
 

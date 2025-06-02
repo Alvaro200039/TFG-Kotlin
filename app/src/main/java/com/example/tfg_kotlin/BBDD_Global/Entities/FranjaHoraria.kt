@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.entitiesApp
+package com.example.tfg_kotlin.BBDD_Global.Entities
 
 import androidx.room.*
 @Entity(tableName = "franjas_horarias")
