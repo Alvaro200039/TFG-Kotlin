@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.entitiesMaster
+package com.example.tfg_kotlin.BBDD_Maestra.Entities
 
 import androidx.room.*
 

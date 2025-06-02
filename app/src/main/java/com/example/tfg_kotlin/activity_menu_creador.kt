@@ -17,9 +17,9 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.database.AppDatabase
-import com.example.tfg_kotlin.database.MasterDatabase
-import com.example.tfg_kotlin.repository.AppRepository
+import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
+import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
+import com.example.tfg_kotlin.repository.GlobalRepository
 import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -34,7 +34,6 @@ import android.os.Build
 import android.view.LayoutInflater
 import android.view.Menu
 import android.widget.NumberPicker
-import android.widget.Switch
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.work.Data
@@ -42,26 +41,25 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
-import androidx.core.graphics.drawable.toDrawable
 import com.google.android.material.materialswitch.MaterialSwitch
 
 
 
 class activity_menu_creador : AppCompatActivity() {
 
-    private lateinit var repositoryApp: AppRepository
+    private lateinit var repositoryApp: GlobalRepository
     private lateinit var repositoryMaster: MasterRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val masterDb = MasterDatabase.getDatabase(applicationContext)
+        val masterDb = MasterDB.getDatabase(applicationContext)
         repositoryMaster = MasterRepository(
             masterDb.empresaDao()
         )
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        repositoryApp = AppRepository(
+        val db = GlobalDB.getDatabase(applicationContext)
+        repositoryApp = GlobalRepository(
             db.usuarioDao(),
             db.salaDao(),
             db.reservaDao(),

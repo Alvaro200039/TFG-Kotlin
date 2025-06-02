@@ -1,9 +1,9 @@
 package com.example.tfg_kotlin.repository
 
-import com.example.tfg_kotlin.daoMaster.EmpresaDao
-import com.example.tfg_kotlin.entitiesMaster.Empresa
+import com.example.tfg_kotlin.BBDD_Maestra.Dao.MasterDao
+import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
 
-class MasterRepository(internal val empresaDao: EmpresaDao) {
+class MasterRepository(internal val empresaDao: MasterDao) {
 
     suspend fun insertarEmpresa(empresa: Empresa): Long {
         return empresaDao.insertarEmpresa(empresa)
@@ -17,9 +17,13 @@ class MasterRepository(internal val empresaDao: EmpresaDao) {
         empresaDao.eliminarEmpresa(empresa)
     }
 
-    suspend fun obtenerEmpresaPorId(cif: String): Empresa? {
-        return empresaDao.obtenerEmpresaPorCif(cif)
+    suspend fun buscarPorCif(cif: String): Empresa? {
+        return empresaDao.buscarPorCif(cif)
     }
+
+   /* suspend fun buscarPorDominio(dominio: String): Empresa?{
+        return empresaDao.buscarPorDominio(email)
+    }*/
 
     suspend fun obtenerTodasLasEmpresas(): List<Empresa> {
         return empresaDao.obtenerTodasLasEmpresas()

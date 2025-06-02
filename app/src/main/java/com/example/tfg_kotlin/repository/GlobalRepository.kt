@@ -1,16 +1,16 @@
 package com.example.tfg_kotlin.repository
 
-import com.example.tfg_kotlin.daoApp.FranjaHorariaDao
-import com.example.tfg_kotlin.daoApp.PisoDao
-import com.example.tfg_kotlin.daoApp.ReservaDao
-import com.example.tfg_kotlin.daoApp.SalaDao
-import com.example.tfg_kotlin.daoApp.UsuarioDao
-import com.example.tfg_kotlin.entitiesApp.FranjaHoraria
-import com.example.tfg_kotlin.entitiesApp.Reserva
-import com.example.tfg_kotlin.entitiesApp.Salas
-import com.example.tfg_kotlin.entitiesApp.Usuario
+import com.example.tfg_kotlin.BBDD_Global.Dao.FranjaHorariaDao
+import com.example.tfg_kotlin.BBDD_Global.Dao.PisoDao
+import com.example.tfg_kotlin.BBDD_Global.Dao.ReservaDao
+import com.example.tfg_kotlin.BBDD_Global.Dao.SalaDao
+import com.example.tfg_kotlin.BBDD_Global.Dao.UsuarioDao
+import com.example.tfg_kotlin.BBDD_Global.Entities.FranjaHoraria
+import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
+import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
+import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 
-class AppRepository(
+class GlobalRepository(
     internal val usuarioDao: UsuarioDao,
     internal val salaDao: SalaDao,
     private val reservaDao: ReservaDao,
@@ -18,11 +18,23 @@ class AppRepository(
     internal val pisoDao: PisoDao,
 ) {
 
+    //Acciones con Tabla(Entities) Usuario
+    suspend fun insertarUsuario(usuario: Usuario) {
+        usuarioDao.insertarUsuario(usuario)
+    }
+
+   /* suspend fun buscarUsuario(usuario: Usuario){
+        usuarioDao.buscarEmpleado(nombre)
+    }
+
+    suspend fun buscarJefe(usuario: Usuario){
+        usuarioDao.buscarJefes(esJefe)
+    }
+    */
+
     suspend fun getAllUsuarios() = usuarioDao.obtenerTodos()
 
-    suspend fun insertUsario(usuario: Usuario) {
-        usuarioDao.insertar(usuario)
-    }
+
 
     suspend fun getAllSalas() = salaDao.obtenerTodas()
 
