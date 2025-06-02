@@ -5,16 +5,12 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
 import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
 import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
-import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.launch
 
 class RegistroEmpresa : AppCompatActivity() {
