@@ -13,7 +13,7 @@ import com.example.tfg_kotlin.R
 import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
 import com.example.tfg_kotlin.database.BBDDMaestra
 import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.database.AppDatabase
+import com.example.tfg_kotlin.database.GlobalDB
 import com.example.tfg_kotlin.repository.RecuperarContrasenaRepository
 import com.example.tfg_kotlin.viewmodel.RecuperarContrasenaViewModel
 import com.example.tfg_kotlin.viewmodel.RecuperarContrasenaViewModelFactory
@@ -72,8 +72,8 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
     private fun configurarPaso1() {
         val dominio = correo.substringAfter("@")
         val nombreBD = construirNombreBD(dominio)
-        val db = AppDatabase.getInstance(applicationContext, nombreBD)
-        val repository = RecuperarContrasenaRepository(db.recuperarContrasenaDao())
+        val db = GlobalDB.getDatabase(applicationContext, nombreBD)
+        val repository = RecuperarContrasenaRepository(db.usuarioDao())
         val factory = RecuperarContrasenaViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[RecuperarContrasenaViewModel::class.java]
 

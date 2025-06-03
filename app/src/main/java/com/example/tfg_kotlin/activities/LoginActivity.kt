@@ -13,12 +13,11 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.tfg_kotlin.R
-import com.example.tfg_kotlin.database.AppDatabase
 import com.example.tfg_kotlin.database.BBDDMaestra
-import com.example.tfg_kotlin.repository.EmpleadoRepository
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import androidx.lifecycle.lifecycleScope
+import com.example.tfg_kotlin.database.GlobalDB
 import com.example.tfg_kotlin.repository.LoginRepository
 import com.example.tfg_kotlin.viewmodel.LoginViewModel
 import com.example.tfg_kotlin.viewmodel.LoginViewModelFactory
@@ -92,8 +91,8 @@ class LoginActivity : AppCompatActivity() {
 
                 // Base de datos específica de la empresa
                 val dominioSinArroba = dominioCorreo.substringAfter("@")
-                val dbEmpresa = AppDatabase.getInstance(applicationContext, dominioSinArroba)
-                val loginRepository = LoginRepository(dbEmpresa.loginDao())
+                val dbEmpresa = GlobalDB.getDatabase(applicationContext, dominioSinArroba)
+                val loginRepository = LoginRepository(dbEmpresa.usuarioDao())
                 val viewModelFactory = LoginViewModelFactory(loginRepository)
                 val viewModel = ViewModelProvider(
                     this@LoginActivity,

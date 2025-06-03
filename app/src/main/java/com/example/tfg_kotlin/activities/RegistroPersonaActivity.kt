@@ -5,26 +5,25 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.tfg_kotlin.R
-import com.example.tfg_kotlin.database.AppDatabase
 import com.example.tfg_kotlin.utils.Validaciones
 import com.example.tfg_kotlin.database.BBDDMaestra
-import com.example.tfg_kotlin.entities.Empleados
 import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModelProvider
+import com.example.tfg_kotlin.database.GlobalDB
+import com.example.tfg_kotlin.entities.Usuario
 import com.example.tfg_kotlin.viewmodel.RegistroPersonaViewModel
 import com.example.tfg_kotlin.viewmodel.RegistroPersonaViewModelFactory
-import com.example.tfg_kotlin.repository.EmpleadoRepository
+import com.example.tfg_kotlin.repository.RegistroPersonaRepository
 
 
 class RegistroPersonaActivity : AppCompatActivity() {
@@ -133,17 +132,17 @@ class RegistroPersonaActivity : AppCompatActivity() {
             }
 
             val nombreBD = construirNombreBD(dominio)
-            val dbEmpresa = AppDatabase.getInstance(applicationContext, nombreBD)
-            val repository = EmpleadoRepository(dbEmpresa.empleadoDao())
+            val dbEmpresa = GlobalDB.getDatabase(applicationContext, nombreBD)
+            val repository = RegistroPersonaRepository(dbEmpresa.usuarioDao())
             val factory = RegistroPersonaViewModelFactory(repository)
             val viewModel = ViewModelProvider(this@RegistroPersonaActivity, factory)[RegistroPersonaViewModel::class.java]
 
             val esJefe = cifInput.isNotEmpty() && cifInput == empresa.cif
 
-            val empleado = Empleados(
+            val usuario = Usuario(
                 nombre = etNombre.text.toString(),
                 apellidos = etApellidos.text.toString(),
-                correo = correo,
+                email = correo,
                 contrasena = etContrasena.text.toString(),
                 cif = if (esJefe) cifInput else "",
                 esJefe = esJefe
@@ -165,7 +164,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
                 }
             }
 
-            viewModel.registrarEmpleado(empleado)
+            viewModel.registrarUsuario(usuario)
         }
     }
 

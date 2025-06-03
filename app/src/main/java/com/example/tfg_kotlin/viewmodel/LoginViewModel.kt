@@ -5,14 +5,15 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tfg_kotlin.entities.Empleados
+import com.example.tfg_kotlin.entities.Usuario
 import com.example.tfg_kotlin.repository.LoginRepository
 import kotlinx.coroutines.launch
 
 
 class LoginViewModel (private val repository: LoginRepository) : ViewModel() {
 
-    private val _usuario = MutableLiveData<Empleados?>()
-    val usuario: LiveData<Empleados?> = _usuario
+    private val _usuario = MutableLiveData<Usuario?>()
+    val usuario: LiveData<Usuario?> = _usuario
 
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
