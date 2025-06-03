@@ -42,7 +42,7 @@ class ReservaWorker(context: Context, params: WorkerParameters) : Worker(context
         }
 
         // 👉 Crear intent que abre la Activity deseada
-        val intent = Intent(applicationContext, activity_menu_creador::class.java).apply {
+        val intent = Intent(applicationContext, Activity_menu_creador::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("lanzada_desde_notificacion", true) // si necesitas pasar algo
         }

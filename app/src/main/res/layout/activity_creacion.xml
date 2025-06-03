@@ -5,7 +5,7 @@
     android:id="@+id/creacion"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity_menu_creador"
+    tools:context=".Activity_menu_creador"
     android:background="@drawable/wallpaper">
 
     <androidx.appcompat.widget.Toolbar

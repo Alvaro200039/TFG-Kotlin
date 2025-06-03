@@ -5,10 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
@@ -34,15 +31,17 @@ class LoginActivity : AppCompatActivity() {
         btnLogin.setOnClickListener {
             iniciarSesion()
         }
-        btnRegistro.setOnClickListener{
+        btnRegistro.setOnClickListener {
             val registro = Intent(this, RegistroEmpleado::class.java)
             startActivity(registro)
 
         }
     }
-    private fun iniciarSesion(){
+
+    private fun iniciarSesion() {
         val correo = etCorreo.text.toString()
         val contrasena = etContrasena.text.toString()
+
         if (correo.isEmpty() || contrasena.isEmpty()) {
             Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
             return
@@ -57,7 +56,7 @@ class LoginActivity : AppCompatActivity() {
         val dbMaestra = Room.databaseBuilder(
             applicationContext,
             MasterDB::class.java,
-            "db_maestra.db"
+            "master_database"
         ).build()
 
         lifecycleScope.launch {
@@ -83,22 +82,20 @@ class LoginActivity : AppCompatActivity() {
 
             runOnUiThread {
                 if (empleado != null && empleado.contrasena == contrasena) {
-                    if (empleado.esJefe) {
+                    val intent = if (empleado.esJefe) {
                         Toast.makeText(this@LoginActivity, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this@LoginActivity, activity_menu_creador::class.java)
-                        startActivity(intent)
+                        Intent(this@LoginActivity, Activity_menu_creador::class.java)
                     } else {
                         Toast.makeText(this@LoginActivity, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this@LoginActivity, activity_menu_empleado::class.java)
-                        startActivity(intent)
+                        Intent(this@LoginActivity, activity_menu_empleado::class.java)
                     }
+                    intent.putExtra("idUsuario", empleado.id)
+                    startActivity(intent)
                 } else {
                     Toast.makeText(this@LoginActivity, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
-                    // Aquí podrías redirigir al registro si quisieras, por ejemplo
-
-                    // startActivity(registro)
                 }
             }
         }
     }
+
 }

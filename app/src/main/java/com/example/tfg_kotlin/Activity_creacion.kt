@@ -68,15 +68,12 @@ class Activity_creacion : AppCompatActivity() {
     private var pisoActual: Piso? = null
     private var empresaCif: String = ""
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Inicializar repositorios con bases de datos
         val masterDb = MasterDB.getDatabase(applicationContext)
-        repositoryMaster = MasterRepository(
-            masterDb.empresaDao()
-        )
+        repositoryMaster = MasterRepository(masterDb.empresaDao())
 
         val db = GlobalDB.getDatabase(applicationContext)
         repositoryApp = GlobalRepository(
@@ -95,24 +92,26 @@ class Activity_creacion : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Configurar Toolbar personalizada sin título y con botón de back
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-
-
+        // Texto título del toolbar: muestra el nombre del piso y permite cambiarlo
         val titleView = findViewById<TextView>(R.id.toolbar_title)
-        titleView.text = "Piso nº" // valor provisional hasta que cargue desde Room
+        titleView.text = "Piso nº" // valor provisional
         titleView.setOnClickListener {
             showChangeTitleDialog()
         }
-        
 
+        // Cargar pisos desde Room y actualizar UI con el último piso y empresaCif
         lifecycleScope.launch {
             repositoryApp.pisoDao.obtenerTodosLosPisos().collectLatest { pisos ->
                 if (pisos.isNotEmpty()) {
                     pisoActual = pisos.last()
+                    empresaCif = pisoActual?.empresaCif ?: ""
                     titleView.text = pisoActual?.nombre ?: "Sin piso"
                 } else {
                     Toast.makeText(this@Activity_creacion, "No hay pisos creados", Toast.LENGTH_SHORT).show()
@@ -120,7 +119,7 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
 
-        // Enlace botones
+        // Referencias a botones y sus listeners
         val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
         val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
         val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
@@ -131,8 +130,10 @@ class Activity_creacion : AppCompatActivity() {
         btnPlano.setOnClickListener { openGallery() }
         btnSala.setOnClickListener { addMovableButton() }
 
+        // Container para añadir botones movibles
         container = findViewById(R.id.container)
     }
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_drag, menu)
@@ -149,13 +150,9 @@ class Activity_creacion : AppCompatActivity() {
             R.id.action_save -> {
                 lifecycleScope.launch {
                     try {
-                        val pisoNombre = findViewById<TextView>(R.id.toolbar_title).text.toString()
-                        val prefs = getSharedPreferences("usuario_prefs", MODE_PRIVATE)
-                        val empresaCif = prefs.getString("empresa_cif", "A1111111")
-
+                        val toolbarTitle = findViewById<TextView>(R.id.toolbar_title).text.toString()
                         guardarDistribucion(
-                            empresaCif = empresaCif.toString(),
-                            pisoNombre = pisoNombre,
+                            pisoNombre = toolbarTitle,
                             imagen = imagen,
                             container = container,
                             pisoDao = repositoryApp.pisoDao,
@@ -738,7 +735,6 @@ private fun openGallery() {
 
 
     suspend fun guardarDistribucion(
-        empresaCif: String,
         pisoNombre: String,
         imagen: ByteArray?,
         container: ViewGroup,
@@ -785,22 +781,25 @@ private fun openGallery() {
             return
         }
 
-        // Aquí cambiamos a contexto IO porque accedemos a base de datos
         withContext(Dispatchers.IO) {
-            // Obtener la base de datos maestra (donde está la empresa)
             val masterDb = MasterDB.getDatabase(container.context)
             val empresaDao = masterDb.empresaDao()
 
-            // Supongamos que obtienes el cif de la empresa actual (por nombre, por prefs, etc.)
-            val empresa = empresaDao.obtenerTodasLasEmpresas().firstOrNull()
-            val empresaCif = empresa?.cif ?: run {
+            val empresas = empresaDao.obtenerTodasLasEmpresas()
+            Log.d("guardarDistribucion", "Empresas encontradas: ${empresas.size}")
+            val empresa = empresas.firstOrNull()
+
+
+            if (empresa == null) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(container.context, "No se encontró empresa", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(container.context, "No se encontró ninguna empresa en la base de datos", Toast.LENGTH_SHORT).show()
                 }
                 return@withContext
             }
 
-            // Comprobamos si ya existe un piso con ese nombre para esta empresa
+            val empresaCif = empresa.cif
+
+            // Ahora comprobamos si ya existe un piso con ese nombre para esta empresa
             val pisoExistente = pisoDao.obtenerPisoPorNombreYEmpresa(pisoNombre, empresaCif)
 
             val pisoId = if (pisoExistente == null) {
@@ -832,6 +831,7 @@ private fun openGallery() {
             Toast.makeText(container.context, "Distribución guardada correctamente", Toast.LENGTH_SHORT).show()
         }
     }
+
 
 
     private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
