@@ -15,6 +15,9 @@ interface ReservaDao {
     @Query("SELECT * FROM reservas WHERE idusuario = :idUsuario")
     suspend fun getReservasPorUsuario(idUsuario: Int): List<Reserva>
 
+    @Query("SELECT * FROM reservas WHERE nombreUsuario = :nombreUsuario")
+    suspend fun getReservasPorNombreUsuario(nombreUsuario: String): List<Reserva>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarReserva(reserva: Reserva)
 

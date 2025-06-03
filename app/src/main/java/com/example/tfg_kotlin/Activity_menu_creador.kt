@@ -41,6 +41,7 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.tfg_kotlin.Activity_empleados
 import java.util.concurrent.TimeUnit
 import com.google.android.material.materialswitch.MaterialSwitch
 
@@ -77,12 +78,20 @@ class Activity_menu_creador : AppCompatActivity() {
             insets
         }
 
-        val idUsuario = intent.getIntExtra("idUsuario", -1)
+        idUsuario = intent.getIntExtra("idUsuario", -1)
 
         if (idUsuario == -1) {
             Toast.makeText(this, "Error al recibir ID del usuario", Toast.LENGTH_SHORT).show()
             finish()
             return
+        }
+
+        val nombreUsuario = intent.getStringExtra("nombreUsuario")
+
+        if (nombreUsuario != null) {
+            Toast.makeText(this, "Hola $nombreUsuario", Toast.LENGTH_SHORT).show()
+        }else {
+            Toast.makeText(this, "Error al recibir nombre del usuario", Toast.LENGTH_SHORT).show()
         }
 
         limpiarReservasPasadas()
@@ -108,6 +117,7 @@ class Activity_menu_creador : AppCompatActivity() {
                     val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
                     intent.putExtra("nombre_piso", nombrePiso)
                     intent.putExtra("idUsuario", idUsuario) // Intent para pasar idUsuario
+                    intent.putExtra("nombreUsuario", nombreUsuario) // Intent para pasar nombreUsuario
                     startActivity(intent)
                 } else {
                     withContext(Dispatchers.Main) {
@@ -241,8 +251,6 @@ class Activity_menu_creador : AppCompatActivity() {
 
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
-        mostrarSiguienteReserva()  // Asumo que idUsuario es global o propiedad
-
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
@@ -330,7 +338,6 @@ class Activity_menu_creador : AppCompatActivity() {
             }
         }
     }
-
 
     private fun limpiarReservasPasadas() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())

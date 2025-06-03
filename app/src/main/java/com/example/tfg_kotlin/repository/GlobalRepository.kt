@@ -13,7 +13,7 @@ import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 class GlobalRepository(
     internal val usuarioDao: UsuarioDao,
     internal val salaDao: SalaDao,
-    private val reservaDao: ReservaDao,
+    internal val reservaDao: ReservaDao,
     internal val franjaHorariaDao: FranjaHorariaDao,
     internal val pisoDao: PisoDao,
 ) {
@@ -24,8 +24,6 @@ class GlobalRepository(
     }
 
     suspend fun getAllUsuarios() = usuarioDao.obtenerTodos()
-
-
 
     suspend fun getAllSalas() = salaDao.obtenerTodas()
 
@@ -44,6 +42,8 @@ class GlobalRepository(
     suspend fun getReservasPorPiso(piso: String) = reservaDao.obtenerPorPiso(piso)
 
     suspend fun getReservasPorFechaHora(fechaHora: String) = reservaDao.obtenerReservasPorFechaHora(fechaHora)
+
+    suspend fun getReservasPorNombreUsuario(nombreUsuario: String) = reservaDao.getReservasPorNombreUsuario(nombreUsuario)
 
     suspend fun buscarReserva(nombreSala: String, piso: String, fechaHora: String) = reservaDao.buscarReserva(nombreSala, piso, fechaHora)
 

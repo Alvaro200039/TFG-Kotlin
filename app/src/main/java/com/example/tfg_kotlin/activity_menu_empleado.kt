@@ -1,19 +1,24 @@
 package com.example.tfg_kotlin
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -34,6 +39,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import androidx.work.Data
 import com.example.tfg_kotlin.Activity_menu_creador
+import com.google.android.material.materialswitch.MaterialSwitch
 
 
 class activity_menu_empleado : AppCompatActivity() {
@@ -68,12 +74,20 @@ class activity_menu_empleado : AppCompatActivity() {
             insets
         }
 
-        val idUsuario = intent.getIntExtra("idUsuario", -1)
+        idUsuario = intent.getIntExtra("idUsuario", -1)
 
         if (idUsuario == -1) {
-            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Error al recibir ID del usuario", Toast.LENGTH_SHORT).show()
             finish()
             return
+        }
+
+        val nombreUsuario = intent.getStringExtra("nombreUsuario")
+
+        if (nombreUsuario != null) {
+            Toast.makeText(this, "Hola $nombreUsuario", Toast.LENGTH_SHORT).show()
+        }else {
+            Toast.makeText(this, "Error al recibir nombre del usuario", Toast.LENGTH_SHORT).show()
         }
 
         limpiarReservasPasadas()
@@ -92,6 +106,7 @@ class activity_menu_empleado : AppCompatActivity() {
                     val intent = Intent(this@activity_menu_empleado, Activity_empleados::class.java)
                     intent.putExtra("nombre_piso", nombrePiso)
                     intent.putExtra("idUsuario", idUsuario) // Intent para pasar idUsuario
+                    intent.putExtra("nombreUsuario", nombreUsuario) // Intent para pasar nombreUsuario
                     startActivity(intent)
                 } else {
                     withContext(Dispatchers.Main) {
@@ -133,11 +148,19 @@ class activity_menu_empleado : AppCompatActivity() {
         mostrarSiguienteReserva()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_principal, menu)
+        return true
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
+                true
+            }
+            R.id.action_options -> {
+                mostrarDialogoNotificaciones() // tu función para mostrar el diálogo
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -145,9 +168,62 @@ class activity_menu_empleado : AppCompatActivity() {
     }
 
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == 1001) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permiso concedido
+            } else {
+                Toast.makeText(this, "No se podrán mostrar notificaciones de reservas.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun mostrarDialogoNotificaciones() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_notificaciones, null)
+
+        val switch = dialogView.findViewById<MaterialSwitch>(R.id.switchNotificaciones)
+        val picker = dialogView.findViewById<NumberPicker>(R.id.pickerMinutos)
+
+        val prefs = getSharedPreferences("ajustes_usuario", MODE_PRIVATE)
+        val notificacionesActivadas = prefs.getBoolean("notificaciones_activadas", true)
+        val minutosAntes = prefs.getInt("minutos_antes", 10)
+
+        switch.isChecked = notificacionesActivadas
+        picker.minValue = 1
+        picker.maxValue = 60
+        picker.value = minutosAntes
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Notificaciones")
+            .setView(dialogView)
+            .setPositiveButton("Guardar") { _, _ ->
+                val editor = prefs.edit()
+                editor.putBoolean("notificaciones_activadas", switch.isChecked)
+                editor.putInt("minutos_antes", picker.value)
+                editor.apply()
+                Toast.makeText(this, "Preferencias guardadas", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancelar", null)
+            .create()
+
+        // Fondo transparente para que solo se vea tu diseño personalizado
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(ContextCompat.getColor(this, R.color.black))
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(ContextCompat.getColor(this, R.color.red))
+    }
+
+
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
-        mostrarSiguienteReserva()
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
@@ -235,8 +311,6 @@ class activity_menu_empleado : AppCompatActivity() {
             }
         }
     }
-
-
 
     private fun limpiarReservasPasadas() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
