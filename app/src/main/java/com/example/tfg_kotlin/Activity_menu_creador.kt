@@ -107,6 +107,7 @@ class Activity_menu_creador : AppCompatActivity() {
 
                     val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
                     intent.putExtra("nombre_piso", nombrePiso)
+                    intent.putExtra("idUsuario", idUsuario) // Intent para pasar idUsuario
                     startActivity(intent)
                 } else {
                     withContext(Dispatchers.Main) {
@@ -119,6 +120,7 @@ class Activity_menu_creador : AppCompatActivity() {
                 }
             }
         }
+
 
         // Botón: Ver mis reservas
         val btnVerReservas = findViewById<Button>(R.id.btnVerReservas)

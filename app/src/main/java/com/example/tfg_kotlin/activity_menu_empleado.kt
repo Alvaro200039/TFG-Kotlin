@@ -33,6 +33,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import androidx.work.Data
+import com.example.tfg_kotlin.Activity_menu_creador
 
 
 class activity_menu_empleado : AppCompatActivity() {
@@ -67,7 +68,7 @@ class activity_menu_empleado : AppCompatActivity() {
             insets
         }
 
-        idUsuario = intent.getIntExtra("idUsuario", -1)
+        val idUsuario = intent.getIntExtra("idUsuario", -1)
 
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
@@ -90,6 +91,7 @@ class activity_menu_empleado : AppCompatActivity() {
 
                     val intent = Intent(this@activity_menu_empleado, Activity_empleados::class.java)
                     intent.putExtra("nombre_piso", nombrePiso)
+                    intent.putExtra("idUsuario", idUsuario) // Intent para pasar idUsuario
                     startActivity(intent)
                 } else {
                     withContext(Dispatchers.Main) {
