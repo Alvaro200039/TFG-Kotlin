@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
+import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDBManager
 import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
 import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
 import kotlinx.coroutines.launch
@@ -40,11 +41,7 @@ class RegistroEmpresa : AppCompatActivity() {
         val cif = editCif.text.toString().trim().uppercase()
 
         //Definición - creación BD_Maestra
-        val db = Room.databaseBuilder(
-            applicationContext,
-            MasterDB::class.java, "db_maestra.db"
-        ).build()
-
+        val db = MasterDB.getDatabase(applicationContext)
         val dao = db.empresaDao()
 
 
@@ -91,11 +88,10 @@ class RegistroEmpresa : AppCompatActivity() {
 
                 //Creación del nombre de las bd_individuales
                 val dbnombre = "db_${nombre.lowercase().replace(" ", "_")}"
-                val dbGlobal = Room.databaseBuilder(
-                    applicationContext,
-                    GlobalDB::class.java,
-                    "$dbnombre.db"
-                ).build()
+
+//Usamos la instcia singleton con el manager para crear la bd
+                val dbGlobal = GlobalDBManager.getDatabase(applicationContext, dbnombre)
+
 
                 //Room como tal no crea la bd, por ello hay que realizar alguna acción para que estas se creen
                 //Con esta acción accedemos a la bd individual y se crea

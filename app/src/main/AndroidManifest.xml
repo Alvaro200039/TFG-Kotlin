@@ -21,7 +21,7 @@
             android:name=".RegistroEmpleado"
             android:exported="false" />
         <activity
-            android:name=".activity_menu_creador"
+            android:name=".Activity_menu_creador"
             android:exported="false" />
         <activity
             android:name=".LoginActivity"

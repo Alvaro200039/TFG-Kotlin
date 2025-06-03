@@ -42,6 +42,7 @@ import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
 import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
+import com.example.tfg_kotlin.activity_menu_empleado
 import com.example.tfg_kotlin.repository.GlobalRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -62,6 +63,7 @@ class Activity_empleados : AppCompatActivity() {
     private lateinit var textViewHora: TextView
     private var snackbarActivo: Snackbar? = null
     private lateinit var listaPisos: List<Piso>
+    private var idUsuario: Int = -1 // Variable global en la Activity
 
 
 
@@ -88,6 +90,14 @@ class Activity_empleados : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        idUsuario = intent.getIntExtra("idUsuario", -1)
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+            finish()
+            return
         }
 
         container = findViewById(R.id.contentLayout)
@@ -209,8 +219,6 @@ class Activity_empleados : AppCompatActivity() {
         contenedorFechaHora.addView(textViewHora)
         toolbar.addView(contenedorFechaHora)
     }
-
-
 
     override fun onResume() {
         super.onResume()
@@ -353,24 +361,21 @@ class Activity_empleados : AppCompatActivity() {
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
 
-        val idUsuario = 123 // Igual que en reservarSala, o cambia para obtenerlo dinámico
-
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
         }
 
         lifecycleScope.launch {
-            val usuarioActual = repositoryApp.usuarioDao.getUsuarioById(idUsuario)
-            val nombreUsuario = usuarioActual?.nombre ?: "Juan"
-
-            val reservas = repositoryApp.getAllReservas().toMutableList()
+            val reservas = repositoryApp.getAllReservas()
 
             // Filtrar solo las reservas del usuario actual
             val reservasUsuario = reservas.filter { it.idusuario == idUsuario }
 
             if (reservasUsuario.isEmpty()) {
-                Toast.makeText(this@Activity_empleados, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_empleados, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
+                }
                 return@launch
             }
 
@@ -380,67 +385,67 @@ class Activity_empleados : AppCompatActivity() {
 
             lateinit var dialog: AlertDialog
 
-            for ((piso, lista) in reservasPorPiso) {
-                val pisoText = TextView(this@Activity_empleados).apply {
-                    text = piso
-                    textSize = 18f
-                    setPadding(0, 16, 0, 8)
-                    setTextColor(Color.BLACK)
-                    setTypeface(null, Typeface.BOLD)
-                }
-                contenedor.addView(pisoText)
-
-                lista.forEach { reserva ->
-                    val reservaText = TextView(this@Activity_empleados).apply {
-                        text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
-                        setPadding(16, 4, 0, 4)
-                        setTextColor(Color.DKGRAY)
-                        setOnClickListener {
-                            val confirmDialog = AlertDialog.Builder(this@Activity_empleados)
-                                .setTitle("¿Cancelar reserva?")
-                                .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
-                                .setPositiveButton("Sí") { _, _ ->
-                                    lifecycleScope.launch {
-                                        repositoryApp.eliminarReserva(reserva)
-
-                                        dialog.dismiss()
-                                        mostrarDialogoReservas() // Recargar reservas
-                                    }
-                                }
-                                .setNegativeButton("No", null)
-                                .create()
-
-                            confirmDialog.setOnShowListener {
-                                confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
-                                confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
-                            }
-
-                            confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                            confirmDialog.show()
-                        }
+            withContext(Dispatchers.Main) {
+                for ((piso, lista) in reservasPorPiso) {
+                    val pisoText = TextView(this@Activity_empleados).apply {
+                        text = piso
+                        textSize = 18f
+                        setPadding(0, 16, 0, 8)
+                        setTextColor(Color.BLACK)
+                        setTypeface(null, Typeface.BOLD)
                     }
-                    contenedor.addView(reservaText)
+                    contenedor.addView(pisoText)
+
+                    lista.forEach { reserva ->
+                        val reservaText = TextView(this@Activity_empleados).apply {
+                            text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
+                            setPadding(16, 4, 0, 4)
+                            setTextColor(Color.DKGRAY)
+                            setOnClickListener {
+                                val confirmDialog = AlertDialog.Builder(this@Activity_empleados)
+                                    .setTitle("¿Cancelar reserva?")
+                                    .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
+                                    .setPositiveButton("Sí") { _, _ ->
+                                        lifecycleScope.launch {
+                                            repositoryApp.eliminarReserva(reserva)
+                                            dialog.dismiss()
+                                            mostrarDialogoReservas() // Recargar reservas
+                                        }
+                                    }
+                                    .setNegativeButton("No", null)
+                                    .create()
+
+                                confirmDialog.setOnShowListener {
+                                    confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+                                    confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                                }
+                                confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                                confirmDialog.show()
+                            }
+                        }
+                        contenedor.addView(reservaText)
+                    }
+
+                    val divider = View(this@Activity_empleados).apply {
+                        setBackgroundColor(Color.LTGRAY)
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            2
+                        ).apply { setMargins(0, 16, 0, 16) }
+                    }
+                    contenedor.addView(divider)
                 }
 
-                val divider = View(this@Activity_empleados).apply {
-                    setBackgroundColor(Color.LTGRAY)
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        2
-                    ).apply { setMargins(0, 16, 0, 16) }
-                }
-                contenedor.addView(divider)
+                dialog = AlertDialog.Builder(this@Activity_empleados)
+                    .setTitle("Tus reservas activas")
+                    .setView(dialogView)
+                    .setPositiveButton("Cerrar", null)
+                    .create()
+
+                dialog.show()
+                dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
             }
-
-            dialog = AlertDialog.Builder(this@Activity_empleados)
-                .setTitle("Tus reservas activas")
-                .setView(dialogView)
-                .setPositiveButton("Cerrar", null)
-                .create()
-
-            dialog.show()
-            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
         }
     }
 
@@ -526,7 +531,6 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun mostrarDialogoDetallesSala(sala: Salas) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-        val idUsuario = 123 // O recuperarlo de SharedPreferences
 
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
@@ -654,7 +658,6 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun reservarSala(nombreSala: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-        val idUsuario = 123   // id de usuario fijo para pruebas
 
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
@@ -763,7 +766,4 @@ class Activity_empleados : AppCompatActivity() {
             dialog.show()
         }
     }
-
-
-
 }

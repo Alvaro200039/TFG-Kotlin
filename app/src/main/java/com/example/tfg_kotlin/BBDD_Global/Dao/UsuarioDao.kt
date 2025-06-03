@@ -30,7 +30,7 @@ interface UsuarioDao {
     suspend fun getUsuarioByNombre(nombre: String): Usuario?
 
     @Query("SELECT * FROM usuarios WHERE email = :email LIMIT 1")
-    suspend fun getUsuarioByEmail(email: String): Usuario?
+    suspend fun obtenerUsuarioPorEmail(email: String): Usuario?
 
     @Query("SELECT * FROM usuarios LIMIT 1")
     suspend fun getPrimerUsuario(): Usuario?
