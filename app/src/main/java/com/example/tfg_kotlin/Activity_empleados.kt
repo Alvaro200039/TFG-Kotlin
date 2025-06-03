@@ -42,7 +42,6 @@ import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
 import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
-import com.example.tfg_kotlin.activity_menu_empleado
 import com.example.tfg_kotlin.repository.GlobalRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -92,7 +91,7 @@ class Activity_empleados : AppCompatActivity() {
             insets
         }
 
-        idUsuario = intent.getIntExtra("idUsuario", -1)
+        idUsuario = intent.getIntExtra("idUsuario", -1) // Obtén el idUsuario del intent
 
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
@@ -360,7 +359,6 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
-
         if (idUsuario == -1) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
@@ -528,86 +526,6 @@ class Activity_empleados : AppCompatActivity() {
         }
     }
 
-
-    private fun mostrarDialogoDetallesSala(sala: Salas) {
-        val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-
-        if (idUsuario == -1) {
-            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        lifecycleScope.launch {
-            val usuario = repositoryApp.usuarioDao.getUsuarioById(idUsuario)
-            val nombreUsuario = usuario?.nombre ?: "Juan"
-
-            val piso = repositoryApp.pisoDao.obtenerPisoPorId(sala.pisoId)
-            val reservas = repositoryApp.getReservasPorFechaHora(fechaHora).toMutableList()
-
-            val reservaExistente = reservas.find {
-                it.nombreSala == sala.nombre &&
-                        it.piso.trim() == piso?.nombre?.trim() &&
-                        it.fechaHora == fechaHora
-            }
-
-            val builder = AlertDialog.Builder(this@Activity_empleados)
-            builder.setTitle("Detalles de ${sala.nombre}")
-
-            // Inflar layout personalizado
-            val dialogView = layoutInflater.inflate(R.layout.dialog_detalles_sala, null)
-
-            // Referencias a TextViews
-            val tvPiso = dialogView.findViewById<TextView>(R.id.tvValorPiso)
-            val tvTamano = dialogView.findViewById<TextView>(R.id.tvValorTamano)
-            val tvExtras = dialogView.findViewById<TextView>(R.id.tvValorExtras)
-            val tvFecha = dialogView.findViewById<TextView>(R.id.tvValorFecha)
-            val tvHora = dialogView.findViewById<TextView>(R.id.tvValorHora)
-
-            // Asignar valores
-            tvPiso.text = piso?.nombre ?: "Desconocido"
-            tvTamano.text = sala.tamaño
-            tvExtras.text = if (sala.extras.isNotEmpty()) sala.extras.joinToString(", ") else "Ninguno"
-            tvFecha.text = fechaSeleccionada
-            tvHora.text = horaSeleccionada
-
-            builder.setView(dialogView)
-
-            if (reservaExistente != null && reservaExistente.nombreUsuario == nombreUsuario) {
-                builder.setPositiveButton("Cancelar reserva") { _, _ ->
-                    lifecycleScope.launch {
-                        repositoryApp.eliminarReserva(reservaExistente)
-                        verificarDisponibilidad(fechaHora)
-                        Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } else if (reservaExistente == null) {
-                builder.setPositiveButton("Reservar") { _, _ ->
-                    reservarSala(sala.nombre)
-                }
-            } else {
-                builder.setPositiveButton("Reservada") { _, _ -> }
-            }
-
-            builder.setNegativeButton("Cerrar") { dialog, _ -> dialog.dismiss() }
-
-            val dialog = builder.create()
-            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-            dialog.setOnShowListener {
-                val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-                positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
-                negativeButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
-
-                if (reservaExistente != null && reservaExistente.nombreUsuario != nombreUsuario) {
-                    positiveButton?.isEnabled = false
-                    positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.grey))
-                    Toast.makeText(this@Activity_empleados, "Reservada por ${reservaExistente.nombreUsuario} a esta hora", Toast.LENGTH_SHORT).show()
-                }
-            }
-            dialog.show()
-        }
-    }
     private fun formatearTextoSala(sala: Salas): String {
         val builder = StringBuilder().append(sala.nombre)
         if (sala.extras.isNotEmpty()) {
@@ -624,6 +542,87 @@ class Activity_empleados : AppCompatActivity() {
             }
         }
         return builder.toString()
+    }
+
+
+
+    private fun mostrarDialogoDetallesSala(sala: Salas) {
+        val fechaHora = "$fechaSeleccionada $horaSeleccionada"
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lifecycleScope.launch {
+            val piso = repositoryApp.pisoDao.obtenerPisoPorId(sala.pisoId)
+            val reservas = repositoryApp.getReservasPorFechaHora(fechaHora).toMutableList()
+
+            val reservaExistente = reservas.find {
+                it.nombreSala.trim().equals(sala.nombre.trim(), ignoreCase = true) &&
+                        it.piso.trim().equals(piso?.nombre?.trim() ?: "", ignoreCase = true) &&
+                        it.fechaHora == fechaHora
+            }
+
+            val builder = AlertDialog.Builder(this@Activity_empleados)
+            builder.setTitle("Detalles de ${sala.nombre}")
+
+            val dialogView = layoutInflater.inflate(R.layout.dialog_detalles_sala, null)
+
+            val tvPiso = dialogView.findViewById<TextView>(R.id.tvValorPiso)
+            val tvTamano = dialogView.findViewById<TextView>(R.id.tvValorTamano)
+            val tvExtras = dialogView.findViewById<TextView>(R.id.tvValorExtras)
+            val tvFecha = dialogView.findViewById<TextView>(R.id.tvValorFecha)
+            val tvHora = dialogView.findViewById<TextView>(R.id.tvValorHora)
+
+            tvPiso.text = piso?.nombre ?: "Desconocido"
+            tvTamano.text = sala.tamaño
+            tvExtras.text = if (sala.extras.isNotEmpty()) sala.extras.joinToString(", ") else "Ninguno"
+            tvFecha.text = fechaSeleccionada
+            tvHora.text = horaSeleccionada
+
+            builder.setView(dialogView)
+
+            when {
+                reservaExistente != null && reservaExistente.idusuario == idUsuario -> {
+                    builder.setPositiveButton("Cancelar reserva") { _, _ ->
+                        lifecycleScope.launch {
+                            repositoryApp.eliminarReserva(reservaExistente)
+                            verificarDisponibilidad(fechaHora)
+                            Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                reservaExistente == null -> {
+                    builder.setPositiveButton("Reservar") { _, _ ->
+                        reservarSala(sala.nombre)
+                    }
+                }
+                else -> {
+                    builder.setPositiveButton("Reservada") { _, _ -> }
+                }
+            }
+
+            builder.setNegativeButton("Cerrar") { dialog, _ -> dialog.dismiss() }
+
+            val dialog = builder.create()
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+            dialog.setOnShowListener {
+                val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                negativeButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
+
+                // Si está reservada por otro usuario, deshabilitar el botón y mostrar toast
+                if (reservaExistente != null && reservaExistente.idusuario != idUsuario) {
+                    positiveButton?.isEnabled = false
+                    positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.grey))
+                    Toast.makeText(this@Activity_empleados, "Sala reservada por ${reservaExistente.nombreUsuario} a esta hora", Toast.LENGTH_SHORT).show()
+                }
+            }
+            dialog.show()
+        }
     }
 
     private fun verificarDisponibilidad(fechaHora: String) {
@@ -666,7 +665,7 @@ class Activity_empleados : AppCompatActivity() {
 
         lifecycleScope.launch {
             val usuarioActual = repositoryApp.usuarioDao.getUsuarioById(idUsuario)
-            val nombreUsuario = usuarioActual?.nombre ?: "Juan"
+            val nombreUsuario = usuarioActual?.nombre ?: ""
 
             // Obtener todos los pisos
             val pisos = repositoryApp.pisoDao.obtenerTodosLosPisos().first()
@@ -683,7 +682,9 @@ class Activity_empleados : AppCompatActivity() {
 
             // Buscar reserva en la misma sala, mismo piso y fechaHora
             val reservaExistente = reservas.find {
-                it.nombreSala == nombreSala && it.piso == nombrePiso && it.fechaHora == fechaHora
+                it.nombreSala.trim().equals(nombreSala.trim(), ignoreCase = true) &&
+                        it.piso.trim().equals(nombrePiso.trim(), ignoreCase = true) &&
+                        it.fechaHora == fechaHora
             }
 
             // Buscar si el usuario ya tiene reserva a esa hora, sin importar la sala o piso
@@ -692,6 +693,10 @@ class Activity_empleados : AppCompatActivity() {
             }
 
             if (reservaExistente != null) {
+                // Obtener el nombre real de quien hizo la reserva, por si nombreUsuario está vacío
+                val usuarioReserva = repositoryApp.usuarioDao.getUsuarioById(reservaExistente.idusuario)
+                val nombreReserva = usuarioReserva?.nombre ?: "Desconocido"
+
                 if (reservaExistente.idusuario == idUsuario) {
                     // Preguntar si quiere cancelar su reserva
                     val dialog = AlertDialog.Builder(this@Activity_empleados)
@@ -718,7 +723,7 @@ class Activity_empleados : AppCompatActivity() {
                 } else {
                     Toast.makeText(
                         this@Activity_empleados,
-                        "Sala ya reservada por ${reservaExistente.nombreUsuario} en este piso",
+                        "Sala ya reservada por $nombreReserva en este piso",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -766,4 +771,5 @@ class Activity_empleados : AppCompatActivity() {
             dialog.show()
         }
     }
+
 }
