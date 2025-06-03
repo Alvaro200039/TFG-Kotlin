@@ -90,6 +90,8 @@ class LoginActivity : AppCompatActivity() {
                         Intent(this@LoginActivity, activity_menu_empleado::class.java)
                     }
                     intent.putExtra("idUsuario", empleado.id)
+                    val nombreCompleto = "${empleado.nombre} ${empleado.apellidos}"
+                    intent.putExtra("nombreUsuario", nombreCompleto)
                     startActivity(intent)
                 } else {
                     Toast.makeText(this@LoginActivity, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
