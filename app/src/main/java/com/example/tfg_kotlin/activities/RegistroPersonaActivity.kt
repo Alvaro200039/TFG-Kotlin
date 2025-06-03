@@ -133,7 +133,13 @@ class RegistroPersonaActivity : AppCompatActivity() {
 
             val nombreBD = construirNombreBD(dominio)
             val dbEmpresa = GlobalDB.getDatabase(applicationContext, nombreBD)
-            val repository = RegistroPersonaRepository(dbEmpresa.usuarioDao())
+            val repository = RegistroPersonaRepository(
+                dbEmpresa.usuarioDao(),
+                dbEmpresa.salaDao(),
+                dbEmpresa.reservaDao(),
+                dbEmpresa.franjaHorariaDao(),
+                dbEmpresa.pisoDao()
+            )
             val factory = RegistroPersonaViewModelFactory(repository)
             val viewModel = ViewModelProvider(this@RegistroPersonaActivity, factory)[RegistroPersonaViewModel::class.java]
 

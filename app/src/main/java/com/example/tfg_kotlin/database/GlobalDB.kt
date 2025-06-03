@@ -33,6 +33,7 @@ abstract class GlobalDB : RoomDatabase() {
     abstract fun franjahorariaDao(): FranjaHorariaDao
     abstract fun pisoDao(): PisoDao
 
+    // Crear una base de datos independiente para cada empresa registrada.
     companion object {
         private val instances: MutableMap<String, GlobalDB> = mutableMapOf()
 
