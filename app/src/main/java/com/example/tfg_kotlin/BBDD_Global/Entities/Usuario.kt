@@ -1,13 +1,15 @@
 package com.example.tfg_kotlin.BBDD_Global.Entities
 
-
 data class Usuario(
-    val id: Int = 0,
-    val email: String,
-    val nombre: String,
-    val apellidos: String,
-    val contrasena: String,
-    val cif: String,
-    val esJefe: Boolean,
-)
+    var id: Int = 0,
+    var email: String = "",
+    var nombre: String = "",
+    var apellidos: String = "",
+    var contrasena: String = "",
+    var cif: String = "",
+    var esJefe: Boolean = false
+){
+    constructor() : this(0,"","","","", "", false)
+}
+
 
