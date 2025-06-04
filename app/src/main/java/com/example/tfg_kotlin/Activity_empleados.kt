@@ -9,7 +9,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
@@ -38,22 +37,17 @@ import com.bumptech.glide.request.transition.Transition
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
-import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
 import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
-import com.example.tfg_kotlin.repository.GlobalRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.example.tfg_kotlin.repository.MasterRepository
 
 
 class Activity_empleados : AppCompatActivity() {
-    private lateinit var repositoryApp: GlobalRepository
-    private lateinit var repositoryMaster: MasterRepository
+
     private lateinit var container: ConstraintLayout
     private var fechaSeleccionada: String = ""
     private var horaSeleccionada: String = ""
@@ -71,19 +65,7 @@ class Activity_empleados : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val masterDb = MasterDB.getDatabase(applicationContext)
-        repositoryMaster = MasterRepository(
-            masterDb.empresaDao()
-        )
 
-        val db = GlobalDB.getDatabase(applicationContext)
-        repositoryApp = GlobalRepository(
-            db.usuarioDao(),
-            db.salaDao(),
-            db.reservaDao(),
-            db.franjahorariaDao(),
-            db.pisoDao()
-        )
         enableEdgeToEdge()
         setContentView(R.layout.activity_empleados)
 

@@ -5,13 +5,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDBManager
-import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
-import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDBManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class RegistroEmpleado : AppCompatActivity() {
     private lateinit var etCorreo: EditText
@@ -21,6 +17,9 @@ class RegistroEmpleado : AppCompatActivity() {
     private lateinit var etApellidos: EditText
     private lateinit var etCif: EditText
     private lateinit var btnRegistrar: Button
+
+    private lateinit var auth: FirebaseAuth
+    private val firestore = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,21 +33,20 @@ class RegistroEmpleado : AppCompatActivity() {
         etRepetirContrasena = findViewById(R.id.etRepetirContrasena)
         btnRegistrar = findViewById(R.id.btnRegistrar)
 
+        auth = FirebaseAuth.getInstance()
 
         btnRegistrar.setOnClickListener {
-            lifecycleScope.launch {
-                registrarEmpleados()
-            }
+            registrarEmpleado()
         }
     }
 
-    private suspend fun registrarEmpleados() {
-        val correo = etCorreo.text.toString()
-        val cif = etCif.text.toString()
+    private fun registrarEmpleado() {
+        val correo = etCorreo.text.toString().trim()
+        val cif = etCif.text.toString().trim()
         val contrasena = etContrasena.text.toString()
         val repetirContrasena = etRepetirContrasena.text.toString()
-        val nombre = etNombre.text.toString()
-        val apellidos = etApellidos.text.toString()
+        val nombre = etNombre.text.toString().trim()
+        val apellidos = etApellidos.text.toString().trim()
 
         if (correo.isEmpty() || contrasena.isEmpty() || repetirContrasena.isEmpty() || nombre.isEmpty() || apellidos.isEmpty()) {
             mostrarToast("Completa todos los campos")
@@ -66,65 +64,79 @@ class RegistroEmpleado : AppCompatActivity() {
         }
 
         val dominio = correo.substringAfterLast("@")
-        val dominioarroba = "@$dominio"
+        val dominioConArroba = "@$dominio"
 
-        val dbMaestra = MasterDBManager.getDatabase(applicationContext)
-        val daoMaestra = dbMaestra.empresaDao()
-        val empresa = daoMaestra.buscarPorDominio(dominioarroba)
+        val empresasRef = firestore.collection("empresas")
 
-        if (empresa == null) {
-            mostrarToast("El dominio introducido no existe o es incorrecto")
-            return
-        }
+        // Buscamos la empresa por dominio
+        empresasRef.whereEqualTo("dominio", dominioConArroba).get()
+            .addOnSuccessListener { empresasSnapshot ->
+                if (empresasSnapshot.isEmpty) {
+                    mostrarToast("El dominio introducido no existe o es incorrecto")
+                } else {
+                    val empresaDoc = empresasSnapshot.documents[0]
+                    val empresaCif = empresaDoc.getString("cif") ?: ""
+                    val esJefe = cif.equals(empresaCif, ignoreCase = true)
+                    val cifFinal = empresaCif // se use o no, se guarda el cif correcto siempre
+                    if (esJefe && cif != empresaCif) {
+                        mostrarToast("El CIF no coincide con el dominio. Corrígelo para continuar.")
+                        etCif.requestFocus()
+                        return@addOnSuccessListener
+                    }
 
-        if (cif.isNotEmpty() && !empresa.cif.equals(cif, ignoreCase = true)) {
-            mostrarToast("El CIF no coincide con el dominio. Corrígelo para continuar.")
-            withContext(Dispatchers.Main) {
-                etCif.requestFocus()
+                    // Creamos el usuario en Firebase Authentication
+                    auth.createUserWithEmailAndPassword(correo, contrasena)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                //val esJefe = empresaCif.equals(cif, ignoreCase = true)
+                                val uid = auth.currentUser?.uid ?: ""
+
+                                val nuevoUsuario = hashMapOf(
+                                    "email" to correo,
+                                    "nombre" to nombre,
+                                    "apellidos" to apellidos,
+                                    "cif" to cifFinal,
+                                    "esJefe" to esJefe,
+                                    "uid" to uid
+                                )
+
+                                // Guardamos datos extra en Firestore, colección "usuarios"
+                                empresaDoc.reference.collection("usuarios").document(uid)
+                                    .set(nuevoUsuario)
+                                    .addOnSuccessListener {
+                                        if (esJefe) {
+                                            mostrarToast("Empleado registrado como Jefe")
+                                        } else {
+                                            mostrarToast("Empleado registrado")
+                                        }
+                                        limpiarCampos()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        mostrarToast("Error guardando datos de usuario")
+                                        e.printStackTrace()
+                                    }
+                            } else {
+                                mostrarToast("Error registrando usuario: ${task.exception?.message}")
+                            }
+                        }
+                }
             }
-            return
-        }
-
-        val dbnombre = "db_${empresa.nombre.lowercase().replace(" ", "_")}"
-        val dbEmpresa = GlobalDBManager.getDatabase(applicationContext, dbnombre)
-        val daoEmpleado = dbEmpresa.usuarioDao()
-
-        val empleadoExistente = daoEmpleado.obtenerPorCorreo(correo)
-        if (empleadoExistente != null) {
-            mostrarToast("Correo ya registrado")
-            return
-        }
-
-        val esJefe = empresa.cif.lowercase() == cif.lowercase()
-        val empleado = Usuario(
-            email = correo,
-            nombre = nombre,
-            apellidos = apellidos,
-            contrasena = contrasena,
-            cif = cif,
-            esJefe = esJefe
-        )
-        daoEmpleado.insertarUsuario(empleado)
-
-        withContext(Dispatchers.Main) {
-            if (esJefe) {
-                Toast.makeText(this@RegistroEmpleado, "Empleado registrado como Jefe", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@RegistroEmpleado, "Empleado registrado", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                mostrarToast("Error buscando empresa")
+                e.printStackTrace()
             }
-            etCorreo.text.clear()
-            etContrasena.text.clear()
-            etRepetirContrasena.text.clear()
-            etNombre.text.clear()
-            etApellidos.text.clear()
-            etCif.text.clear()
-        }
     }
 
-    private suspend fun mostrarToast(mensaje: String) {
-        withContext(Dispatchers.Main) {
-            Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
-        }
+    private fun mostrarToast(mensaje: String) {
+        Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
     }
 
+    private fun limpiarCampos() {
+        etCorreo.text.clear()
+        etContrasena.text.clear()
+        etRepetirContrasena.text.clear()
+        etNombre.text.clear()
+        etApellidos.text.clear()
+        etCif.text.clear()
+    }
 }

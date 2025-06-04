@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "504190687749",
+    "project_id": "tfgkotlin-2fa399b3",
+    "storage_bucket": "tfgkotlin-2fa399b3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:504190687749:android:c324432dcf22c2640b1a6c",
+        "android_client_info": {
+          "package_name": "com.example.tfg_kotlin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCN4sxSXHmgVGygxmwM-x8TwcxzIb1dXZ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

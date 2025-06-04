@@ -1,8 +1,8 @@
 package com.example.tfg_kotlin
 
-import android.R.attr.id
 import android.content.res.ColorStateList
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
@@ -34,6 +34,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.graphics.toColorInt
@@ -43,103 +44,104 @@ import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.Utils.naturalOrderKey
 import com.example.tfg_kotlin.Utils.compareNaturalKeys
-import com.example.tfg_kotlin.BBDD_Global.Dao.PisoDao
-import com.example.tfg_kotlin.BBDD_Global.Dao.SalaDao
-import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
-import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
-import com.example.tfg_kotlin.BBDD_Global.Entities.FranjaHoraria
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Salas
-import com.example.tfg_kotlin.BBDD_Maestra.Entities.Empresa
-import com.example.tfg_kotlin.repository.GlobalRepository
-import com.example.tfg_kotlin.repository.MasterRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import android.util.Base64
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
 
 class Activity_creacion : AppCompatActivity() {
 
-    private lateinit var container: ConstraintLayout
-    private lateinit var repositoryApp: GlobalRepository
-    private lateinit var repositoryMaster: MasterRepository
-    private var pisoActual: Piso? = null
-    private var empresaCif: String = ""
+        private lateinit var container: ConstraintLayout
+        private var pisoActual: Piso? = null
+        private var empresaCif: String = ""
+        private lateinit var firestore: FirebaseFirestore
+        private lateinit var auth: FirebaseAuth
+        private var imagen: ByteArray? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            setContentView(R.layout.activity_creacion)
 
-        // Inicializar repositorios con bases de datos
-        val masterDb = MasterDB.getDatabase(applicationContext)
-        repositoryMaster = MasterRepository(masterDb.empresaDao())
-
-        val db = GlobalDB.getDatabase(applicationContext)
-        repositoryApp = GlobalRepository(
-            db.usuarioDao(),
-            db.salaDao(),
-            db.reservaDao(),
-            db.franjahorariaDao(),
-            db.pisoDao()
-        )
-
-        setContentView(R.layout.activity_creacion)
-
-        enableEdgeToEdge()
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.creacion)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        // Configurar Toolbar personalizada sin título y con botón de back
-        val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        // Texto título del toolbar: muestra el nombre del piso y permite cambiarlo
-        val titleView = findViewById<TextView>(R.id.toolbar_title)
-        titleView.text = "Piso nº" // valor provisional
-        titleView.setOnClickListener {
-            showChangeTitleDialog()
-        }
-
-        // Cargar pisos desde Room y actualizar UI con el último piso y empresaCif
-        lifecycleScope.launch {
-            repositoryApp.pisoDao.obtenerTodosLosPisos().collectLatest { pisos ->
-                if (pisos.isNotEmpty()) {
-                    pisoActual = pisos.last()
-                    empresaCif = pisoActual?.empresaCif ?: ""
-                    titleView.text = pisoActual?.nombre ?: "Sin piso"
-                } else {
-                    Toast.makeText(this@Activity_creacion, "No hay pisos creados", Toast.LENGTH_SHORT).show()
-                }
+            enableEdgeToEdge()
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.creacion)) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                insets
             }
+
+            // Inicializar Firebase
+            firestore = FirebaseFirestore.getInstance()
+            auth = FirebaseAuth.getInstance()
+
+            // Obtener CIF desde el Intent
+            empresaCif = intent.getStringExtra("cifUsuario") ?: ""
+            if (empresaCif.isEmpty()) {
+                Toast.makeText(this, "Error: CIF no recibido", Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+
+            // Toolbar
+            val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
+            setSupportActionBar(toolbar)
+            supportActionBar?.setDisplayShowTitleEnabled(false)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+            val titleView = findViewById<TextView>(R.id.toolbar_title)
+            titleView.text = "Piso nº" // provisional
+            titleView.setOnClickListener {
+                showChangeTitleDialog()
+            }
+
+            // Obtener último piso desde Firestore
+            firestore.collection("empresas")
+                .document(empresaCif)
+                .collection("pisos")
+                .orderBy("nombre", Query.Direction.ASCENDING) // o por fecha de creación si tienes ese campo
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    val pisos = querySnapshot.toObjects(Piso::class.java)
+                    if (pisos.isNotEmpty()) {
+                        pisoActual = pisos.last()
+                        titleView.text = pisoActual?.nombre ?: "Sin nombre"
+                    } else {
+                        Toast.makeText(this, "No hay pisos creados", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Error cargando pisos", Toast.LENGTH_SHORT).show()
+                }
+
+            // Botones
+            val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
+            val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
+            val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
+            val btnPisos = findViewById<LinearLayout>(R.id.btn_pisos)
+            val layoutFranjas = findViewById<LinearLayout>(R.id.layoutFranjas)
+
+            btnHoras.setOnClickListener {cargarFranjas(layoutFranjas)}
+            btnPisos.setOnClickListener { mostrarDialogoEliminarPisos() }
+            btnPlano.setOnClickListener { openGallery() }
+            btnSala.setOnClickListener { addMovableButton() }
+
+            container = findViewById(R.id.container)
         }
-
-        // Referencias a botones y sus listeners
-        val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
-        val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
-        val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
-        val btnPisos = findViewById<LinearLayout>(R.id.btn_pisos)
-
-        btnHoras.setOnClickListener { mostrarDialogoFranjas() }
-        btnPisos.setOnClickListener { mostrarDialogoEliminarPisos() }
-        btnPlano.setOnClickListener { openGallery() }
-        btnSala.setOnClickListener { addMovableButton() }
-
-        // Container para añadir botones movibles
-        container = findViewById(R.id.container)
-    }
-
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_drag, menu)
         return true
     }
-
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
@@ -148,15 +150,22 @@ class Activity_creacion : AppCompatActivity() {
                 true
             }
             R.id.action_save -> {
+                val toolbarTitle = findViewById<TextView>(R.id.toolbar_title).text.toString()
+
                 lifecycleScope.launch {
                     try {
-                        val toolbarTitle = findViewById<TextView>(R.id.toolbar_title).text.toString()
+                        // Aquí extraes la imagen de fondo desde el fondo del layout, si es necesario
+                        val fondoLayout = findViewById<View>(R.id.container)
+                        val fondoBitmap = fondoLayout.background?.toBitmapOrNull()
+                        val fondoBytes = fondoBitmap?.let { bitmap ->
+                            val stream = ByteArrayOutputStream()
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                            stream.toByteArray()
+                        }
                         guardarDistribucion(
                             pisoNombre = toolbarTitle,
-                            imagen = imagen,
-                            container = container,
-                            pisoDao = repositoryApp.pisoDao,
-                            salaDao = repositoryApp.salaDao
+                            imagen = fondoBytes,
+                            container = findViewById(R.id.container)
                         )
                     } catch (e: Exception) {
                         Log.e("Activity_creacion", "Error guardando: ${e.message}", e)
@@ -167,158 +176,75 @@ class Activity_creacion : AppCompatActivity() {
                 }
                 true
             }
-
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-private fun mostrarDialogoFranjas() {
-    val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
 
-    val layoutFranjas = dialogView.findViewById<LinearLayout>(R.id.layoutFranjas)
-    val botonAgregar = dialogView.findViewById<Button>(R.id.btnAddFranja)
+    private fun cargarFranjas(layoutFranjas: LinearLayout) {
+            lifecycleScope.launch {
+                try {
+                    val snapshot = firestore.collection("empresas")
+                        .document(empresaCif)
+                        .collection("franjasHorarias")
+                        .get()
+                        .await()
 
-    val editHoraInicio = dialogView.findViewById<EditText>(R.id.etHoraInicio)
-    val editMinutoInicio = dialogView.findViewById<EditText>(R.id.etMinInicio)
-    val editHoraFin = dialogView.findViewById<EditText>(R.id.etHoraFin)
-    val editMinutoFin = dialogView.findViewById<EditText>(R.id.etMinFin)
-
-    editHoraInicio.autoAdvanceTo(editMinutoInicio)
-    editMinutoInicio.autoAdvanceTo(editHoraFin)
-    editHoraFin.autoAdvanceTo(editMinutoFin)
-    editMinutoFin.autoAdvanceTo(null)
-
-    val dialog = AlertDialog.Builder(this)
-        .setTitle("Añadir franjas horarias")
-        .setView(dialogView)
-        .setNegativeButton("Cerrar", null)
-        .create()
-
-    dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-    dialog.show()
-
-    // Función para actualizar la UI con franjas que vienen de DB
-    fun actualizarListaFranjasUI(franjas: List<FranjaHoraria>) {
-        layoutFranjas.removeAllViews()
-        for (franja in franjas.sortedBy { it.hora }) {
-            val franjaView = LinearLayout(dialogView.context).apply {
-                orientation = LinearLayout.HORIZONTAL
-
-                val textview = TextView(dialogView.context).apply {
-                    text = franja.hora
-                    textSize = 16f
-                    setPadding(8, 4, 8, 4)
-                }
-
-                val botonEliminar = Button(dialogView.context).apply {
-                    text = "❌"
-                    textSize = 14f
-                    setBackgroundColor(Color.TRANSPARENT)
-                    setPadding(16, 0, 16, 0)
-                    setOnClickListener {
-                        lifecycleScope.launch {
-                            repositoryApp.franjaHorariaDao.eliminarFranja(franja)
-                            // Volver a cargar la lista y actualizar UI
-                            val nuevasFranjas = withContext(Dispatchers.IO) {
-                                repositoryApp.franjaHorariaDao.getTodasFranjas()
-                            }
-                            actualizarListaFranjasUI(nuevasFranjas)
-                        }
+                    val franjas = snapshot.documents.mapNotNull { it.id }
+                    actualizarListaFranjas(franjas, layoutFranjas)
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_creacion, "Error cargando franjas: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
-
-                addView(textview)
-                addView(botonEliminar)
             }
-            layoutFranjas.addView(franjaView)
-        }
-    }
-
-
-    // Observar cambios en las franjas con Flow y actualizar UI
-    lifecycleScope.launch {
-        val franjas = withContext(Dispatchers.IO) {
-            repositoryApp.franjaHorariaDao.getTodasFranjas()
-
-        }
-        actualizarListaFranjasUI(franjas)
-    }
-
-    botonAgregar.setOnClickListener {
-        val hInicioStr = editHoraInicio.text.toString()
-        val mInicioStr = editMinutoInicio.text.toString()
-        val hFinStr = editHoraFin.text.toString()
-        val mFinStr = editMinutoFin.text.toString()
-
-        // Validar que no estén vacíos
-        if (hInicioStr.isBlank() || mInicioStr.isBlank() || hFinStr.isBlank() || mFinStr.isBlank()) {
-            Toast.makeText(this, "Por favor, rellena todos los campos.", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener
         }
 
-        // Convertir a enteros y validar rangos
-        val hInicio = hInicioStr.toIntOrNull()
-        val mInicio = mInicioStr.toIntOrNull()
-        val hFin = hFinStr.toIntOrNull()
-        val mFin = mFinStr.toIntOrNull()
+        private fun actualizarListaFranjas(franjas: List<String>, layoutFranjas: LinearLayout) {
+            layoutFranjas.removeAllViews()
+            for (hora in franjas.sorted()) {
+                val franjaView = LinearLayout(layoutFranjas.context).apply {
+                    orientation = LinearLayout.HORIZONTAL
 
-        if (hInicio == null || mInicio == null || hFin == null || mFin == null) {
-            Toast.makeText(this, "Introduce números válidos.", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener
-        }
+                    val textView = TextView(layoutFranjas.context).apply {
+                        text = hora
+                        textSize = 16f
+                        setPadding(8, 4, 8, 4)
+                    }
 
-        if (hInicio !in 1..24) {
-            Toast.makeText(this, "La hora de inicio debe estar entre 1 y 24.", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener
-        }
-        if (hFin !in 1..24) {
-            Toast.makeText(this, "La hora de fin debe estar entre 1 y 24.", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener
-        }
-        if (mInicio !in 0..59) {
-            Toast.makeText(this, "Los minutos de inicio deben estar entre 0 y 59.", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener
-        }
-        if (mFin !in 0..59) {
-            Toast.makeText(this, "Los minutos de fin deben estar entre 0 y 59.", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener
-        }
+                    val botonEliminar = Button(layoutFranjas.context).apply {
+                        text = "❌"
+                        textSize = 14f
+                        setBackgroundColor(Color.TRANSPARENT)
+                        setPadding(16, 0, 16, 0)
+                        setOnClickListener {
+                            lifecycleScope.launch {
+                                try {
+                                    firestore.collection("empresas")
+                                        .document(empresaCif)
+                                        .collection("franjasHorarias")
+                                        .document(hora)
+                                        .delete()
+                                        .await()
 
-        // Comparar hora inicio y fin
-        val inicioEnMinutos = hInicio * 60 + mInicio
-        val finEnMinutos = hFin * 60 + mFin
-        if (inicioEnMinutos >= finEnMinutos) {
-            Toast.makeText(this, "La hora de inicio debe ser anterior a la hora de fin.", Toast.LENGTH_SHORT).show()
-            return@setOnClickListener
-        }
+                                    cargarFranjas(layoutFranjas) // Aquí ya funciona
+                                } catch (e: Exception) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(this@Activity_creacion, "Error eliminando franja: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-        val horaInicioStr = "%02d:%02d".format(hInicio, mInicio)
-        val horaFinStr = "%02d:%02d".format(hFin, mFin)
-        val nuevaFranja = "$horaInicioStr - $horaFinStr"
-
-        // Insertar nueva franja en DB
-        lifecycleScope.launch {
-            repositoryApp.franjaHorariaDao.insertarFranja(FranjaHoraria(nuevaFranja))
-            val nuevasFranjas = withContext(Dispatchers.IO) {
-                repositoryApp.franjaHorariaDao.getTodasFranjas()
+                    addView(textView)
+                    addView(botonEliminar)
+                }
+                layoutFranjas.addView(franjaView)
             }
-            actualizarListaFranjasUI(nuevasFranjas)
         }
 
-        // Limpiar campos
-        editHoraInicio.text.clear()
-        editMinutoInicio.text.clear()
-        editHoraFin.text.clear()
-        editMinutoFin.text.clear()
-    }
-
-
-    val btnCerrar = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-    btnCerrar.setTextColor(Color.BLACK)
-}
-
-
-private fun openGallery() {
+        private fun openGallery() {
         getImage.launch("image/*")
     }
 
@@ -366,59 +292,59 @@ private fun openGallery() {
         salasEnMemoria.add(sala)
     }
 
+        private fun showChangeTitleDialog() {
+            val piso = pisoActual
 
-
-    private fun showChangeTitleDialog() {
-        val piso = pisoActual
-
-        val editText = EditText(this).apply {
-            setText(piso?.nombre ?: "Piso nº ")  // Si no hay piso, campo inicial
-            setSelection(text.length)
-        }
-
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
-            addView(editText)
-        }
-
-        val title = if (piso == null) "Crear nuevo piso" else "Editar nombre del piso"
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle(title)
-            .setView(layout)
-            .setPositiveButton("Guardar") { _, _ ->
-                val maxTitleLength = 11
-                val nuevoTitulo = editText.text.toString().trim().take(maxTitleLength)
-
-                if (nuevoTitulo.isEmpty() || nuevoTitulo.equals("Piso nº", ignoreCase = true) || nuevoTitulo.equals("Piso nº ", ignoreCase = true)) {
-                    showToast("Por favor, cambie el nombre del piso antes de guardar")
-                } else {
-                    // SOLO actualizamos el nombre en memoria y en UI, no guardamos en base de datos
-                    pisoActual = if (piso == null) {
-                        // Piso nuevo en memoria, sin ID aún (id=0 o -1)
-                        Piso(id, nombre = nuevoTitulo, imagen = imagen, empresaCif = "A1111111")
-                    } else {
-                        piso.copy(nombre = nuevoTitulo)
-                    }
-
-                    // Actualizamos el título en la toolbar o donde lo muestres
-                    findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
-                    showToast("Nombre del piso modificado (pendiente de guardar)")
-                }
+            val editText = EditText(this).apply {
+                setText(piso?.nombre ?: "Piso nº ")
+                setSelection(text.length)
             }
-            .setNegativeButton("Cancelar", null)
-            .create()
 
-        dialog.setOnShowListener {
-            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK)
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.RED)
+            val layout = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(50, 40, 50, 10)
+                addView(editText)
+            }
+
+            val title = if (piso == null) "Crear nuevo piso" else "Editar nombre del piso"
+
+            val dialog = AlertDialog.Builder(this)
+                .setTitle(title)
+                .setView(layout)
+                .setPositiveButton("Guardar") { _, _ ->
+                    val maxTitleLength = 11
+                    val nuevoTitulo = editText.text.toString().trim().take(maxTitleLength)
+
+                    if (nuevoTitulo.isEmpty() || nuevoTitulo.equals("Piso nº", ignoreCase = true) || nuevoTitulo.equals("Piso nº ", ignoreCase = true)) {
+                        showToast("Por favor, cambie el nombre del piso antes de guardar")
+                    } else {
+                        pisoActual = if (piso == null) {
+                            Piso(
+                                id = null,                      // Todavía no tiene ID Firestore
+                                nombre = nuevoTitulo,
+                                empresaCif = empresaCif,  // Usa la variable que tengas con el CIF actual
+                                imagenUrl = null                // O alguna URL por defecto si tienes
+                            )
+                        } else {
+                            piso.copy(nombre = nuevoTitulo)
+                        }
+
+
+                        findViewById<TextView>(R.id.toolbar_title).text = nuevoTitulo
+                        showToast("Nombre del piso modificado (pendiente de guardar)")
+                    }
+                }
+                .setNegativeButton("Cancelar", null)
+                .create()
+
+            dialog.setOnShowListener {
+                dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK)
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.RED)
+            }
+
+            dialog.show()
         }
-
-        dialog.show()
-    }
-
 
 
     private fun showToast(msg: String) {
@@ -557,163 +483,188 @@ private fun openGallery() {
         dialog.show()
     }
 
-    private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
-        val pisoId = pisoActual?.id ?: return
+        private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
+            val empresaCif = pisoActual?.empresaCif ?: return
+            val pisoId = pisoActual?.id ?: return
 
-        lifecycleScope.launch {
-            val sala = repositoryApp.salaDao.obtenerSalaPorNombreYPiso(nombreSala, pisoId)
-            if (sala != null && (sala.ancho != nuevoAncho.toFloat() || sala.alto != nuevoAlto.toFloat())) {
-                val salaActualizada = sala.copy(
-                    ancho = nuevoAncho.toFloat(),
-                    alto = nuevoAlto.toFloat()
-                )
-                repositoryApp.salaDao.actualizar(salaActualizada)
-            }
-        }
-    }
+            lifecycleScope.launch {
+                try {
+                    val salasRef = firestore.collection("empresas")
+                        .document(empresaCif)
+                        .collection("pisos")
+                        .document(pisoId)
+                        .collection("salas")
 
+                    // Buscar sala por nombre
+                    val salaQuery = salasRef
+                        .whereEqualTo("nombre", nombreSala)
+                        .get()
+                        .await()
 
-    private fun showEditButtonDialog(button: Button) {
-        val sala = button.tag as? Salas
-        if (sala == null) {
-            Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
-            return
-        }
+                    if (!salaQuery.isEmpty) {
+                        val doc = salaQuery.documents.first()
+                        val sala = doc.toObject(Salas::class.java)
 
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
-        }
+                        if (sala != null && (sala.ancho != nuevoAncho.toFloat() || sala.alto != nuevoAlto.toFloat())) {
+                            val salaActualizada = sala.copy(
+                                ancho = nuevoAncho.toFloat(),
+                                alto = nuevoAlto.toFloat()
+                            )
 
-        val editTextNombre = EditText(this).apply {
-            hint = "Nuevo nombre"
-            setText(sala.nombre)
-            val maxLength = 20
-            val filter = InputFilter.LengthFilter(maxLength)
-            filters = arrayOf(filter)
-        }
-
-        val charCountTextView = TextView(this).apply {
-            text = "${sala.nombre.length}/20"
-            setTextColor("#000000".toColorInt())
-        }
-
-        editTextNombre.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val currentLength = s?.length ?: 0
-                charCountTextView.text = "$currentLength/20"
-            }
-        })
-
-        val tamanios = listOf("Pequeño", "Grande")
-
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            tamanios
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-
-        val spinnerTamanio = Spinner(this).apply {
-            this.adapter = adapter
-            setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
-            background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
-            setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 16
-                bottomMargin = 16
-            }
-        }
-
-
-        val checkWifi = CheckBox(this).apply {
-            text = "WiFi"
-            isChecked = sala.extras.contains("WiFi")
-            buttonTintList = ColorStateList.valueOf(Color.GRAY)
-        }
-        val checkProyector = CheckBox(this).apply {
-            text = "Proyector"
-            isChecked = sala.extras.contains("Proyector")
-            buttonTintList = ColorStateList.valueOf(Color.GRAY)
-        }
-        val checkPizarra = CheckBox(this).apply {
-            text = "Pizarra"
-            isChecked = sala.extras.contains("Pizarra")
-            buttonTintList = ColorStateList.valueOf(Color.GRAY)
-        }
-
-        layout.apply {
-            addView(editTextNombre)
-            addView(charCountTextView)
-            addView(spinnerTamanio)
-            addView(checkWifi)
-            addView(checkProyector)
-            addView(checkPizarra)
-        }
-
-        val builder = AlertDialog.Builder(this)
-            .setTitle("Editar sala")
-            .setView(layout)
-            .setPositiveButton("Guardar", null) // Controlamos el click manualmente
-            .setNegativeButton("Cancelar", null)
-
-        val dialog = builder.create()
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
-
-            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            positiveButton.setOnClickListener {
-                val nuevoNombre = editTextNombre.text.toString().trim()
-
-                if (nuevoNombre.isEmpty()) {
-                    editTextNombre.error = "El nombre no puede estar vacío"
-                    return@setOnClickListener
-                }
-
-                val nombreRepetido = container.children
-                    .filterIsInstance<Button>()
-                    .filter { it != button }
-                    .mapNotNull { (it.tag as? Salas)?.nombre }
-                    .any { it.equals(nuevoNombre, ignoreCase = true) }
-
-                if (nombreRepetido) {
-                    editTextNombre.error = "Ese nombre ya está en uso"
-                    return@setOnClickListener
-                }
-
-                // Crear una copia modificada de la sala
-                val salaEditada = sala.copy(
-                    nombre = nuevoNombre,
-                    tamaño = spinnerTamanio.selectedItem?.toString().toString(),
-                    extras = mutableListOf<String>().apply {
-                        if (checkWifi.isChecked) add("WiFi")
-                        if (checkProyector.isChecked) add("Proyector")
-                        if (checkPizarra.isChecked) add("Pizarra")
+                            // Actualizar el documento en Firestore
+                            salasRef.document(doc.id).set(salaActualizada).await()
+                        }
                     }
-                )
-
-                // Guardar en Room en coroutine
-                lifecycleScope.launch {
-                    repositoryApp.salaDao.actualizar(salaEditada)
-                    actualizarBotonConSala(button, salaEditada)
-                    button.tag = salaEditada
-                    Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
+                } catch (e: Exception) {
+                    Log.e("Firestore", "Error al actualizar tamaño de sala: ${e.message}", e)
                 }
-
             }
         }
 
-        dialog.show()
-    }
+
+
+        private fun showEditButtonDialog(button: Button) {
+            val sala = button.tag as? Salas
+            if (sala == null) {
+                Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val empresaCif = pisoActual?.empresaCif ?: return
+            val pisoId = pisoActual?.id ?: return
+
+            val layout = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(50, 40, 50, 10)
+            }
+
+            val editTextNombre = EditText(this).apply {
+                hint = "Nuevo nombre"
+                setText(sala.nombre)
+                filters = arrayOf(InputFilter.LengthFilter(20))
+            }
+
+            val charCountTextView = TextView(this).apply {
+                text = "${sala.nombre.length}/20"
+                setTextColor("#000000".toColorInt())
+            }
+
+            editTextNombre.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    charCountTextView.text = "${s?.length ?: 0}/20"
+                }
+            })
+
+            val tamanios = listOf("Pequeño", "Grande")
+            val spinnerTamanio = Spinner(this).apply {
+                adapter = ArrayAdapter(this@Activity_creacion, android.R.layout.simple_spinner_dropdown_item, tamanios)
+                setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
+                background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
+                setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = 16; bottomMargin = 16 }
+            }
+
+            val checkWifi = CheckBox(this).apply {
+                text = "WiFi"
+                isChecked = sala.extras.contains("WiFi")
+                buttonTintList = ColorStateList.valueOf(Color.GRAY)
+            }
+            val checkProyector = CheckBox(this).apply {
+                text = "Proyector"
+                isChecked = sala.extras.contains("Proyector")
+                buttonTintList = ColorStateList.valueOf(Color.GRAY)
+            }
+            val checkPizarra = CheckBox(this).apply {
+                text = "Pizarra"
+                isChecked = sala.extras.contains("Pizarra")
+                buttonTintList = ColorStateList.valueOf(Color.GRAY)
+            }
+
+            layout.apply {
+                addView(editTextNombre)
+                addView(charCountTextView)
+                addView(spinnerTamanio)
+                addView(checkWifi)
+                addView(checkProyector)
+                addView(checkPizarra)
+            }
+
+            val builder = AlertDialog.Builder(this)
+                .setTitle("Editar sala")
+                .setView(layout)
+                .setPositiveButton("Guardar", null)
+                .setNegativeButton("Cancelar", null)
+
+            val dialog = builder.create()
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+            dialog.setOnShowListener {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+
+                val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                positiveButton.setOnClickListener {
+                    val nuevoNombre = editTextNombre.text.toString().trim()
+
+                    if (nuevoNombre.isEmpty()) {
+                        editTextNombre.error = "El nombre no puede estar vacío"
+                        return@setOnClickListener
+                    }
+
+                    val nombreRepetido = container.children
+                        .filterIsInstance<Button>()
+                        .filter { it != button }
+                        .mapNotNull { (it.tag as? Salas)?.nombre }
+                        .any { it.equals(nuevoNombre, ignoreCase = true) }
+
+                    if (nombreRepetido) {
+                        editTextNombre.error = "Ese nombre ya está en uso"
+                        return@setOnClickListener
+                    }
+
+                    // Crear la sala editada
+                    val salaEditada = sala.copy(
+                        nombre = nuevoNombre,
+                        tamaño = spinnerTamanio.selectedItem?.toString().toString(),
+                        extras = mutableListOf<String>().apply {
+                            if (checkWifi.isChecked) add("WiFi")
+                            if (checkProyector.isChecked) add("Proyector")
+                            if (checkPizarra.isChecked) add("Pizarra")
+                        }
+                    )
+
+                    // Guardar en Firestore
+                    lifecycleScope.launch {
+                        try {
+                            val docId = sala.id ?: return@launch
+                            val salaRef = firestore.collection("empresas")
+                                .document(empresaCif)
+                                .collection("pisos")
+                                .document(pisoId)
+                                .collection("salas")
+                                .document(docId)
+
+                            salaRef.set(salaEditada).await()
+
+                            actualizarBotonConSala(button, salaEditada)
+                            button.tag = salaEditada
+                            Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
+                            dialog.dismiss()
+                        } catch (e: Exception) {
+                            Toast.makeText(this@Activity_creacion, "Error al actualizar sala", Toast.LENGTH_SHORT).show()
+                            Log.e("Firestore", "Error: ${e.message}", e)
+                        }
+                    }
+                }
+            }
+
+            dialog.show()
+        }
 
 
     private fun actualizarBotonConSala(button: Button, sala: Salas) {
@@ -734,138 +685,133 @@ private fun openGallery() {
     }
 
 
-    suspend fun guardarDistribucion(
-        pisoNombre: String,
-        imagen: ByteArray?,
-        container: ViewGroup,
-        pisoDao: PisoDao,
-        salaDao: SalaDao
-    ) {
-        val salasGuardadas = mutableListOf<Salas>()
+        suspend fun guardarDistribucion(
+            pisoNombre: String,
+            imagen: ByteArray?,
+            container: ViewGroup
+        ) {
+            val db = FirebaseFirestore.getInstance()
+            val auth = FirebaseAuth.getInstance()
+            val empresaCif = auth.currentUser?.uid ?: "" // O usa el cif real del usuario autenticado
 
-        for (i in 0 until container.childCount) {
-            val view = container.getChildAt(i)
-            if (view is Button) {
-                val sala = view.tag as? Salas ?: continue
-                salasGuardadas.add(
-                    Salas(
-                        id = sala.id,
-                        nombre = sala.nombre,
-                        tamaño = sala.tamaño,
-                        pisoId = -1,
-                        x = view.x,
-                        y = view.y,
-                        ancho = view.width.toFloat(),
-                        alto = view.height.toFloat(),
-                        extras = sala.extras
+            val salasGuardadas = mutableListOf<Map<String, Any>>()
+
+            for (i in 0 until container.childCount) {
+                val view = container.getChildAt(i)
+                if (view is Button) {
+                    val sala = view.tag as? Salas ?: continue
+                    val salaMap = mapOf(
+                        "id" to sala.id,
+                        "nombre" to sala.nombre,
+                        "tamaño" to sala.tamaño,
+                        "x" to view.x,
+                        "y" to view.y,
+                        "ancho" to view.width.toFloat(),
+                        "alto" to view.height.toFloat(),
+                        "extras" to sala.extras
                     )
-                )
-            }
-        }
-
-        if (salasGuardadas.isEmpty()) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(container.context, "Debes colocar al menos una sala antes de guardar", Toast.LENGTH_SHORT).show()
-            }
-            return
-        }
-
-        if (pisoNombre.isBlank()) {
-            withContext(Dispatchers.Main) {
-                Snackbar.make(container, "Por favor, asigna un nombre al piso", Snackbar.LENGTH_LONG)
-                    .setAction("Editar") {
-                        // Abrir diálogo de edición si quieres
-                    }
-                    .show()
-            }
-            return
-        }
-
-        withContext(Dispatchers.IO) {
-            val masterDb = MasterDB.getDatabase(container.context)
-            val empresaDao = masterDb.empresaDao()
-
-            val empresas = empresaDao.obtenerTodasLasEmpresas()
-            Log.d("guardarDistribucion", "Empresas encontradas: ${empresas.size}")
-            val empresa = empresas.firstOrNull()
-
-
-            if (empresa == null) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(container.context, "No se encontró ninguna empresa en la base de datos", Toast.LENGTH_SHORT).show()
+                    salasGuardadas.add(salaMap as Map<String, Any>)
                 }
-                return@withContext
             }
 
-            val empresaCif = empresa.cif
-
-            // Ahora comprobamos si ya existe un piso con ese nombre para esta empresa
-            val pisoExistente = pisoDao.obtenerPisoPorNombreYEmpresa(pisoNombre, empresaCif)
-
-            val pisoId = if (pisoExistente == null) {
-                val nuevoPiso = Piso(
-                    nombre = pisoNombre,
-                    empresaCif = empresaCif,
-                    imagen = imagen
-                )
-                pisoDao.insertarPiso(nuevoPiso).toInt()
-            } else {
-                val pisoActualizado = pisoExistente.copy(
-                    nombre = pisoNombre,
-                    empresaCif = empresaCif,
-                    imagen = imagen
-                )
-                pisoDao.actualizarPiso(pisoActualizado)
-                pisoExistente.id
+            if (salasGuardadas.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(container.context, "Debes colocar al menos una sala antes de guardar", Toast.LENGTH_SHORT).show()
+                }
+                return
             }
 
-            salaDao.eliminarPorPiso(pisoId)
+            if (pisoNombre.isBlank()) {
+                withContext(Dispatchers.Main) {
+                    Snackbar.make(container, "Por favor, asigna un nombre al piso", Snackbar.LENGTH_LONG).show()
+                }
+                return
+            }
 
-            salasGuardadas.forEach { sala ->
-                sala.pisoId = pisoId
-                salaDao.insertar(sala)
+            val encodedImage = imagen?.let { Base64.encodeToString(it, Base64.DEFAULT) }
+
+            val pisoRef = db.collection("empresas")
+                .document(empresaCif)
+                .collection("pisos")
+                .document(pisoNombre)
+
+            val pisoData = mapOf(
+                "nombre" to pisoNombre,
+                "empresaCif" to empresaCif,
+                "imagenBase64" to encodedImage,
+                "salas" to salasGuardadas
+            )
+
+            try {
+                pisoRef.set(pisoData).await()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(container.context, "Distribución guardada en Firestore", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(container.context, "Error al guardar: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
-        withContext(Dispatchers.Main) {
-            Toast.makeText(container.context, "Distribución guardada correctamente", Toast.LENGTH_SHORT).show()
-        }
-    }
 
 
 
     private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
+        val db = Firebase.firestore
+        val empresaDoc = db.collection("empresas").document(empresaCif)
+        val pisosCollection = empresaDoc.collection("pisos")
+
         lifecycleScope.launch {
-            val piso = repositoryApp.pisoDao.obtenerPisoPorNombreYEmpresa(nombrePiso, empresaCif)
+            try {
+                // Buscar piso por nombre
+                val querySnapshot = pisosCollection.whereEqualTo("nombre", nombrePiso).get().await()
+                val pisoDoc = querySnapshot.documents.firstOrNull()
 
-            if (piso != null) {
-                repositoryApp.pisoDao.eliminarPiso(piso)
+                if (pisoDoc != null) {
+                    val pisoId = pisoDoc.id
 
-                val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-                val pisoActual = prefNumeroPiso.getString("numero_piso", null)
+                    // Eliminar salas asociadas a ese piso
+                    pisosCollection.document(pisoId).collection("salas").get().await().documents.forEach {
+                        it.reference.delete()
+                    }
 
-                if (pisoActual == nombrePiso) {
-                    val pisosRestantes = repositoryApp.pisoDao.obtenerTodosLosPisos().firstOrNull() ?: emptyList()
-                    val nombresPisos = pisosRestantes.map { it.nombre }
+                    // Eliminar el piso
+                    pisosCollection.document(pisoId).delete().await()
 
-                    prefNumeroPiso.edit().apply {
-                        if (nombresPisos.isNotEmpty()) {
-                            putString("numero_piso", nombresPisos.first())
-                        } else {
-                            remove("numero_piso")
+                    // Actualizar preferencia local
+                    val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+                    val pisoActual = prefNumeroPiso.getString("numero_piso", null)
+
+                    if (pisoActual == nombrePiso) {
+                        val pisosRestantes = pisosCollection.get().await().documents
+                        val nombresPisos = pisosRestantes.mapNotNull { it.getString("nombre") }
+
+                        prefNumeroPiso.edit().apply {
+                            if (nombresPisos.isNotEmpty()) {
+                                putString("numero_piso", nombresPisos.first())
+                            } else {
+                                remove("numero_piso")
+                            }
+                            apply()
                         }
-                        apply()
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_creacion, "Piso eliminado", Toast.LENGTH_SHORT).show()
+                        mostrarDialogoEliminarPisos()
+                    }
+
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_creacion, "Piso no encontrado", Toast.LENGTH_SHORT).show()
                     }
                 }
 
+            } catch (e: Exception) {
+                Log.e("Firestore", "Error al eliminar piso: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_creacion, "Piso eliminado", Toast.LENGTH_SHORT).show()
-                    // Aquí volvemos a mostrar el diálogo actualizado
-                    mostrarDialogoEliminarPisos()
-                }
-            } else {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_creacion, "Piso no encontrado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@Activity_creacion, "Error eliminando el piso", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -873,64 +819,74 @@ private fun openGallery() {
 
 
     private fun mostrarDialogoEliminarPisos() {
+        val db = Firebase.firestore
+        val empresaDoc = db.collection("empresas").document(empresaCif)
+        val pisosCollection = empresaDoc.collection("pisos")
+
         lifecycleScope.launch {
-            val pisos = repositoryApp.pisoDao.obtenerTodosLosPisos().firstOrNull() ?: emptyList()
-            val nombresPisos = pisos.map { it.nombre }.toMutableList()
+            try {
+                val snapshot = pisosCollection.get().await()
+                val nombresPisos = snapshot.documents.mapNotNull { it.getString("nombre") }.toMutableList()
 
-            if (nombresPisos.isEmpty()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_creacion, "No hay pisos guardados.", Toast.LENGTH_SHORT).show()
-                }
-                return@launch
-            }
-
-            nombresPisos.sortWith { piso1, piso2 ->
-                val key1 = naturalOrderKey(piso1)
-                val key2 = naturalOrderKey(piso2)
-                compareNaturalKeys(key1, key2)
-            }
-
-            withContext(Dispatchers.Main) {
-                val pisosArray = nombresPisos.toTypedArray()
-
-                val dialogPrincipal = AlertDialog.Builder(this@Activity_creacion)
-                    .setTitle("Eliminar piso")
-                    .setItems(pisosArray) { dialogInterface, which ->
-                        val pisoSeleccionado = pisosArray[which]
-
-                        val dialogConfirmacion = AlertDialog.Builder(this@Activity_creacion)
-                            .setTitle("¿Eliminar '$pisoSeleccionado'?")
-                            .setMessage("Esta acción eliminará el piso y todas sus salas.")
-                            .setPositiveButton("Eliminar") { dialogConfirm, _ ->
-                                val empresaCif = empresaCif
-                                eliminarPisoPorNombre(pisoSeleccionado, empresaCif)
-                                dialogConfirm.dismiss()
-                                dialogInterface.dismiss()  // Cerramos el diálogo principal también
-                            }
-                            .setNegativeButton("Cancelar", null)
-                            .create()
-
-                        dialogConfirmacion.setOnShowListener {
-                            dialogConfirmacion.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                            dialogConfirmacion.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
-                        }
-                        dialogConfirmacion.show()
+                if (nombresPisos.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_creacion, "No hay pisos guardados.", Toast.LENGTH_SHORT).show()
                     }
-                    .setNegativeButton("Cancelar", null)
-                    .create()
-
-                dialogPrincipal.setOnShowListener {
-                    dialogPrincipal.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                    dialogPrincipal.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                    return@launch
                 }
-                dialogPrincipal.show()
+
+                // Orden natural como antes
+                nombresPisos.sortWith { p1, p2 ->
+                    val k1 = naturalOrderKey(p1)
+                    val k2 = naturalOrderKey(p2)
+                    compareNaturalKeys(k1, k2)
+                }
+
+                withContext(Dispatchers.Main) {
+                    val pisosArray = nombresPisos.toTypedArray()
+
+                    val dialogPrincipal = AlertDialog.Builder(this@Activity_creacion)
+                        .setTitle("Eliminar piso")
+                        .setItems(pisosArray) { dialogInterface, which ->
+                            val pisoSeleccionado = pisosArray[which]
+
+                            val dialogConfirmacion = AlertDialog.Builder(this@Activity_creacion)
+                                .setTitle("¿Eliminar '$pisoSeleccionado'?")
+                                .setMessage("Esta acción eliminará el piso y todas sus salas.")
+                                .setPositiveButton("Eliminar") { dialogConfirm, _ ->
+                                    eliminarPisoPorNombre(pisoSeleccionado, empresaCif)
+                                    dialogConfirm.dismiss()
+                                    dialogInterface.dismiss()
+                                }
+                                .setNegativeButton("Cancelar", null)
+                                .create()
+
+                            dialogConfirmacion.setOnShowListener {
+                                dialogConfirmacion.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                                dialogConfirmacion.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                            }
+
+                            dialogConfirmacion.show()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .create()
+
+                    dialogPrincipal.setOnShowListener {
+                        dialogPrincipal.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                        dialogPrincipal.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                    }
+
+                    dialogPrincipal.show()
+                }
+
+            } catch (e: Exception) {
+                Log.e("Firestore", "Error al obtener pisos: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_creacion, "Error obteniendo pisos", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
-
-
-
-    private var imagen: ByteArray? = null // esto lo usarás al guardar en la base de datos
 
     private val getImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {

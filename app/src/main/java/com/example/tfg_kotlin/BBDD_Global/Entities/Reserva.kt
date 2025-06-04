@@ -1,14 +1,12 @@
 package com.example.tfg_kotlin.BBDD_Global.Entities
 
-import androidx.room.*
 
-@Entity(tableName = "reservas")
 data class Reserva(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val nombreSala: String,
-    val idSala: Int,
-    val fechaHora: String,
-    val nombreUsuario: String,
-    val idusuario: Int,
-    val piso: String
+    var id: String? = null,
+    val nombreSala: String = "",
+    val idSala: String = "",       // si es entero en Room, aquí puedes dejar String y luego convertir
+    val fechaHora: String = "",
+    val nombreUsuario: String = "",
+    val idusuario: String = "",    // Firebase UID es String
+    val piso: String = ""
 )

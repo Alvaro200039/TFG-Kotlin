@@ -1,144 +1,100 @@
 package com.example.tfg_kotlin
 
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
-import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
-import com.example.tfg_kotlin.repository.GlobalRepository
-import com.example.tfg_kotlin.repository.MasterRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.TimeUnit
+import android.content.pm.PackageManager
+import android.view.LayoutInflater
+import android.view.Menu
+import android.widget.NumberPicker
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.work.Data
-import com.example.tfg_kotlin.Activity_menu_creador
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
+import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
+import java.util.concurrent.TimeUnit
 import com.google.android.material.materialswitch.MaterialSwitch
-
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObject
+import kotlinx.coroutines.tasks.await
 
 class activity_menu_empleado : AppCompatActivity() {
 
-    private lateinit var repositoryApp: GlobalRepository
-    private lateinit var repositoryMaster: MasterRepository
-    private var idUsuario: Int = -1 // Variable global en la Activity
+    private lateinit var firestore: FirebaseFirestore
+    private var idUsuario: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
-        val masterDb = MasterDB.getDatabase(applicationContext)
-        repositoryMaster = MasterRepository(
-            masterDb.empresaDao()
-        )
-
-        val db = GlobalDB.getDatabase(applicationContext)
-        repositoryApp = GlobalRepository(
-            db.usuarioDao(),
-            db.salaDao(),
-            db.reservaDao(),
-            db.franjahorariaDao(),
-            db.pisoDao()
-        )
+        setContentView(R.layout.activity_menu_creador)
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_menu_empleado)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.menuempleado)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.menucreacion)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        idUsuario = intent.getIntExtra("idUsuario", -1)
+        val auth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
 
-        if (idUsuario == -1) {
-            Toast.makeText(this, "Error al recibir ID del usuario", Toast.LENGTH_SHORT).show()
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Toast.makeText(this, "No hay usuario logueado", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        val nombreUsuario = intent.getStringExtra("nombreUsuario")
+        idUsuario = currentUser.uid  // asignamos directamente el UID string
 
-        if (nombreUsuario != null) {
-            Toast.makeText(this, "Hola $nombreUsuario", Toast.LENGTH_SHORT).show()
-        }else {
-            Toast.makeText(this, "Error al recibir nombre del usuario", Toast.LENGTH_SHORT).show()
+        val cifUsuario = intent.getStringExtra("cifUsuario") ?: ""
+
+        if (cifUsuario.isEmpty()) {
+            Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
+            finish()
+            return
         }
 
-        limpiarReservasPasadas()
-        mostrarSiguienteReserva()
-
-        // Botón: Hacer nueva reserva
-        val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
-        btnNuevaReserva.setOnClickListener {
-            lifecycleScope.launch {
-                val pisos = repositoryApp.pisoDao.obtenerTodosLosPisos().first()
-
-                if (pisos.isNotEmpty()) {
-                    val pisoSeleccionado = pisos.last() // O el que quieras, aquí el último piso
-                    val nombrePiso = pisoSeleccionado.nombre
-
-                    val intent = Intent(this@activity_menu_empleado, Activity_empleados::class.java)
-                    intent.putExtra("nombre_piso", nombrePiso)
-                    intent.putExtra("idUsuario", idUsuario) // Intent para pasar idUsuario
-                    intent.putExtra("nombreUsuario", nombreUsuario) // Intent para pasar nombreUsuario
-                    startActivity(intent)
-                } else {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            this@activity_menu_empleado,
-                            "No se ha creado ningún piso. Crea uno primero.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+        firestore.collection("empresas")
+            .document(cifUsuario)
+            .collection("usuarios")
+            .document(currentUser.uid)
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.exists()) {
+                    val usuario = documentSnapshot.toObject<Usuario>()
+                    if (usuario != null) {
+                        Toast.makeText(this, "Hola ${usuario.nombre}", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(this, "Usuario no existe en esta empresa", Toast.LENGTH_SHORT).show()
                 }
             }
-        }
-
-        // Botón: Ver mis reservas
-        val btnVerReservas = findViewById<Button>(R.id.btnVerReservas)
-        btnVerReservas.setOnClickListener {
-            mostrarDialogoReservas()
-        }
-
-        // Botón: Cerrar sesión (opcional)
-        val btnLogout = findViewById<Button>(R.id.btnLogout)
-        btnLogout?.setOnClickListener {
-            // Aquí podrías limpiar datos, cerrar sesión y volver al login
-            // Por ejemplo:
-            // startActivity(Intent(this, LoginActivity::class.java))
-            // finish()
-        }
-
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
 
@@ -160,7 +116,7 @@ class activity_menu_empleado : AppCompatActivity() {
                 true
             }
             R.id.action_options -> {
-                mostrarDialogoNotificaciones() // tu función para mostrar el diálogo
+                mostrarDialogoNotificaciones()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -217,107 +173,164 @@ class activity_menu_empleado : AppCompatActivity() {
 
         dialog.show()
 
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(ContextCompat.getColor(this, R.color.black))
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(ContextCompat.getColor(this, R.color.red))
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            ?.setTextColor(ContextCompat.getColor(this, R.color.black))
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            ?.setTextColor(ContextCompat.getColor(this, R.color.red))
     }
 
 
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
-        if (idUsuario == -1) {
+
+        val uidUsuario = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+        if (uidUsuario.isEmpty()) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
         }
 
         lifecycleScope.launch {
-            val reservas = repositoryApp.getAllReservas()
+            try {
+                val snapshot = firestore.collection("reservas").get().await()
+                val reservas = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Reserva::class.java)?.copy(id = doc.id)
+                }
 
-            // Filtrar solo las reservas del usuario actual
-            val reservasUsuario = reservas.filter { it.idusuario == idUsuario }
+                // Filtrar por UID Firebase (String)
+                val reservasUsuario = reservas.filter { it.idusuario == uidUsuario }
 
-            if (reservasUsuario.isEmpty()) {
+                if (reservasUsuario.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@activity_menu_empleado,
+                            "No tienes reservas activas.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    return@launch
+                }
+
+                val reservasPorPiso = reservasUsuario.groupBy { it.piso }
+
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@activity_menu_empleado, "No tienes reservas activas.", Toast.LENGTH_SHORT).show()
-                }
-                return@launch
-            }
+                    val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
+                    val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
 
-            val reservasPorPiso = reservasUsuario.groupBy { it.piso }
-            val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
-            val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
+                    lateinit var dialog: AlertDialog
 
-            lateinit var dialog: AlertDialog
-
-            withContext(Dispatchers.Main) {
-                for ((piso, lista) in reservasPorPiso) {
-                    val pisoText = TextView(this@activity_menu_empleado).apply {
-                        text = piso
-                        textSize = 18f
-                        setPadding(0, 16, 0, 8)
-                        setTextColor(Color.BLACK)
-                        setTypeface(null, Typeface.BOLD)
-                    }
-                    contenedor.addView(pisoText)
-
-                    lista.forEach { reserva ->
-                        val reservaText = TextView(this@activity_menu_empleado).apply {
-                            text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
-                            setPadding(16, 4, 0, 4)
-                            setTextColor(Color.DKGRAY)
-                            setOnClickListener {
-                                val confirmDialog = AlertDialog.Builder(this@activity_menu_empleado)
-                                    .setTitle("¿Cancelar reserva?")
-                                    .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
-                                    .setPositiveButton("Sí") { _, _ ->
-                                        lifecycleScope.launch {
-                                            repositoryApp.eliminarReserva(reserva)
-                                            dialog.dismiss()
-                                            mostrarDialogoReservas() // Recargar reservas
-                                        }
-                                    }
-                                    .setNegativeButton("No", null)
-                                    .create()
-
-                                confirmDialog.setOnShowListener {
-                                    confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
-                                    confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
-                                }
-                                confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                                confirmDialog.show()
-                            }
+                    for ((piso, lista) in reservasPorPiso) {
+                        val pisoText = TextView(this@activity_menu_empleado).apply {
+                            text = piso
+                            textSize = 18f
+                            setPadding(0, 16, 0, 8)
+                            setTextColor(Color.BLACK)
+                            setTypeface(null, Typeface.BOLD)
                         }
-                        contenedor.addView(reservaText)
+                        contenedor.addView(pisoText)
+
+                        lista.forEach { reserva ->
+                            val reservaText = TextView(this@activity_menu_empleado).apply {
+                                text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
+                                setPadding(16, 4, 0, 4)
+                                setTextColor(Color.DKGRAY)
+                                setOnClickListener {
+                                    val confirmDialog = AlertDialog.Builder(this@activity_menu_empleado)
+                                        .setTitle("¿Cancelar reserva?")
+                                        .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
+                                        .setPositiveButton("Sí") { _, _ ->
+                                            lifecycleScope.launch {
+                                                try {
+                                                    reserva.id?.let { idDoc ->
+                                                        firestore.collection("reservas")
+                                                            .document(idDoc)
+                                                            .delete()
+                                                            .await()
+                                                    }
+                                                    dialog.dismiss()
+                                                    mostrarDialogoReservas() // Recargar
+                                                } catch (e: Exception) {
+                                                    withContext(Dispatchers.Main) {
+                                                        Toast.makeText(
+                                                            this@activity_menu_empleado,
+                                                            "Error al eliminar la reserva",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        .setNegativeButton("No", null)
+                                        .create()
+
+                                    confirmDialog.setOnShowListener {
+                                        confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                                            ?.setTextColor(Color.BLACK)
+                                        confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                                            ?.setTextColor(Color.RED)
+                                    }
+                                    confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                                    confirmDialog.show()
+                                }
+                            }
+                            contenedor.addView(reservaText)
+                        }
+
+                        val divider = View(this@activity_menu_empleado).apply {
+                            setBackgroundColor(Color.LTGRAY)
+                            layoutParams = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                2
+                            ).apply { setMargins(0, 16, 0, 16) }
+                        }
+                        contenedor.addView(divider)
                     }
 
-                    val divider = View(this@activity_menu_empleado).apply {
-                        setBackgroundColor(Color.LTGRAY)
-                        layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            2
-                        ).apply { setMargins(0, 16, 0, 16) }
-                    }
-                    contenedor.addView(divider)
+                    dialog = AlertDialog.Builder(this@activity_menu_empleado)
+                        .setTitle("Tus reservas activas")
+                        .setView(dialogView)
+                        .setPositiveButton("Cerrar", null)
+                        .create()
+
+                    dialog.show()
+                    dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
                 }
-
-                dialog = AlertDialog.Builder(this@activity_menu_empleado)
-                    .setTitle("Tus reservas activas")
-                    .setView(dialogView)
-                    .setPositiveButton("Cerrar", null)
-                    .create()
-
-                dialog.show()
-                dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@activity_menu_empleado, "Error cargando reservas", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
     private fun limpiarReservasPasadas() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        val ahora = formato.format(Date()) // Lo convertimos a String porque Room usa fechaHora como String
 
-        lifecycleScope.launch {
-            repositoryApp.limpiarReservasAntiguas(ahora)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val snapshot = firestore.collection("reservas").get().await()
+                val reservas = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Reserva::class.java)?.copy(id = doc.id)
+                }
+
+                val reservasAntiguas = reservas.filter {
+                    try {
+                        val fechaReserva = formato.parse(it.fechaHora)
+                        fechaReserva != null && fechaReserva.before(Date())
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+
+                reservasAntiguas.forEach { reserva ->
+                    reserva.id?.let { idDoc ->
+                        firestore.collection("reservas").document(idDoc).delete().await()
+                    }
+                }
+            } catch (e: Exception) {
+                // Opcional: Log.e("limpiarReservasPasadas", "Error al limpiar reservas", e)
+            }
         }
     }
 
@@ -326,63 +339,82 @@ class activity_menu_empleado : AppCompatActivity() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val ahora = Date()
 
-        lifecycleScope.launch {
-            val reservas = repositoryApp.getReservasPorUsuario(idUsuario)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val snapshot = firestore.collection("reservas")
+                    .whereEqualTo("idusuario", idUsuario)  // idUsuario debe ser String
+                    .get()
+                    .await()
 
-            val reservasFuturas = reservas.filter {
-                try {
-                    val fechaReserva = formato.parse(it.fechaHora)
-                    fechaReserva != null && fechaReserva.after(ahora)
-                } catch (e: Exception) {
-                    false
+                val reservas = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(Reserva::class.java)?.copy(id = doc.id)
                 }
-            }
 
-            if (reservasFuturas.isEmpty()) {
-                textView.text = "No hay reservas próximas"
-                return@launch
-            }
+                val reservasFuturas = reservas.filter {
+                    try {
+                        val fechaReserva = formato.parse(it.fechaHora)
+                        fechaReserva != null && fechaReserva.after(ahora)
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
 
-            val siguienteReserva = reservasFuturas.minByOrNull {
-                formato.parse(it.fechaHora)?.time ?: Long.MAX_VALUE
-            }
+                if (reservasFuturas.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        textView.text = "No hay reservas próximas"
+                    }
+                    return@launch
+                }
 
-            siguienteReserva?.let { reserva ->
-                val texto = "Siguiente reserva: ${reserva.piso} \n${reserva.nombreSala} el ${reserva.fechaHora}"
-                textView.text = texto
+                val siguienteReserva = reservasFuturas.minByOrNull {
+                    formato.parse(it.fechaHora)?.time ?: Long.MAX_VALUE
+                }
 
-                val fechaReserva = formato.parse(reserva.fechaHora)
-                fechaReserva?.let { fecha ->
-                    val tiempoRestante = fecha.time - System.currentTimeMillis()
+                siguienteReserva?.let { reserva ->
+                    val texto = "Siguiente reserva: ${reserva.piso} \n${reserva.nombreSala} el ${reserva.fechaHora}"
 
-                    val prefs = getSharedPreferences("ajustes_usuario", MODE_PRIVATE)
-                    val notificacionesActivadas = prefs.getBoolean("notificaciones_activadas", true)
-                    val minutosAntes = prefs.getInt("minutos_antes", 10)
+                    withContext(Dispatchers.Main) {
+                        textView.text = texto
+                    }
 
-                    if (notificacionesActivadas) {
-                        val tiempoAntes = TimeUnit.MINUTES.toMillis(minutosAntes.toLong())
-                        val delay = tiempoRestante - tiempoAntes
+                    val fechaReserva = formato.parse(reserva.fechaHora)
+                    fechaReserva?.let { fecha ->
+                        val tiempoRestante = fecha.time - System.currentTimeMillis()
 
-                        if (delay > 0) {
-                            val inputData = Data.Builder()
-                                .putString("hora_reserva", reserva.fechaHora)
-                                .putString("nombre_sala", reserva.nombreSala)
-                                .build()
+                        val prefs = getSharedPreferences("ajustes_usuario", MODE_PRIVATE)
+                        val notificacionesActivadas = prefs.getBoolean("notificaciones_activadas", true)
+                        val minutosAntes = prefs.getInt("minutos_antes", 10)
 
-                            val workRequest = OneTimeWorkRequestBuilder<ReservaWorker>()
-                                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                                .setInputData(inputData)
-                                .build()
+                        if (notificacionesActivadas) {
+                            val tiempoAntes = TimeUnit.MINUTES.toMillis(minutosAntes.toLong())
+                            val delay = tiempoRestante - tiempoAntes
 
-                            val workName = "recordatorio_reserva_${reserva.nombreSala}_${reserva.fechaHora}"
+                            if (delay > 0) {
+                                val inputData = Data.Builder()
+                                    .putString("hora_reserva", reserva.fechaHora)
+                                    .putString("nombre_sala", reserva.nombreSala)
+                                    .build()
 
-                            WorkManager.getInstance(this@activity_menu_empleado).enqueueUniqueWork(
-                                workName,
-                                ExistingWorkPolicy.REPLACE,
-                                workRequest
-                            )
+                                val workRequest = OneTimeWorkRequestBuilder<ReservaWorker>()
+                                    .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                                    .setInputData(inputData)
+                                    .build()
+
+                                val workName = "recordatorio_reserva_${reserva.nombreSala}_${reserva.fechaHora}"
+
+                                WorkManager.getInstance(this@activity_menu_empleado)
+                                    .enqueueUniqueWork(
+                                        workName,
+                                        ExistingWorkPolicy.REPLACE,
+                                        workRequest
+                                    )
+                            }
                         }
                     }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    textView.text = "Error al cargar reservas"
                 }
             }
         }

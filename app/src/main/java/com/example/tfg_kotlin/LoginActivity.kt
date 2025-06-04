@@ -6,11 +6,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
-import com.example.tfg_kotlin.BBDD_Global.Database.GlobalDB
-import com.example.tfg_kotlin.BBDD_Maestra.Database.MasterDB
-import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import androidx.core.content.edit
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var etCorreo: EditText
@@ -18,15 +16,22 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var btnRegistro: Button
 
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        auth = FirebaseAuth.getInstance()
 
-        etContrasena = findViewById(R.id.etContrasena)
         etCorreo = findViewById(R.id.etCorreo)
+        etContrasena = findViewById(R.id.etContrasena)
         btnLogin = findViewById(R.id.btnLogin)
         btnRegistro = findViewById(R.id.btnRegistro)
 
+
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         btnLogin.setOnClickListener {
             iniciarSesion()
@@ -34,12 +39,11 @@ class LoginActivity : AppCompatActivity() {
         btnRegistro.setOnClickListener {
             val registro = Intent(this, RegistroEmpleado::class.java)
             startActivity(registro)
-
         }
     }
 
     private fun iniciarSesion() {
-        val correo = etCorreo.text.toString()
+        val correo = etCorreo.text.toString().trim()
         val contrasena = etContrasena.text.toString()
 
         if (correo.isEmpty() || contrasena.isEmpty()) {
@@ -52,52 +56,45 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        val dominio = correo.substringAfter("@")
-        val dbMaestra = Room.databaseBuilder(
-            applicationContext,
-            MasterDB::class.java,
-            "master_database"
-        ).build()
+        auth.signInWithEmailAndPassword(correo, contrasena)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    if (user != null) {
+                        // Obtener datos adicionales del usuario (ejemplo: rol) de Firestore
+                        db.collection("usuarios").document(user.uid).get()
+                            .addOnSuccessListener { document ->
+                                if (document != null && document.exists()) {
+                                    val esJefe = document.getBoolean("esJefe") ?: false
+                                    val nombre = document.getString("nombre") ?: ""
+                                    val apellidos = document.getString("apellidos") ?: ""
+                                    val cif = document.getString("cif") ?: ""
 
-        lifecycleScope.launch {
-            val empresa = dbMaestra.empresaDao().buscarPorDominio("@$dominio")
+                                    val intent = if (esJefe) {
+                                        Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
+                                        Intent(this, Activity_menu_creador::class.java)
+                                    } else {
+                                        Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
+                                        Intent(this, activity_menu_empleado::class.java)
+                                    }
 
-            if (empresa == null) {
-                runOnUiThread {
-                    Toast.makeText(this@LoginActivity, "Dominio no registrado", Toast.LENGTH_SHORT).show()
-                }
-                return@launch
-            }
-
-            val nombreEmpresa = empresa.nombre.lowercase().replace(" ", "_")
-            val dbNombre = "db_$nombreEmpresa.db"
-
-            val dbEmpresa = Room.databaseBuilder(
-                applicationContext,
-                GlobalDB::class.java,
-                dbNombre
-            ).build()
-
-            val empleado = dbEmpresa.usuarioDao().obtenerPorCorreo(correo)
-
-            runOnUiThread {
-                if (empleado != null && empleado.contrasena == contrasena) {
-                    val intent = if (empleado.esJefe) {
-                        Toast.makeText(this@LoginActivity, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
-                        Intent(this@LoginActivity, Activity_menu_creador::class.java)
-                    } else {
-                        Toast.makeText(this@LoginActivity, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
-                        Intent(this@LoginActivity, activity_menu_empleado::class.java)
+                                    intent.putExtra("idUsuario", user.uid)
+                                    intent.putExtra("nombreUsuario", "$nombre $apellidos")
+                                    intent.putExtra("cifUsuario", cif)
+                                    startActivity(intent)
+                                    finish()
+                                }
+                                else {
+                                    Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(this, "Error al obtener datos del usuario", Toast.LENGTH_SHORT).show()
+                            }
                     }
-                    intent.putExtra("idUsuario", empleado.id)
-                    val nombreCompleto = "${empleado.nombre} ${empleado.apellidos}"
-                    intent.putExtra("nombreUsuario", nombreCompleto)
-                    startActivity(intent)
                 } else {
-                    Toast.makeText(this@LoginActivity, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Credenciales incorrectas o error de red", Toast.LENGTH_SHORT).show()
                 }
             }
-        }
     }
-
 }
