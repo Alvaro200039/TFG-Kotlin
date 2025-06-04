@@ -67,7 +67,7 @@ class RegistroEmpresa : AppCompatActivity() {
                                     "nombre" to nombre,
                                     "dominio" to dominio
                                 )
-                                empresasRef.document(cif).set(empresaMap)
+                                empresasRef.document(nombre).set(empresaMap)
                                     .addOnSuccessListener {
                                         Toast.makeText(this, "Empresa registrada", Toast.LENGTH_SHORT).show()
                                         editCif.text.clear()

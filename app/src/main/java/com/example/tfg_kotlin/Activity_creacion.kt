@@ -776,6 +776,12 @@ class Activity_creacion : AppCompatActivity() {
         ) {
             val db = FirebaseFirestore.getInstance()
             val auth = FirebaseAuth.getInstance()
+            val nombeEmpresa = firestore.collection("empresas")
+                .document(empresaCif)
+                .collection("pisos")
+                .get()
+                .await()
+
             val empresaCif = auth.currentUser?.uid ?: "" // O usa el cif real del usuario autenticado
 
             val salasGuardadas = mutableListOf<Map<String, Any>>()
@@ -815,13 +821,13 @@ class Activity_creacion : AppCompatActivity() {
             val encodedImage = imagen?.let { Base64.encodeToString(it, Base64.DEFAULT) }
 
             val pisoRef = db.collection("empresas")
-                .document(empresaCif)
+                .document(nombeEmpresa.toString())
                 .collection("pisos")
                 .document(pisoNombre)
 
             val pisoData = mapOf(
                 "nombre" to pisoNombre,
-                "empresaCif" to empresaCif,
+                "nombreEmpresa" to nombeEmpresa,
                 "imagenBase64" to encodedImage,
                 "salas" to salasGuardadas
             )
