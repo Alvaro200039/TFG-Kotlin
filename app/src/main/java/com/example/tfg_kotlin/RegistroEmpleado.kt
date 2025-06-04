@@ -98,11 +98,11 @@ class RegistroEmpleado : AppCompatActivity() {
                                     "esJefe" to esJefe,
                                     "nombre" to nombre,
                                     "apellidos" to apellidos,
-                                    "uid" to uid,
+                                    "uid" to uid
                                 )
 
                                 // Guardamos datos extra en Firestore, colección "usuarios"
-                                empresaDoc.reference.collection("usuarios").document(uid)
+                                empresaDoc.reference.collection("usuarios").document(correo)
                                     .set(nuevoUsuario)
                                     .addOnSuccessListener {
                                         if (esJefe) {
