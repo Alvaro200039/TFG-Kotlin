@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.core.content.edit
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var etCorreo: EditText
@@ -23,15 +22,12 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         etCorreo = findViewById(R.id.etCorreo)
         etContrasena = findViewById(R.id.etContrasena)
         btnLogin = findViewById(R.id.btnLogin)
         btnRegistro = findViewById(R.id.btnRegistro)
-
-
-        auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
 
         btnLogin.setOnClickListener {
             iniciarSesion()
@@ -61,40 +57,67 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null) {
-                        // Obtener datos adicionales del usuario (ejemplo: rol) de Firestore
-                        db.collection("usuarios").document(user.uid).get()
-                            .addOnSuccessListener { document ->
-                                if (document != null && document.exists()) {
-                                    val esJefe = document.getBoolean("esJefe") ?: false
-                                    val nombre = document.getString("nombre") ?: ""
-                                    val apellidos = document.getString("apellidos") ?: ""
-                                    val cif = document.getString("cif") ?: ""
-
-                                    val intent = if (esJefe) {
-                                        Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
-                                        Intent(this, Activity_menu_creador::class.java)
-                                    } else {
-                                        Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
-                                        Intent(this, activity_menu_empleado::class.java)
-                                    }
-
-                                    intent.putExtra("idUsuario", user.uid)
-                                    intent.putExtra("nombreUsuario", "$nombre $apellidos")
-                                    intent.putExtra("cifUsuario", cif)
-                                    startActivity(intent)
-                                    finish()
-                                }
-                                else {
-                                    Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                            .addOnFailureListener {
-                                Toast.makeText(this, "Error al obtener datos del usuario", Toast.LENGTH_SHORT).show()
-                            }
+                        // Buscar usuario dentro de las empresas
+                        buscarUsuarioEnEmpresas(user.uid)
                     }
                 } else {
                     Toast.makeText(this, "Credenciales incorrectas o error de red", Toast.LENGTH_SHORT).show()
                 }
+            }
+    }
+
+    private fun buscarUsuarioEnEmpresas(uid: String) {
+        db.collection("empresas")
+            .get()
+            .addOnSuccessListener { empresasSnapshot ->
+                if (empresasSnapshot.isEmpty) {
+                    Toast.makeText(this, "No hay empresas registradas", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                buscarUsuarioRecursivo(empresasSnapshot.documents, uid, 0)
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al obtener empresas", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun buscarUsuarioRecursivo(empresas: List<com.google.firebase.firestore.DocumentSnapshot>, uid: String, index: Int) {
+        if (index >= empresas.size) {
+            Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val empresaDoc = empresas[index]
+        empresaDoc.reference.collection("usuarios").document(uid)
+            .get()
+            .addOnSuccessListener { usuarioDoc ->
+                if (usuarioDoc != null && usuarioDoc.exists()) {
+                    val esJefe = usuarioDoc.getBoolean("esJefe") ?: false
+                    val nombre = usuarioDoc.getString("nombre") ?: ""
+                    val apellidos = usuarioDoc.getString("apellidos") ?: ""
+                    val cif = usuarioDoc.getString("cif") ?: empresaDoc.getString("cif") ?: ""
+
+                    val intent = if (esJefe) {
+                        Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
+                        Intent(this, Activity_menu_creador::class.java)
+                    } else {
+                        Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
+                        Intent(this, activity_menu_empleado::class.java)
+                    }
+
+                    intent.putExtra("idUsuario", uid)
+                    intent.putExtra("nombreUsuario", "$nombre $apellidos")
+                    intent.putExtra("cifUsuario", cif)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    // No encontrado en esta empresa, buscar en la siguiente
+                    buscarUsuarioRecursivo(empresas, uid, index + 1)
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al buscar usuario", Toast.LENGTH_SHORT).show()
             }
     }
 }
