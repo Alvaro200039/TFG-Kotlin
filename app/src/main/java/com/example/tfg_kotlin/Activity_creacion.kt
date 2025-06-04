@@ -256,7 +256,6 @@ class Activity_creacion : AppCompatActivity() {
         val sala = Salas(
             nombre = "Sala",
             tamaño = "pequeña", // o "grande"
-            pisoId = -1, // provisional, sin piso asignado aún
             x = 100f,
             y = 100f,
             ancho = 300f,
