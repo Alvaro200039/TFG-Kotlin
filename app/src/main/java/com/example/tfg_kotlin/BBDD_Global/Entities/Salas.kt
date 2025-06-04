@@ -5,7 +5,6 @@ data class Salas(
     val id: String? = null,
     var nombre: String,
     var tamaño: String,
-    var pisoId: Int,
     var x: Float,
     var y: Float,
     var ancho: Float,
