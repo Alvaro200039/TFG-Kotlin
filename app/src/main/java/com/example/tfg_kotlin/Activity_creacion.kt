@@ -127,9 +127,8 @@ class Activity_creacion : AppCompatActivity() {
             val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
             val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
             val btnPisos = findViewById<LinearLayout>(R.id.btn_pisos)
-            val layoutFranjas = findViewById<LinearLayout>(R.id.layoutFranjas)
 
-            btnHoras.setOnClickListener {cargarFranjas(layoutFranjas)}
+            btnHoras.setOnClickListener {cargarFranjas()}
             btnPisos.setOnClickListener { mostrarDialogoEliminarPisos() }
             btnPlano.setOnClickListener { openGallery() }
             btnSala.setOnClickListener { addMovableButton() }
@@ -180,9 +179,80 @@ class Activity_creacion : AppCompatActivity() {
     }
 
 
-    private fun cargarFranjas(layoutFranjas: LinearLayout) {
+    private fun cargarFranjas() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
+        val layoutFranjas = dialogView.findViewById<LinearLayout>(R.id.layoutFranjas)
+        val botonAgregar = dialogView.findViewById<Button>(R.id.btnAddFranja)
+
+        val editHoraInicio = dialogView.findViewById<EditText>(R.id.etHoraInicio)
+        val editMinutoInicio = dialogView.findViewById<EditText>(R.id.etMinInicio)
+        val editHoraFin = dialogView.findViewById<EditText>(R.id.etHoraFin)
+        val editMinutoFin = dialogView.findViewById<EditText>(R.id.etMinFin)
+
+        editHoraInicio.autoAdvanceTo(editMinutoInicio)
+        editMinutoInicio.autoAdvanceTo(editHoraFin)
+        editHoraFin.autoAdvanceTo(editMinutoFin)
+        editMinutoFin.autoAdvanceTo(null)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Añadir franjas horarias")
+            .setView(dialogView)
+            .setNegativeButton("Cerrar", null)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+        dialog.show()
+
+        // Cargar franjas desde Firebase
+        lifecycleScope.launch {
+            try {
+                val snapshot = firestore.collection("empresas")
+                    .document(empresaCif)
+                    .collection("franjasHorarias")
+                    .get()
+                    .await()
+
+                val franjas = snapshot.documents.mapNotNull { it.id }
+                actualizarListaFranjas(franjas, layoutFranjas)
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_creacion, "Error cargando franjas: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // Botón Agregar
+        botonAgregar.setOnClickListener {
+            val hInicio = editHoraInicio.text.toString().padStart(2, '0')
+            val mInicio = editMinutoInicio.text.toString().padStart(2, '0')
+            val hFin = editHoraFin.text.toString().padStart(2, '0')
+            val mFin = editMinutoFin.text.toString().padStart(2, '0')
+
+            if (hInicio.isBlank() || mInicio.isBlank() || hFin.isBlank() || mFin.isBlank()) {
+                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val horaInicio = "$hInicio:$mInicio"
+            val horaFin = "$hFin:$mFin"
+
+            // Validación de formato y orden
+            if (horaInicio >= horaFin) {
+                Toast.makeText(this, "La hora de inicio debe ser menor que la de fin", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val franja = "$horaInicio-$horaFin"
+
             lifecycleScope.launch {
                 try {
+                    firestore.collection("empresas")
+                        .document(empresaCif)
+                        .collection("franjasHorarias")
+                        .document(franja)
+                        .set(mapOf("activo" to true)) // puedes guardar más datos si necesitas
+                        .await()
+
                     val snapshot = firestore.collection("empresas")
                         .document(empresaCif)
                         .collection("franjasHorarias")
@@ -191,15 +261,20 @@ class Activity_creacion : AppCompatActivity() {
 
                     val franjas = snapshot.documents.mapNotNull { it.id }
                     actualizarListaFranjas(franjas, layoutFranjas)
+                    editHoraInicio.text.clear()
+                    editMinutoInicio.text.clear()
+                    editHoraFin.text.clear()
+                    editMinutoFin.text.clear()
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "Error cargando franjas: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@Activity_creacion, "Error al guardar franja: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
+    }
 
-        private fun actualizarListaFranjas(franjas: List<String>, layoutFranjas: LinearLayout) {
+    private fun actualizarListaFranjas(franjas: List<String>, layoutFranjas: LinearLayout) {
             layoutFranjas.removeAllViews()
             for (hora in franjas.sorted()) {
                 val franjaView = LinearLayout(layoutFranjas.context).apply {
@@ -226,7 +301,9 @@ class Activity_creacion : AppCompatActivity() {
                                         .delete()
                                         .await()
 
-                                    cargarFranjas(layoutFranjas) // Aquí ya funciona
+                                    val nuevasFranjas = franjas.toMutableList().apply { remove(hora) }
+                                    actualizarListaFranjas(nuevasFranjas, layoutFranjas)
+
                                 } catch (e: Exception) {
                                     withContext(Dispatchers.Main) {
                                         Toast.makeText(this@Activity_creacion, "Error eliminando franja: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -241,9 +318,17 @@ class Activity_creacion : AppCompatActivity() {
                 }
                 layoutFranjas.addView(franjaView)
             }
+
         }
 
-        private fun openGallery() {
+
+
+
+
+
+
+
+    private fun openGallery() {
         getImage.launch("image/*")
     }
 
@@ -259,7 +344,8 @@ class Activity_creacion : AppCompatActivity() {
             y = 100f,
             ancho = 300f,
             alto = 200f,
-            extras = emptyList()
+            extras = emptyList(),
+            id = null
         )
 
         val button = Button(this).apply {
@@ -290,7 +376,7 @@ class Activity_creacion : AppCompatActivity() {
         salasEnMemoria.add(sala)
     }
 
-        private fun showChangeTitleDialog() {
+    private fun showChangeTitleDialog() {
             val piso = pisoActual
 
             val editText = EditText(this).apply {
