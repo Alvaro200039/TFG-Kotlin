@@ -93,11 +93,12 @@ class RegistroEmpleado : AppCompatActivity() {
 
                                 val nuevoUsuario = hashMapOf(
                                     "email" to correo,
-                                    "nombre" to nombre,
-                                    "apellidos" to apellidos,
+                                    "contrasena" to contrasena,
                                     "cif" to cifFinal,
                                     "esJefe" to esJefe,
-                                    "uid" to uid
+                                    "nombre" to nombre,
+                                    "apellidos" to apellidos,
+                                    "uid" to uid,
                                 )
 
                                 // Guardamos datos extra en Firestore, colección "usuarios"
