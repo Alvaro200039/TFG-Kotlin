@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -21,6 +22,7 @@ import java.util.Locale
 import android.content.pm.PackageManager
 import android.view.LayoutInflater
 import android.view.Menu
+import android.widget.Button
 import android.widget.NumberPicker
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -29,6 +31,7 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
 import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 import java.util.concurrent.TimeUnit
@@ -42,6 +45,7 @@ class Activity_menu_creador : AppCompatActivity() {
 
     private lateinit var firestore: FirebaseFirestore
     private var idUsuario: String = ""
+    private var nombreUsuario: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,8 +68,7 @@ class Activity_menu_creador : AppCompatActivity() {
             return
         }
 
-        idUsuario = currentUser.uid  // asignamos directamente el UID string
-
+        idUsuario = currentUser.uid  // UID string
         val cifUsuario = intent.getStringExtra("cifUsuario") ?: ""
 
         if (cifUsuario.isEmpty()) {
@@ -74,6 +77,7 @@ class Activity_menu_creador : AppCompatActivity() {
             return
         }
 
+        // Carga el usuario para mostrar el nombre
         firestore.collection("empresas")
             .document(cifUsuario)
             .collection("usuarios")
@@ -83,6 +87,7 @@ class Activity_menu_creador : AppCompatActivity() {
                 if (documentSnapshot.exists()) {
                     val usuario = documentSnapshot.toObject<Usuario>()
                     if (usuario != null) {
+                        nombreUsuario = usuario.nombre
                         Toast.makeText(this, "Hola ${usuario.nombre}", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
@@ -94,6 +99,67 @@ class Activity_menu_creador : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+
+        // Botón: Crear o editar salas
+        val btnEditarSalas = findViewById<Button>(R.id.btnEditarSalas)
+        btnEditarSalas.setOnClickListener {
+            val intent = Intent(this, Activity_creacion::class.java)
+            intent.putExtra("cifUsuario", cifUsuario)  // Pasamos el CIF para que Activity_creacion lo use
+            startActivity(intent)
+        }
+
+        // Botón: Hacer nueva reserva
+        val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
+        btnNuevaReserva.setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    // Obtener pisos desde Firestore
+                    val pisosSnapshot = firestore.collection("pisos")
+                        .whereEqualTo("empresaCif", cifUsuario)
+                        .get()
+                        .await()
+
+                    val pisos = pisosSnapshot.documents.mapNotNull { it.toObject(Piso::class.java)?.apply { id = it.id } }
+
+                    if (pisos.isNotEmpty()) {
+                        val pisoSeleccionado = pisos.last() // o cualquiera que prefieras
+                        val nombrePiso = pisoSeleccionado.nombre
+
+                        val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
+                        intent.putExtra("nombre_piso", nombrePiso)
+                        intent.putExtra("idUsuario", idUsuario)
+                        intent.putExtra("nombreUsuario", nombreUsuario)
+                        startActivity(intent)
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@Activity_menu_creador,
+                                "No se ha creado ningún piso. Crea uno primero.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_menu_creador, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        // Botón: Ver mis reservas
+        val btnVerReservas = findViewById<Button>(R.id.btnVerReservas)
+        btnVerReservas.setOnClickListener {
+            mostrarDialogoReservas()
+        }
+
+        // Botón: Cerrar sesión
+        val btnLogout = findViewById<Button>(R.id.btnLogout)
+        btnLogout?.setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+        }
     }
 
     override fun onResume() {
