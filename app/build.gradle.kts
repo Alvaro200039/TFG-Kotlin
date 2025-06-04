@@ -1,7 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)  // Aplica plugin ksp aquí (no en dependencies)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)  // Aplica plugin ksp aquí (no en dependencies)
 }
 
 android {
@@ -39,22 +41,26 @@ android {
 dependencies {
     implementation(libs.glide)
     implementation(libs.gson)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.ai)
     annotationProcessor(libs.compiler)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-
+    implementation(libs.firebase.auth.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.ksp)
 
     implementation (libs.androidx.work.runtime.ktx)
-
-
 }
