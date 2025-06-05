@@ -68,8 +68,7 @@ class RegistroEmpresa : AppCompatActivity() {
                                     "nombre" to nombre,
                                     "dominio" to dominio
                                 )
-                                val prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE)
-                                prefs.edit { putString("nombreEmpresa", nombre) }
+
                                 empresasRef.document(nombre).set(empresaMap)
                                     .addOnSuccessListener {
                                         Toast.makeText(this, "Empresa registrada", Toast.LENGTH_SHORT).show()

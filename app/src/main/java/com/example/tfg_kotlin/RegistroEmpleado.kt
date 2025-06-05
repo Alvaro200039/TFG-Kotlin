@@ -88,12 +88,10 @@ class RegistroEmpleado : AppCompatActivity() {
                     auth.createUserWithEmailAndPassword(correo, contrasena)
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
-                                //val esJefe = empresaCif.equals(cif, ignoreCase = true)
                                 val uid = auth.currentUser?.uid ?: ""
 
                                 val nuevoUsuario = hashMapOf(
                                     "email" to correo,
-                                    "contrasena" to contrasena,
                                     "cif" to cifFinal,
                                     "esJefe" to esJefe,
                                     "nombre" to nombre,
