@@ -67,74 +67,102 @@ class Activity_creacion : AppCompatActivity() {
         private lateinit var firestore: FirebaseFirestore
         private lateinit var auth: FirebaseAuth
         private var imagen: ByteArray? = null
+        private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
 
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            setContentView(R.layout.activity_creacion)
 
-            enableEdgeToEdge()
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.creacion)) { v, insets ->
-                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-                insets
-            }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_creacion)
 
-            // Inicializar Firebase
-            firestore = FirebaseFirestore.getInstance()
-            auth = FirebaseAuth.getInstance()
-
-            // Obtener CIF desde el Intent
-            empresaCif = intent.getStringExtra("cifUsuario") ?: ""
-            if (empresaCif.isEmpty()) {
-                Toast.makeText(this, "Error: CIF no recibido", Toast.LENGTH_SHORT).show()
-                finish()
-                return
-            }
-
-            // Toolbar
-            val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
-            setSupportActionBar(toolbar)
-            supportActionBar?.setDisplayShowTitleEnabled(false)
-            supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-            val titleView = findViewById<TextView>(R.id.toolbar_title)
-            titleView.text = "Piso nº" // provisional
-            titleView.setOnClickListener {
-                showChangeTitleDialog()
-            }
-
-            // Obtener último piso desde Firestore
-            firestore.collection("empresas")
-                .document(empresaCif)
-                .collection("pisos")
-                .orderBy("nombre", Query.Direction.ASCENDING) // o por fecha de creación si tienes ese campo
-                .get()
-                .addOnSuccessListener { querySnapshot ->
-                    val pisos = querySnapshot.toObjects(Piso::class.java)
-                    if (pisos.isNotEmpty()) {
-                        pisoActual = pisos.last()
-                        titleView.text = pisoActual?.nombre ?: "Sin nombre"
-                    } else {
-                        Toast.makeText(this, "No hay pisos creados", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Error cargando pisos", Toast.LENGTH_SHORT).show()
-                }
-
-            // Botones
-            val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
-            val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
-            val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
-            val btnPisos = findViewById<LinearLayout>(R.id.btn_pisos)
-
-            btnHoras.setOnClickListener {cargarFranjas()}
-            btnPisos.setOnClickListener { mostrarDialogoEliminarPisos() }
-            btnPlano.setOnClickListener { openGallery() }
-            btnSala.setOnClickListener { addMovableButton() }
-
-            container = findViewById(R.id.container)
+        enableEdgeToEdge()
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.creacion)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
         }
+
+        // Inicializar Firebase
+        firestore = FirebaseFirestore.getInstance()
+        auth = FirebaseAuth.getInstance()
+
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        // Primero obtenemos el CIF del usuario actual desde Firestore
+        firestore.collection("usuarios")
+            .whereEqualTo("email", currentUser.email)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    val usuarioDoc = querySnapshot.documents[0]
+                    empresaCif = usuarioDoc.getString("cif") ?: ""
+                    if (empresaCif.isEmpty()) {
+                        Toast.makeText(this, "CIF no encontrado para el usuario", Toast.LENGTH_SHORT).show()
+                        finish()
+                        return@addOnSuccessListener
+                    }
+                    // Ahora que tenemos el CIF, seguimos con la inicialización:
+                    inicializarUIConCIF(empresaCif)
+                } else {
+                    Toast.makeText(this, "No se encontró el usuario en Firestore", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al obtener datos: ${it.message}", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+    }
+
+    private fun inicializarUIConCIF(empresaCif: String) {
+        // Toolbar
+        val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val titleView = findViewById<TextView>(R.id.toolbar_title)
+        titleView.text = "Piso nº" // provisional
+        titleView.setOnClickListener {
+            showChangeTitleDialog()
+        }
+
+        // Obtener último piso desde Firestore usando empresaCif
+        firestore.collection("empresas")
+            .document(empresaCif)
+            .collection("pisos")
+            .orderBy("nombre", Query.Direction.ASCENDING)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val pisos = querySnapshot.toObjects(Piso::class.java)
+                if (pisos.isNotEmpty()) {
+                    pisoActual = pisos.last()
+                    titleView.text = pisoActual?.nombre ?: "Sin nombre"
+                } else {
+                    Toast.makeText(this, "No hay pisos creados", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error cargando pisos", Toast.LENGTH_SHORT).show()
+            }
+
+        // Botones
+        val btnHoras = findViewById<LinearLayout>(R.id.btn_horas)
+        val btnPlano = findViewById<LinearLayout>(R.id.btn_plano)
+        val btnSala = findViewById<LinearLayout>(R.id.btn_sala)
+        val btnPisos = findViewById<LinearLayout>(R.id.btn_pisos)
+
+        btnHoras.setOnClickListener { cargarFranjas() }
+        btnPisos.setOnClickListener { mostrarDialogoEliminarPisos() }
+        btnPlano.setOnClickListener { openGallery() }
+        btnSala.setOnClickListener { addMovableButton() }
+
+        container = findViewById(R.id.container)
+    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_drag, menu)
@@ -177,7 +205,6 @@ class Activity_creacion : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
 
     private fun cargarFranjas() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
@@ -321,18 +348,9 @@ class Activity_creacion : AppCompatActivity() {
 
         }
 
-
-
-
-
-
-
-
     private fun openGallery() {
         getImage.launch("image/*")
     }
-
-    private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
 
     private fun addMovableButton() {
         // No compruebo pisoActual porque aún no existe piso guardado
@@ -429,7 +447,6 @@ class Activity_creacion : AppCompatActivity() {
 
             dialog.show()
         }
-
 
     private fun showToast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
@@ -567,7 +584,7 @@ class Activity_creacion : AppCompatActivity() {
         dialog.show()
     }
 
-        private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
+    private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
             val empresaCif = pisoActual?.empresaCif ?: return
             val pisoId = pisoActual?.id ?: return
 
@@ -605,9 +622,7 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
 
-
-
-        private fun showEditButtonDialog(button: Button) {
+    private fun showEditButtonDialog(button: Button) {
             val sala = button.tag as? Salas
             if (sala == null) {
                 Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
@@ -769,82 +784,80 @@ class Activity_creacion : AppCompatActivity() {
     }
 
 
-        suspend fun guardarDistribucion(
-            pisoNombre: String,
-            imagen: ByteArray?,
-            container: ViewGroup
-        ) {
-            val db = FirebaseFirestore.getInstance()
-            val auth = FirebaseAuth.getInstance()
-            val nombeEmpresa = firestore.collection("empresas")
-                .document(empresaCif)
-                .collection("pisos")
-                .get()
-                .await()
+    suspend fun guardarDistribucion(
+        pisoNombre: String,
+        imagen: ByteArray?,
+        container: ViewGroup
+    ) {
+        val db = FirebaseFirestore.getInstance()
 
-            val empresaCif = auth.currentUser?.uid ?: "" // O usa el cif real del usuario autenticado
-
-            val salasGuardadas = mutableListOf<Map<String, Any>>()
-
-            for (i in 0 until container.childCount) {
-                val view = container.getChildAt(i)
-                if (view is Button) {
-                    val sala = view.tag as? Salas ?: continue
-                    val salaMap = mapOf(
-                        "id" to sala.id,
-                        "nombre" to sala.nombre,
-                        "tamaño" to sala.tamaño,
-                        "x" to view.x,
-                        "y" to view.y,
-                        "ancho" to view.width.toFloat(),
-                        "alto" to view.height.toFloat(),
-                        "extras" to sala.extras
-                    )
-                    salasGuardadas.add(salaMap as Map<String, Any>)
-                }
+        // Aquí usas empresaCif directamente
+        if (empresaCif.isEmpty()) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(container.context, "Error: CIF de empresa no definido", Toast.LENGTH_SHORT).show()
             }
+            return
+        }
 
-            if (salasGuardadas.isEmpty()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(container.context, "Debes colocar al menos una sala antes de guardar", Toast.LENGTH_SHORT).show()
-                }
-                return
-            }
+        val salasGuardadas = mutableListOf<Map<String, Any>>()
 
-            if (pisoNombre.isBlank()) {
-                withContext(Dispatchers.Main) {
-                    Snackbar.make(container, "Por favor, asigna un nombre al piso", Snackbar.LENGTH_LONG).show()
-                }
-                return
-            }
-
-            val encodedImage = imagen?.let { Base64.encodeToString(it, Base64.DEFAULT) }
-
-            val pisoRef = db.collection("empresas")
-                .document(nombeEmpresa.toString())
-                .collection("pisos")
-                .document(pisoNombre)
-
-            val pisoData = mapOf(
-                "nombre" to pisoNombre,
-                "nombreEmpresa" to nombeEmpresa,
-                "imagenBase64" to encodedImage,
-                "salas" to salasGuardadas
-            )
-
-            try {
-                pisoRef.set(pisoData).await()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(container.context, "Distribución guardada en Firestore", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(container.context, "Error al guardar: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+        for (i in 0 until container.childCount) {
+            val view = container.getChildAt(i)
+            if (view is Button) {
+                val sala = view.tag as? Salas ?: continue
+                val salaMap = mapOf(
+                    "id" to (sala.id ?: ""),
+                    "nombre" to sala.nombre,
+                    "tamaño" to sala.tamaño,
+                    "x" to view.x,
+                    "y" to view.y,
+                    "ancho" to view.width.toFloat(),
+                    "alto" to view.height.toFloat(),
+                    "extras" to sala.extras
+                )
+                salasGuardadas.add(salaMap)
             }
         }
 
+        if (salasGuardadas.isEmpty()) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(container.context, "Debes colocar al menos una sala antes de guardar", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
 
+        if (pisoNombre.isBlank()) {
+            withContext(Dispatchers.Main) {
+                Snackbar.make(container, "Por favor, asigna un nombre al piso", Snackbar.LENGTH_LONG).show()
+            }
+            return
+        }
+
+        val encodedImage = imagen?.let { Base64.encodeToString(it, Base64.DEFAULT) }
+
+        val pisoRef = db.collection("empresas")
+            .document(empresaCif)          // usa el CIF directamente
+            .collection("pisos")
+            .document(pisoNombre)
+
+        val pisoData = mapOf(
+            "nombre" to pisoNombre,
+            "nombreEmpresa" to empresaCif,    // guardas CIF, no el objeto de consulta
+            "imagenBase64" to encodedImage,
+            "salas" to salasGuardadas
+        )
+
+        try {
+            pisoRef.set(pisoData).await()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(container.context, "Distribución guardada en Firestore", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(container.context, "Error al guardar: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
 
     private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
@@ -906,7 +919,6 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
     }
-
 
     private fun mostrarDialogoEliminarPisos() {
         val db = Firebase.firestore
