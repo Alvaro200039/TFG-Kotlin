@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin.activities
 
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
@@ -71,25 +72,54 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
             }
 
             val db = Firebase.firestore
+            val dominioCorreo = "@" + correo.substringAfter("@")
 
-            db.collection("usuarios")
-                .whereEqualTo("email", correo)
+            // Buscar el CIF según el dominio
+            db.collection("empresas")
+                .whereEqualTo("dominio", dominioCorreo)
                 .get()
-                .addOnSuccessListener { documents ->
-                    if (!documents.isEmpty) {
-                        codigoGenerado = (100000..999999).random().toString()
-                        Toast.makeText(this, "Tu código es: $codigoGenerado", Toast.LENGTH_LONG).show()
-                        layoutPaso1.visibility = LinearLayout.GONE
-                        layoutPaso2.visibility = LinearLayout.VISIBLE
+                .addOnSuccessListener { empresaDocs  ->
+                    if (!empresaDocs.isEmpty) {
+                        val cif = empresaDocs.documents[0].getString("cif") ?: ""
+
+                        // Buscar el usuario dentro de la subcolección de esa empresa
+                        db.collection("empresas")
+                            .document(cif)
+                            .collection("Usuarios")
+                            .whereEqualTo("email", correo)
+                            .get()
+                            .addOnSuccessListener { userDocs ->
+                                Log.d("RecuperarContrasena", "Documentos encontrados: ${userDocs.size()}")
+                                if (!userDocs.isEmpty) {
+                                    for (doc in userDocs) {
+                                        Log.d("RecuperarContrasena", "Doc ID: ${doc.id} - Data: ${doc.data}")
+                                    }
+                                    codigoGenerado = (100000..999999).random().toString()
+                                    Toast.makeText(this, "Tu código es: $codigoGenerado", Toast.LENGTH_LONG).show()
+                                    layoutPaso1.visibility = LinearLayout.GONE
+                                    layoutPaso2.visibility = LinearLayout.VISIBLE
+                                } else {
+                                    Log.d("RecuperarContrasena", "No hay documentos con ese correo")
+                                    etCorreo.error = "No hay ninguna cuenta con este correo"
+                                }
+                            }
+                            .addOnFailureListener {
+                                Log.e("RecuperarContrasena", "Error al buscar usuario", it)
+                                etCorreo.error = "Error al buscar el usuario"
+                            }
+
                     } else {
-                        etCorreo.error = "No hay ninguna cuenta con este correo"
+                        Log.d("RecuperarContrasena", "No se encontró empresa con dominio: $dominioCorreo")
+                        etCorreo.error = "No hay ninguna empresa asociada a ese dominio"
                     }
                 }
                 .addOnFailureListener {
-                    etCorreo.error = "Error al buscar el usuario"
+                    Log.e("RecuperarContrasena", "Error al buscar empresa", it)
+                    etCorreo.error = "Error al buscar empresa"
                 }
         }
-    }
+
+}
 
     private fun configurarPaso2() {
         btnCambiar.setOnClickListener {
