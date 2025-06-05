@@ -57,13 +57,14 @@ import java.io.ByteArrayOutputStream
 import android.util.Base64
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import kotlin.math.log
 
 
 class Activity_creacion : AppCompatActivity() {
 
         private lateinit var container: ConstraintLayout
         private var pisoActual: Piso? = null
-        private var Cif: String = ""
+        private var cif: String = ""
         private lateinit var firestore: FirebaseFirestore
         private lateinit var auth: FirebaseAuth
         private var imagen: ByteArray? = null
@@ -91,18 +92,18 @@ class Activity_creacion : AppCompatActivity() {
         }
 
         // Obtener el CIF directamente del Intent
-        Cif = intent.getStringExtra("cifUsuario") ?: ""
-        if (Cif.isEmpty()) {
+        cif = intent.getStringExtra("cifUsuario") ?: ""
+        if (cif.isEmpty()) {
             Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
         // Ahora que tenemos el CIF, seguimos con la inicialización:
-        inicializarUIConCIF(Cif)
+        inicializarUIConCIF(cif)
     }
 
-    private fun inicializarUIConCIF(empresaCif: String) {
+    private fun inicializarUIConCIF(cif: String) {
         // Toolbar
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
@@ -117,7 +118,7 @@ class Activity_creacion : AppCompatActivity() {
 
         // Obtener último piso desde Firestore usando empresaCif
         firestore.collection("empresas")
-            .document(empresaCif)
+            .document(cif)
             .collection("pisos")
             .orderBy("nombre", Query.Direction.ASCENDING)
             .get()
@@ -190,7 +191,6 @@ class Activity_creacion : AppCompatActivity() {
         }
     }
 
-
     private fun cargarFranjas() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
         val layoutFranjas = dialogView.findViewById<LinearLayout>(R.id.layoutFranjas)
@@ -214,133 +214,157 @@ class Activity_creacion : AppCompatActivity() {
 
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.show()
-        val nombreEmpresa = getSharedPreferences("MiAppPrefs", MODE_PRIVATE).getString("nombreEmpresa", null)
 
-        // Cargar franjas desde Firebase
+        val cifNormalizado = cif.trim().uppercase()
+        if (cifNormalizado.isBlank()) {
+            Toast.makeText(this, "Error: CIF de empresa no definido", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+            return
+        }
+
         lifecycleScope.launch {
             try {
-                val snapshot = firestore.collection(nombreEmpresa.toString())
-                    .document(nombreEmpresa.toString())
+                val firestore = FirebaseFirestore.getInstance()
+
+                // Buscar empresa por CIF
+                val empresaSnapshot = firestore.collection("empresas")
+                    .whereEqualTo("cif", cifNormalizado)
+                    .get()
+                    .await()
+
+                if (empresaSnapshot.isEmpty) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_creacion, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    }
+                    return@launch
+                }
+
+                val nombreEmpresa = empresaSnapshot.documents[0].getString("nombre") ?: run {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_creacion, "Nombre de empresa no encontrado", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    }
+                    return@launch
+                }
+
+                // Cargar franjas existentes para la empresa encontrada
+                val snapshotFranjas = firestore.collection("empresas")
+                    .document(nombreEmpresa)
                     .collection("franjasHorarias")
                     .get()
                     .await()
 
+                val franjas = snapshotFranjas.documents.mapNotNull { it.id }
+                actualizarListaFranjas(franjas, layoutFranjas, nombreEmpresa)
 
-                val franjas = snapshot.documents.mapNotNull { it.id }
-                actualizarListaFranjas(franjas, layoutFranjas)
+                // Botón Agregar
+                botonAgregar.setOnClickListener {
+                    val hInicio = editHoraInicio.text.toString().padStart(2, '0')
+                    val mInicio = editMinutoInicio.text.toString().padStart(2, '0')
+                    val hFin = editHoraFin.text.toString().padStart(2, '0')
+                    val mFin = editMinutoFin.text.toString().padStart(2, '0')
+
+                    if (hInicio.isBlank() || mInicio.isBlank() || hFin.isBlank() || mFin.isBlank()) {
+                        Toast.makeText(this@Activity_creacion, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    val horaInicio = "$hInicio:$mInicio"
+                    val horaFin = "$hFin:$mFin"
+
+                    if (horaInicio >= horaFin) {
+                        Toast.makeText(this@Activity_creacion, "La hora de inicio debe ser menor que la de fin", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    val franja = "$horaInicio-$horaFin"
+
+                    lifecycleScope.launch {
+                        try {
+                            firestore.collection("empresas")
+                                .document(nombreEmpresa)
+                                .collection("franjasHorarias")
+                                .document(franja)
+                                .set(mapOf("activo" to true))
+                                .await()
+
+                            // Recargar lista después de guardar
+                            val nuevoSnapshot = firestore.collection("empresas")
+                                .document(nombreEmpresa)
+                                .collection("franjasHorarias")
+                                .get()
+                                .await()
+
+                            val nuevasFranjas = nuevoSnapshot.documents.mapNotNull { it.id }
+                            actualizarListaFranjas(nuevasFranjas, layoutFranjas, nombreEmpresa)
+
+                            // Limpiar campos
+                            editHoraInicio.text.clear()
+                            editMinutoInicio.text.clear()
+                            editHoraFin.text.clear()
+                            editMinutoFin.text.clear()
+
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@Activity_creacion, "Error al guardar franja: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@Activity_creacion, "Error cargando franjas: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        // Botón Agregar
-        botonAgregar.setOnClickListener {
-            val hInicio = editHoraInicio.text.toString().padStart(2, '0')
-            val mInicio = editMinutoInicio.text.toString().padStart(2, '0')
-            val hFin = editHoraFin.text.toString().padStart(2, '0')
-            val mFin = editMinutoFin.text.toString().padStart(2, '0')
-
-            if (hInicio.isBlank() || mInicio.isBlank() || hFin.isBlank() || mFin.isBlank()) {
-                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val horaInicio = "$hInicio:$mInicio"
-            val horaFin = "$hFin:$mFin"
-
-            // Validación de formato y orden
-            if (horaInicio >= horaFin) {
-                Toast.makeText(this, "La hora de inicio debe ser menor que la de fin", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val franja = "$horaInicio-$horaFin"
-
-            lifecycleScope.launch {
-                try {
-                    firestore.collection("empresas")
-                        .document(Cif)
-                        .collection("franjasHorarias")
-                        .document(franja)
-                        .set(mapOf("activo" to true)) // puedes guardar más datos si necesitas
-                        .await()
-
-                    val snapshot = firestore.collection("empresas")
-                        .document(Cif)
-                        .collection("franjasHorarias")
-                        .get()
-                        .await()
-
-                    val franjas = snapshot.documents.mapNotNull { it.id }
-                    actualizarListaFranjas(franjas, layoutFranjas)
-                    editHoraInicio.text.clear()
-                    editMinutoInicio.text.clear()
-                    editHoraFin.text.clear()
-                    editMinutoFin.text.clear()
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "Error al guardar franja: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
+                    dialog.dismiss()
                 }
             }
         }
     }
 
-    private fun actualizarListaFranjas(franjas: List<String>, layoutFranjas: LinearLayout) {
-            layoutFranjas.removeAllViews()
-            for (hora in franjas.sorted()) {
-                val franjaView = LinearLayout(layoutFranjas.context).apply {
-                    orientation = LinearLayout.HORIZONTAL
+    private fun actualizarListaFranjas(franjas: List<String>, layoutFranjas: LinearLayout, nombreEmpresa: String) {
+        layoutFranjas.removeAllViews()
+        for (hora in franjas.sorted()) {
+            val franjaView = LinearLayout(layoutFranjas.context).apply {
+                orientation = LinearLayout.HORIZONTAL
 
-                    val textView = TextView(layoutFranjas.context).apply {
-                        text = hora
-                        textSize = 16f
-                        setPadding(8, 4, 8, 4)
-                    }
+                val textView = TextView(layoutFranjas.context).apply {
+                    text = hora
+                    textSize = 16f
+                    setPadding(8, 4, 8, 4)
+                }
 
-                    val botonEliminar = Button(layoutFranjas.context).apply {
-                        text = "❌"
-                        textSize = 14f
-                        setBackgroundColor(Color.TRANSPARENT)
-                        setPadding(16, 0, 16, 0)
-                        setOnClickListener {
-                            lifecycleScope.launch {
-                                try {
-                                    firestore.collection("empresas")
-                                        .document(Cif)
-                                        .collection("franjasHorarias")
-                                        .document(hora)
-                                        .delete()
-                                        .await()
+                val botonEliminar = Button(layoutFranjas.context).apply {
+                    text = "❌"
+                    textSize = 14f
+                    setBackgroundColor(Color.TRANSPARENT)
+                    setPadding(16, 0, 16, 0)
+                    setOnClickListener {
+                        lifecycleScope.launch {
+                            try {
+                                firestore.collection("empresas")
+                                    .document(nombreEmpresa)
+                                    .collection("franjasHorarias")
+                                    .document(hora)
+                                    .delete()
+                                    .await()
 
-                                    val nuevasFranjas = franjas.toMutableList().apply { remove(hora) }
-                                    actualizarListaFranjas(nuevasFranjas, layoutFranjas)
-
-                                } catch (e: Exception) {
-                                    withContext(Dispatchers.Main) {
-                                        Toast.makeText(this@Activity_creacion, "Error eliminando franja: ${e.message}", Toast.LENGTH_SHORT).show()
-                                    }
+                                val nuevasFranjas = franjas.toMutableList().apply { remove(hora) }
+                                actualizarListaFranjas(nuevasFranjas, layoutFranjas, nombreEmpresa)
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(this@Activity_creacion, "Error eliminando franja: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
                     }
-
-                    addView(textView)
-                    addView(botonEliminar)
                 }
-                layoutFranjas.addView(franjaView)
+
+                addView(textView)
+                addView(botonEliminar)
             }
-
+            layoutFranjas.addView(franjaView)
         }
-
-
-
-
-
-
-
+    }
 
     private fun openGallery() {
         getImage.launch("image/*")
@@ -420,7 +444,7 @@ class Activity_creacion : AppCompatActivity() {
                             Piso(
                                 id = null,                      // Todavía no tiene ID Firestore
                                 nombre = nuevoTitulo,
-                                empresaCif = Cif,  // Usa la variable que tengas con el CIF actual
+                                empresaCif = cif,  // Usa la variable que tengas con el CIF actual
                                 imagenUrl = null                // O alguna URL por defecto si tienes
                             )
                         } else {
@@ -581,7 +605,7 @@ class Activity_creacion : AppCompatActivity() {
         dialog.show()
     }
 
-        private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
+    private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
             val empresaCif = pisoActual?.empresaCif ?: return
             val pisoId = pisoActual?.id ?: return
 
@@ -619,9 +643,7 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
 
-
-
-        private fun showEditButtonDialog(button: Button) {
+    private fun showEditButtonDialog(button: Button) {
             val sala = button.tag as? Salas
             if (sala == null) {
                 Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
@@ -764,7 +786,6 @@ class Activity_creacion : AppCompatActivity() {
             dialog.show()
         }
 
-
     private fun actualizarBotonConSala(button: Button, sala: Salas) {
         val builder = StringBuilder()
         builder.append(sala.nombre)
@@ -788,34 +809,32 @@ class Activity_creacion : AppCompatActivity() {
         imagen: ByteArray?,
         container: ViewGroup
     ) {
-        val db = FirebaseFirestore.getInstance()
 
-        // Aquí usas empresaCif directamente
-        if (Cif.isEmpty()) {
+        Log.d("DEBUG", "Valor cif = '${cif}' (length=${cif.length})")
+
+
+        if (cif.isBlank()) {
             withContext(Dispatchers.Main) {
                 Toast.makeText(container.context, "Error: CIF de empresa no definido", Toast.LENGTH_SHORT).show()
             }
             return
         }
 
-        val salasGuardadas = mutableListOf<Map<String, Any>>()
+        val db = FirebaseFirestore.getInstance()
 
-        for (i in 0 until container.childCount) {
+        val salasGuardadas = (0 until container.childCount).mapNotNull { i ->
             val view = container.getChildAt(i)
-            if (view is Button) {
-                val sala = view.tag as? Salas ?: continue
-                val salaMap = mapOf(
-                    "id" to (sala.id ?: ""),
-                    "nombre" to sala.nombre,
-                    "tamaño" to sala.tamaño,
-                    "x" to view.x,
-                    "y" to view.y,
-                    "ancho" to view.width.toFloat(),
-                    "alto" to view.height.toFloat(),
-                    "extras" to sala.extras
-                )
-                salasGuardadas.add(salaMap)
-            }
+            val sala = (view as? Button)?.tag as? Salas ?: return@mapNotNull null
+            mapOf(
+                "id" to (sala.id ?: ""),
+                "nombre" to sala.nombre,
+                "tamaño" to sala.tamaño,
+                "x" to view.x,
+                "y" to view.y,
+                "ancho" to view.width.toFloat(),
+                "alto" to view.height.toFloat(),
+                "extras" to sala.extras
+            )
         }
 
         if (salasGuardadas.isEmpty()) {
@@ -834,32 +853,39 @@ class Activity_creacion : AppCompatActivity() {
 
         val encodedImage = imagen?.let { Base64.encodeToString(it, Base64.DEFAULT) }
 
+        val cifNormalizado = cif.trim().uppercase()
+        val empresaSnapshot = db.collection("empresas")
+            .whereEqualTo("cif", cifNormalizado)
+            .get()
+            .await()
+
+        if (empresaSnapshot.isEmpty) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(container.context, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
+        val nombreEmpresa = empresaSnapshot.documents[0].getString("nombre") ?: return
+
         val pisoRef = db.collection("empresas")
-            .document(Cif)          // usa el CIF directamente
+            .document(nombreEmpresa)
             .collection("pisos")
             .document(pisoNombre)
 
         val pisoData = mapOf(
             "nombre" to pisoNombre,
-            "nombreEmpresa" to Cif,    // guardas CIF, no el objeto de consulta
+            "nombreEmpresa" to nombreEmpresa,
             "imagenBase64" to encodedImage,
             "salas" to salasGuardadas
         )
 
-        try {
-            pisoRef.set(pisoData).await()
-            withContext(Dispatchers.Main) {
-                Toast.makeText(container.context, "Distribución guardada en Firestore", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(container.context, "Error al guardar: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        pisoRef.set(pisoData).await()
+
+        withContext(Dispatchers.Main) {
+            Toast.makeText(container.context, "Distribución guardada en Firestore", Toast.LENGTH_SHORT).show()
         }
     }
-
-
-
 
     private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
         val db = Firebase.firestore
@@ -924,7 +950,7 @@ class Activity_creacion : AppCompatActivity() {
 
     private fun mostrarDialogoEliminarPisos() {
         val db = Firebase.firestore
-        val empresaDoc = db.collection("empresas").document(Cif)
+        val empresaDoc = db.collection("empresas").document(cif)
         val pisosCollection = empresaDoc.collection("pisos")
 
         lifecycleScope.launch {
@@ -958,7 +984,7 @@ class Activity_creacion : AppCompatActivity() {
                                 .setTitle("¿Eliminar '$pisoSeleccionado'?")
                                 .setMessage("Esta acción eliminará el piso y todas sus salas.")
                                 .setPositiveButton("Eliminar") { dialogConfirm, _ ->
-                                    eliminarPisoPorNombre(pisoSeleccionado, Cif)
+                                    eliminarPisoPorNombre(pisoSeleccionado, cif)
                                     dialogConfirm.dismiss()
                                     dialogInterface.dismiss()
                                 }

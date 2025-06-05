@@ -2,6 +2,7 @@ package com.example.tfg_kotlin
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings.Global.putString
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -98,6 +99,7 @@ class LoginActivity : AppCompatActivity() {
                     val nombre = usuarioDoc.getString("nombre") ?: ""
                     val apellidos = usuarioDoc.getString("apellidos") ?: ""
                     val cif = usuarioDoc.getString("cif") ?: empresaDoc.getString("cif") ?: ""
+                    val nombreEmpresa = empresaDoc.id
 
                     val intent = if (esJefe) {
                         Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
@@ -111,6 +113,7 @@ class LoginActivity : AppCompatActivity() {
                     prefs.edit { putString("correo", correo) }
                     prefs.edit{ putString("nombreUsuario", "$nombre $apellidos") }
                     prefs.edit { putString("cifUsuario", cif) }
+                    prefs.edit { putString("nombreEmpresa", nombreEmpresa) }
 
                     startActivity(intent)
                     finish()

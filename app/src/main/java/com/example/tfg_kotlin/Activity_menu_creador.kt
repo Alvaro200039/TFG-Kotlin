@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.content.pm.PackageManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.widget.Button
@@ -70,8 +71,18 @@ class Activity_menu_creador : AppCompatActivity() {
 
         idUsuario = currentUser.uid
         val cifUsuario = getSharedPreferences("MiAppPrefs", MODE_PRIVATE).getString("cifUsuario", null)
+        Toast.makeText(this, "cif recibido $cifUsuario", Toast.LENGTH_SHORT).show()
+
         if (cifUsuario.isNullOrEmpty()) {
             Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        val correoUsuario = getSharedPreferences("MiAppPrefs", MODE_PRIVATE).getString("correo", null)
+        Toast.makeText(this, "correo recibido $correoUsuario", Toast.LENGTH_SHORT).show()
+        if (correoUsuario.isNullOrEmpty()) {
+            Toast.makeText(this, "Correo no recibido", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -80,7 +91,7 @@ class Activity_menu_creador : AppCompatActivity() {
         firestore.collection("empresas")
             .document(cifUsuario.toString())
             .collection("usuarios")
-            .document(currentUser.uid)
+            .document(correoUsuario.toString())
             .get()
             .addOnSuccessListener { documentSnapshot ->
                 if (documentSnapshot.exists()) {
@@ -110,23 +121,80 @@ class Activity_menu_creador : AppCompatActivity() {
         btnNuevaReserva.setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    // Obtener pisos desde Firestore
-                    val pisosSnapshot = firestore.collection("pisos")
-                        .whereEqualTo("empresaCif", cifUsuario)
+                    val cifNormalizado = cifUsuario.trim().uppercase()
+
+                    // 1. Buscar la empresa por CIF
+                    val empresaSnapshot = firestore.collection("empresas")
+                        .whereEqualTo("cif", cifNormalizado)
                         .get()
                         .await()
 
-                    val pisos = pisosSnapshot.documents.mapNotNull { it.toObject(Piso::class.java)?.apply { id = it.id } }
+                    if (empresaSnapshot.isEmpty) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@Activity_menu_creador,
+                                "Empresa no encontrada para el CIF: $cifNormalizado",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        return@launch
+                    }
+
+                    // Obtener el id del documento empresa (ejemplo: "empresa1")
+                    val idEmpresa = empresaSnapshot.documents[0].id
+                    Log.d("DEBUG", "Empresa encontrada: $idEmpresa")
+
+                    // 2. Obtener los pisos dentro de la empresa
+                    val pisosSnapshot = firestore.collection("empresas")
+                        .document(idEmpresa)
+                        .collection("pisos")
+                        .get()
+                        .await()
+
+                    val pisos = pisosSnapshot.documents.mapNotNull { doc ->
+                        doc.toObject(Piso::class.java)?.apply { id = doc.id }
+                    }
+
+                    Log.d("DEBUG", "Pisos encontrados: ${pisos.size}")
+
+                    lifecycleScope.launch {
+                        try {
+                            val doc = firestore.collection("usuarios").document(idUsuario).get().await()
+                            val nombre = doc.getString("nombre") ?: ""
+
+                            if (nombre.isNotEmpty()) {
+                                val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
+                                intent.putExtra("idUsuario", idUsuario)
+                                intent.putExtra("nombreUsuario", nombre)
+                                // otros extras como "nombre_piso"
+                                startActivity(intent)
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(this@Activity_menu_creador, "No se encontró nombre de usuario", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@Activity_menu_creador, "Error al obtener usuario: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+
+
 
                     if (pisos.isNotEmpty()) {
-                        val pisoSeleccionado = pisos.last() // o cualquiera que prefieras
+                        // Seleccionar el último piso (puedes cambiar la lógica)
+                        val pisoSeleccionado = pisos.last()
                         val nombrePiso = pisoSeleccionado.nombre
 
-                        val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
-                        intent.putExtra("nombre_piso", nombrePiso)
-                        intent.putExtra("idUsuario", idUsuario)
-                        intent.putExtra("nombreUsuario", nombreUsuario)
-                        startActivity(intent)
+                        withContext(Dispatchers.Main) {
+                            Log.d("DEBUG", "idUsuario: $idUsuario, nombreUsuario: $nombreUsuario")
+
+                            val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
+                            intent.putExtra("nombre_piso", nombrePiso)
+                            intent.putExtra("nombreUsuario", nombreUsuario)
+                            startActivity(intent)
+                        }
                     } else {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(
@@ -136,13 +204,19 @@ class Activity_menu_creador : AppCompatActivity() {
                             ).show()
                         }
                     }
+
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_menu_creador, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@Activity_menu_creador,
+                            "Error al cargar pisos: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
         }
+
 
         // Botón: Ver mis reservas
         val btnVerReservas = findViewById<Button>(R.id.btnVerReservas)
