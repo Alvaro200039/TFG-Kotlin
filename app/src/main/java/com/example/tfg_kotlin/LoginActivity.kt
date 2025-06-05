@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.core.content.edit
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var etCorreo: EditText
@@ -56,9 +57,9 @@ class LoginActivity : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    if (user != null) {
+                    if (user != null && user.email != null) {
                         // Buscar usuario dentro de las empresas
-                        buscarUsuarioEnEmpresas(user.uid)
+                        buscarUsuarioEnEmpresas(correo)
                     }
                 } else {
                     Toast.makeText(this, "Credenciales incorrectas o error de red", Toast.LENGTH_SHORT).show()
@@ -66,7 +67,7 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    private fun buscarUsuarioEnEmpresas(uid: String) {
+    private fun buscarUsuarioEnEmpresas(correo: String) {
         db.collection("empresas")
             .get()
             .addOnSuccessListener { empresasSnapshot ->
@@ -75,21 +76,21 @@ class LoginActivity : AppCompatActivity() {
                     return@addOnSuccessListener
                 }
 
-                buscarUsuarioRecursivo(empresasSnapshot.documents, uid, 0)
+                buscarUsuarioRecursivo(empresasSnapshot.documents, correo, 0)
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Error al obtener empresas", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun buscarUsuarioRecursivo(empresas: List<com.google.firebase.firestore.DocumentSnapshot>, uid: String, index: Int) {
+    private fun buscarUsuarioRecursivo(empresas: List<com.google.firebase.firestore.DocumentSnapshot>, correo: String, index: Int) {
         if (index >= empresas.size) {
             Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
             return
         }
 
         val empresaDoc = empresas[index]
-        empresaDoc.reference.collection("usuarios").document(uid)
+        empresaDoc.reference.collection("usuarios").document(correo)
             .get()
             .addOnSuccessListener { usuarioDoc ->
                 if (usuarioDoc != null && usuarioDoc.exists()) {
@@ -106,14 +107,17 @@ class LoginActivity : AppCompatActivity() {
                         Intent(this, activity_menu_empleado::class.java)
                     }
 
-                    intent.putExtra("idUsuario", uid)
-                    intent.putExtra("nombreUsuario", "$nombre $apellidos")
-                    intent.putExtra("cifUsuario", cif)
+                    val prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE)
+                    prefs.edit { putString("correo", correo) }
+                    prefs.edit{ putString("nombreUsuario", "$nombre $apellidos") }
+                    prefs.edit { putString("cifUsuario", cif) }
+
                     startActivity(intent)
                     finish()
+
                 } else {
                     // No encontrado en esta empresa, buscar en la siguiente
-                    buscarUsuarioRecursivo(empresas, uid, index + 1)
+                    buscarUsuarioRecursivo(empresas, correo, index + 1)
                 }
             }
             .addOnFailureListener {

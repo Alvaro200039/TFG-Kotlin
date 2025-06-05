@@ -68,10 +68,9 @@ class Activity_menu_creador : AppCompatActivity() {
             return
         }
 
-        idUsuario = currentUser.uid  // UID string
-        val cifUsuario = intent.getStringExtra("cifUsuario") ?: ""
-
-        if (cifUsuario.isEmpty()) {
+        idUsuario = currentUser.uid
+        val cifUsuario = getSharedPreferences("MiAppPrefs", MODE_PRIVATE).getString("cifUsuario", null)
+        if (cifUsuario.isNullOrEmpty()) {
             Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
             finish()
             return
@@ -79,7 +78,7 @@ class Activity_menu_creador : AppCompatActivity() {
 
         // Carga el usuario para mostrar el nombre
         firestore.collection("empresas")
-            .document(cifUsuario)
+            .document(cifUsuario.toString())
             .collection("usuarios")
             .document(currentUser.uid)
             .get()
@@ -92,8 +91,6 @@ class Activity_menu_creador : AppCompatActivity() {
                     } else {
                         Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    Toast.makeText(this, "Usuario no existe en esta empresa", Toast.LENGTH_SHORT).show()
                 }
             }
             .addOnFailureListener { e ->
@@ -104,6 +101,7 @@ class Activity_menu_creador : AppCompatActivity() {
         val btnEditarSalas = findViewById<Button>(R.id.btnEditarSalas)
         btnEditarSalas.setOnClickListener {
             val intent = Intent(this, Activity_creacion::class.java)
+            intent.putExtra("cifUsuario", cifUsuario)
             startActivity(intent)
         }
 

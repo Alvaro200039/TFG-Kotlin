@@ -63,12 +63,10 @@ class Activity_creacion : AppCompatActivity() {
 
         private lateinit var container: ConstraintLayout
         private var pisoActual: Piso? = null
-        private var empresaCif: String = ""
+        private var Cif: String = ""
         private lateinit var firestore: FirebaseFirestore
         private lateinit var auth: FirebaseAuth
         private var imagen: ByteArray? = null
-        private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,30 +90,16 @@ class Activity_creacion : AppCompatActivity() {
             return
         }
 
-        // Primero obtenemos el CIF del usuario actual desde Firestore
-        firestore.collection("usuarios")
-            .whereEqualTo("email", currentUser.email)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                if (!querySnapshot.isEmpty) {
-                    val usuarioDoc = querySnapshot.documents[0]
-                    empresaCif = usuarioDoc.getString("cif") ?: ""
-                    if (empresaCif.isEmpty()) {
-                        Toast.makeText(this, "CIF no encontrado para el usuario", Toast.LENGTH_SHORT).show()
-                        finish()
-                        return@addOnSuccessListener
-                    }
-                    // Ahora que tenemos el CIF, seguimos con la inicialización:
-                    inicializarUIConCIF(empresaCif)
-                } else {
-                    Toast.makeText(this, "No se encontró el usuario en Firestore", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error al obtener datos: ${it.message}", Toast.LENGTH_SHORT).show()
-                finish()
-            }
+        // Obtener el CIF directamente del Intent
+        Cif = intent.getStringExtra("cifUsuario") ?: ""
+        if (Cif.isEmpty()) {
+            Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        // Ahora que tenemos el CIF, seguimos con la inicialización:
+        inicializarUIConCIF(Cif)
     }
 
     private fun inicializarUIConCIF(empresaCif: String) {
@@ -206,6 +190,7 @@ class Activity_creacion : AppCompatActivity() {
         }
     }
 
+
     private fun cargarFranjas() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_franjas_horas, null)
         val layoutFranjas = dialogView.findViewById<LinearLayout>(R.id.layoutFranjas)
@@ -229,15 +214,17 @@ class Activity_creacion : AppCompatActivity() {
 
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.show()
+        val nombreEmpresa = getSharedPreferences("MiAppPrefs", MODE_PRIVATE).getString("nombreEmpresa", null)
 
         // Cargar franjas desde Firebase
         lifecycleScope.launch {
             try {
-                val snapshot = firestore.collection("empresas")
-                    .document(empresaCif)
+                val snapshot = firestore.collection(nombreEmpresa.toString())
+                    .document(nombreEmpresa.toString())
                     .collection("franjasHorarias")
                     .get()
                     .await()
+
 
                 val franjas = snapshot.documents.mapNotNull { it.id }
                 actualizarListaFranjas(franjas, layoutFranjas)
@@ -274,14 +261,14 @@ class Activity_creacion : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     firestore.collection("empresas")
-                        .document(empresaCif)
+                        .document(Cif)
                         .collection("franjasHorarias")
                         .document(franja)
                         .set(mapOf("activo" to true)) // puedes guardar más datos si necesitas
                         .await()
 
                     val snapshot = firestore.collection("empresas")
-                        .document(empresaCif)
+                        .document(Cif)
                         .collection("franjasHorarias")
                         .get()
                         .await()
@@ -322,7 +309,7 @@ class Activity_creacion : AppCompatActivity() {
                             lifecycleScope.launch {
                                 try {
                                     firestore.collection("empresas")
-                                        .document(empresaCif)
+                                        .document(Cif)
                                         .collection("franjasHorarias")
                                         .document(hora)
                                         .delete()
@@ -348,9 +335,18 @@ class Activity_creacion : AppCompatActivity() {
 
         }
 
+
+
+
+
+
+
+
     private fun openGallery() {
         getImage.launch("image/*")
     }
+
+    private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
 
     private fun addMovableButton() {
         // No compruebo pisoActual porque aún no existe piso guardado
@@ -424,7 +420,7 @@ class Activity_creacion : AppCompatActivity() {
                             Piso(
                                 id = null,                      // Todavía no tiene ID Firestore
                                 nombre = nuevoTitulo,
-                                empresaCif = empresaCif,  // Usa la variable que tengas con el CIF actual
+                                empresaCif = Cif,  // Usa la variable que tengas con el CIF actual
                                 imagenUrl = null                // O alguna URL por defecto si tienes
                             )
                         } else {
@@ -447,6 +443,7 @@ class Activity_creacion : AppCompatActivity() {
 
             dialog.show()
         }
+
 
     private fun showToast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
@@ -584,7 +581,7 @@ class Activity_creacion : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
+        private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
             val empresaCif = pisoActual?.empresaCif ?: return
             val pisoId = pisoActual?.id ?: return
 
@@ -622,7 +619,9 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
 
-    private fun showEditButtonDialog(button: Button) {
+
+
+        private fun showEditButtonDialog(button: Button) {
             val sala = button.tag as? Salas
             if (sala == null) {
                 Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
@@ -792,7 +791,7 @@ class Activity_creacion : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
 
         // Aquí usas empresaCif directamente
-        if (empresaCif.isEmpty()) {
+        if (Cif.isEmpty()) {
             withContext(Dispatchers.Main) {
                 Toast.makeText(container.context, "Error: CIF de empresa no definido", Toast.LENGTH_SHORT).show()
             }
@@ -836,13 +835,13 @@ class Activity_creacion : AppCompatActivity() {
         val encodedImage = imagen?.let { Base64.encodeToString(it, Base64.DEFAULT) }
 
         val pisoRef = db.collection("empresas")
-            .document(empresaCif)          // usa el CIF directamente
+            .document(Cif)          // usa el CIF directamente
             .collection("pisos")
             .document(pisoNombre)
 
         val pisoData = mapOf(
             "nombre" to pisoNombre,
-            "nombreEmpresa" to empresaCif,    // guardas CIF, no el objeto de consulta
+            "nombreEmpresa" to Cif,    // guardas CIF, no el objeto de consulta
             "imagenBase64" to encodedImage,
             "salas" to salasGuardadas
         )
@@ -858,6 +857,8 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
     }
+
+
 
 
     private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
@@ -920,9 +921,10 @@ class Activity_creacion : AppCompatActivity() {
         }
     }
 
+
     private fun mostrarDialogoEliminarPisos() {
         val db = Firebase.firestore
-        val empresaDoc = db.collection("empresas").document(empresaCif)
+        val empresaDoc = db.collection("empresas").document(Cif)
         val pisosCollection = empresaDoc.collection("pisos")
 
         lifecycleScope.launch {
@@ -956,7 +958,7 @@ class Activity_creacion : AppCompatActivity() {
                                 .setTitle("¿Eliminar '$pisoSeleccionado'?")
                                 .setMessage("Esta acción eliminará el piso y todas sus salas.")
                                 .setPositiveButton("Eliminar") { dialogConfirm, _ ->
-                                    eliminarPisoPorNombre(pisoSeleccionado, empresaCif)
+                                    eliminarPisoPorNombre(pisoSeleccionado, Cif)
                                     dialogConfirm.dismiss()
                                     dialogInterface.dismiss()
                                 }
