@@ -63,18 +63,16 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
     private fun configurarPaso1() {
         btnEnviarCodigo.setOnClickListener {
-            correo = etCorreo.text.toString().trim()
+            correo = etCorreo.text.toString().trim().lowercase()
 
             if (correo.isEmpty() || !correo.contains("@")) {
                 etCorreo.error = "Introduce un correo válido"
                 return@setOnClickListener
             }
 
-            val dominio = correo.substringAfter("@")
-            val dbName = dominio.replace(".", "_")
             val db = Firebase.firestore
 
-            db.collection("usuarios_$dbName")
+            db.collection("usuarios")
                 .whereEqualTo("email", correo)
                 .get()
                 .addOnSuccessListener { documents ->
@@ -114,17 +112,15 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val dominio = correo.substringAfter("@")
-            val dbName = dominio.replace(".", "_")
             val db = Firebase.firestore
 
-            db.collection("usuarios_$dbName")
+            db.collection("usuarios")
                 .whereEqualTo("email", correo)
                 .get()
                 .addOnSuccessListener { result ->
                     if (!result.isEmpty) {
                         val docId = result.documents[0].id
-                        db.collection("usuarios_$dbName")
+                        db.collection("usuarios")
                             .document(docId)
                             .update("contrasena", nuevaPass)
                             .addOnSuccessListener {

@@ -79,24 +79,43 @@ class LoginActivity : AppCompatActivity() {
                     if (task.isSuccessful) {
                         val uid = FirebaseAuth.getInstance().currentUser?.uid
                         if (uid != null) {
-                            FirebaseFirestore.getInstance()
-                                .collection("usuarios")
-                                .document(uid)
+                            // Busca el usuario en la subcolección Usuarios
+                            val dominio = "@" + correo.substringAfter("@")
+                            val db = FirebaseFirestore.getInstance()
+
+                            db.collection("empresas")
+                                .whereEqualTo("dominio", dominio)
                                 .get()
-                                .addOnSuccessListener { document ->
-                                    if (document.exists()) {
-                                        val esJefe = document.getBoolean("esJefe") ?: false
-                                        val destino = if (esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
-                                        Toast.makeText(this, "Bienvenido", Toast.LENGTH_SHORT).show()
-                                        startActivity(Intent(this, destino))
-                                        finish()
+                                .addOnSuccessListener { documentos ->
+                                    if (!documentos.isEmpty) {
+                                        val empresaDoc = documentos.documents.first()
+
+                                        empresaDoc.reference
+                                            .collection("Usuarios")
+                                            .document(uid)
+                                            .get()
+                                            .addOnSuccessListener { document ->
+                                                if (document.exists()) {
+                                                    val esJefe = document.getBoolean("esJefe") ?: false
+                                                    val destino = if (esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
+                                                    Toast.makeText(this, "Bienvenido", Toast.LENGTH_SHORT).show()
+                                                    startActivity(Intent(this, destino))
+                                                    finish()
+                                                } else {
+                                                    mostrarError("No se encontraron datos del usuario.")
+                                                }
+                                            }
+                                            .addOnFailureListener {
+                                                mostrarError("Error al obtener datos del usuario.")
+                                            }
                                     } else {
-                                        mostrarError("No se encontraron datos del usuario.")
+                                        mostrarError("No se encontró una empresa con el dominio especificado.")
                                     }
                                 }
                                 .addOnFailureListener {
-                                    mostrarError("Error al obtener datos del usuario.")
+                                    mostrarError("Error al buscar la empresa.")
                                 }
+
                         } else {
                             mostrarError("No se pudo obtener el UID del usuario.")
                         }
@@ -106,6 +125,7 @@ class LoginActivity : AppCompatActivity() {
                 }
         }
     }
+
 
 
     private fun mostrarError(mensaje: String) {

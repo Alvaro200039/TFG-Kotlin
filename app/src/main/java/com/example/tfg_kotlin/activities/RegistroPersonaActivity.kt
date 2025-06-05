@@ -146,8 +146,8 @@ class RegistroPersonaActivity : AppCompatActivity() {
                             "esJefe" to esJefe
                         )
 
-                        // Paso 3: Guardar usuario en la colección "usuarios"
-                        db.collection("usuarios")
+                        // Paso 3: Guardar usuario dentro de la colección empresas
+                        empresaDoc.reference.collection("Usuarios")
                             .document(uid)
                             .set(usuarioMap)
                             .addOnSuccessListener {
