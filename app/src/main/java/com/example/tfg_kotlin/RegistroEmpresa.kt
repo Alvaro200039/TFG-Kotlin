@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -67,6 +68,8 @@ class RegistroEmpresa : AppCompatActivity() {
                                     "nombre" to nombre,
                                     "dominio" to dominio
                                 )
+                                val prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE)
+                                prefs.edit { putString("nombreEmpresa", nombre) }
                                 empresasRef.document(nombre).set(empresaMap)
                                     .addOnSuccessListener {
                                         Toast.makeText(this, "Empresa registrada", Toast.LENGTH_SHORT).show()
