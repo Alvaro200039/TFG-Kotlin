@@ -104,7 +104,6 @@ class Activity_menu_creador : AppCompatActivity() {
         val btnEditarSalas = findViewById<Button>(R.id.btnEditarSalas)
         btnEditarSalas.setOnClickListener {
             val intent = Intent(this, Activity_creacion::class.java)
-            intent.putExtra("cifUsuario", cifUsuario)  // Pasamos el CIF para que Activity_creacion lo use
             startActivity(intent)
         }
 

@@ -56,9 +56,9 @@ class LoginActivity : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    if (user != null && user.email != null) {
+                    if (user != null) {
                         // Buscar usuario dentro de las empresas
-                        buscarUsuarioEnEmpresas(correo)
+                        buscarUsuarioEnEmpresas(user.uid)
                     }
                 } else {
                     Toast.makeText(this, "Credenciales incorrectas o error de red", Toast.LENGTH_SHORT).show()
@@ -66,7 +66,7 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    private fun buscarUsuarioEnEmpresas(correo: String) {
+    private fun buscarUsuarioEnEmpresas(uid: String) {
         db.collection("empresas")
             .get()
             .addOnSuccessListener { empresasSnapshot ->
@@ -75,21 +75,21 @@ class LoginActivity : AppCompatActivity() {
                     return@addOnSuccessListener
                 }
 
-                buscarUsuarioRecursivo(empresasSnapshot.documents, correo, 0)
+                buscarUsuarioRecursivo(empresasSnapshot.documents, uid, 0)
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Error al obtener empresas", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun buscarUsuarioRecursivo(empresas: List<com.google.firebase.firestore.DocumentSnapshot>, correo: String, index: Int) {
+    private fun buscarUsuarioRecursivo(empresas: List<com.google.firebase.firestore.DocumentSnapshot>, uid: String, index: Int) {
         if (index >= empresas.size) {
             Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
             return
         }
 
         val empresaDoc = empresas[index]
-        empresaDoc.reference.collection("usuarios").document(correo)
+        empresaDoc.reference.collection("usuarios").document(uid)
             .get()
             .addOnSuccessListener { usuarioDoc ->
                 if (usuarioDoc != null && usuarioDoc.exists()) {
@@ -106,15 +106,14 @@ class LoginActivity : AppCompatActivity() {
                         Intent(this, activity_menu_empleado::class.java)
                     }
 
-                    intent.putExtra("correoUsuario", correo)
+                    intent.putExtra("idUsuario", uid)
                     intent.putExtra("nombreUsuario", "$nombre $apellidos")
                     intent.putExtra("cifUsuario", cif)
                     startActivity(intent)
                     finish()
-
                 } else {
                     // No encontrado en esta empresa, buscar en la siguiente
-                    buscarUsuarioRecursivo(empresas, correo, index + 1)
+                    buscarUsuarioRecursivo(empresas, uid, index + 1)
                 }
             }
             .addOnFailureListener {
