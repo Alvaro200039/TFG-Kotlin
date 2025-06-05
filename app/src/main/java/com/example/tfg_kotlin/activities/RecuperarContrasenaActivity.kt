@@ -10,6 +10,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.tfg_kotlin.R
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -95,7 +96,9 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                                         Log.d("RecuperarContrasena", "Doc ID: ${doc.id} - Data: ${doc.data}")
                                     }
                                     codigoGenerado = (100000..999999).random().toString()
-                                    Toast.makeText(this, "Tu código es: $codigoGenerado", Toast.LENGTH_LONG).show()
+                                    Snackbar.make(findViewById(android.R.id.content), "Tu código es: $codigoGenerado", Snackbar.LENGTH_INDEFINITE)
+                                        .setDuration(8000) // 8 segundos
+                                        .show()
                                     layoutPaso1.visibility = LinearLayout.GONE
                                     layoutPaso2.visibility = LinearLayout.VISIBLE
                                 } else {
