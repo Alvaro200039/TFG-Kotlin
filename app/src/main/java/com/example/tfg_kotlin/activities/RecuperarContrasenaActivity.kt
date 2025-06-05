@@ -8,16 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModelProvider
 import com.example.tfg_kotlin.R
-import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
-import com.example.tfg_kotlin.database.BBDDMaestra
-import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.database.GlobalDB
-import com.example.tfg_kotlin.repository.RecuperarContrasenaRepository
-import com.example.tfg_kotlin.viewmodel.RecuperarContrasenaViewModel
-import com.example.tfg_kotlin.viewmodel.RecuperarContrasenaViewModelFactory
-import kotlinx.coroutines.launch
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class RecuperarContrasenaActivity : AppCompatActivity() {
 
@@ -32,8 +25,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
     private var codigoGenerado: String = ""
     private var correo: String = ""
-    private lateinit var db: BBDDMaestra
-    private lateinit var viewModel: RecuperarContrasenaViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,13 +62,6 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
 
     private fun configurarPaso1() {
-        val dominio = correo.substringAfter("@")
-        val nombreBD = construirNombreBD(dominio)
-        val db = GlobalDB.getDatabase(applicationContext, nombreBD)
-        val repository = RecuperarContrasenaRepository(db.usuarioDao())
-        val factory = RecuperarContrasenaViewModelFactory(repository)
-        viewModel = ViewModelProvider(this, factory)[RecuperarContrasenaViewModel::class.java]
-
         btnEnviarCodigo.setOnClickListener {
             correo = etCorreo.text.toString().trim()
 
@@ -85,40 +70,42 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            viewModel.verificarCorreo(correo)
-        }
+            val dominio = correo.substringAfter("@")
+            val dbName = dominio.replace(".", "_")
+            val db = Firebase.firestore
 
-        viewModel.codigoGenerado.observe(this) { codigo ->
-            codigo?.let {
-                Toast.makeText(this, "Tu código es: $it", Toast.LENGTH_LONG).show()
-                layoutPaso1.visibility = LinearLayout.GONE
-                layoutPaso2.visibility = LinearLayout.VISIBLE
-            }
+            db.collection("usuarios_$dbName")
+                .whereEqualTo("email", correo)
+                .get()
+                .addOnSuccessListener { documents ->
+                    if (!documents.isEmpty) {
+                        codigoGenerado = (100000..999999).random().toString()
+                        Toast.makeText(this, "Tu código es: $codigoGenerado", Toast.LENGTH_LONG).show()
+                        layoutPaso1.visibility = LinearLayout.GONE
+                        layoutPaso2.visibility = LinearLayout.VISIBLE
+                    } else {
+                        etCorreo.error = "No hay ninguna cuenta con este correo"
+                    }
+                }
+                .addOnFailureListener {
+                    etCorreo.error = "Error al buscar el usuario"
+                }
         }
-
-        viewModel.error.observe(this) {
-            if (it != null) {
-                etCorreo.error = it
-                viewModel.limpiarEstado()
-            }
-        }
-        }
-
+    }
 
     private fun configurarPaso2() {
         btnCambiar.setOnClickListener {
             val codigoIngresado = etCodigo.text.toString().trim()
             val nuevaPass = etNuevaPass.text.toString().trim()
             val repetirPass = etRepetirPass.text.toString().trim()
-            val codigoEsperado = viewModel.codigoGenerado.value
 
-            if (codigoIngresado != codigoEsperado) {
+            if (codigoIngresado != codigoGenerado) {
                 etCodigo.error = "El código no es correcto"
                 return@setOnClickListener
             }
 
-            if (nuevaPass.length < 4) {
-                etNuevaPass.error = "La contraseña debe tener al menos 4 caracteres"
+            if (nuevaPass.length < 6) {
+                etNuevaPass.error = "La contraseña debe tener al menos 6 caracteres"
                 return@setOnClickListener
             }
 
@@ -126,14 +113,31 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                 etRepetirPass.error = "Las contraseñas no coinciden"
                 return@setOnClickListener
             }
-            viewModel.cambiarContrasena(correo, nuevaPass)
 
-            viewModel.cambioExitoso.observe(this) {
-                if (it) {
-                    Toast.makeText(this, "Contraseña actualizada correctamente", Toast.LENGTH_SHORT).show()
-                    finish()
+            val dominio = correo.substringAfter("@")
+            val dbName = dominio.replace(".", "_")
+            val db = Firebase.firestore
+
+            db.collection("usuarios_$dbName")
+                .whereEqualTo("email", correo)
+                .get()
+                .addOnSuccessListener { result ->
+                    if (!result.isEmpty) {
+                        val docId = result.documents[0].id
+                        db.collection("usuarios_$dbName")
+                            .document(docId)
+                            .update("contrasena", nuevaPass)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Contraseña actualizada correctamente", Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(this, "Error al actualizar la contraseña", Toast.LENGTH_SHORT).show()
+                            }
+                    } else {
+                        Toast.makeText(this, "No se encontró el usuario", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
         }
     }
 

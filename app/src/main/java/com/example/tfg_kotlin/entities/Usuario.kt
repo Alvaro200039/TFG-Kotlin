@@ -1,16 +1,14 @@
 package com.example.tfg_kotlin.entities
 
-import androidx.room.*
 
-@Entity(tableName = "usuarios")
 data class Usuario(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val email: String,
-    val nombre: String,
-    val apellidos: String,
-    val contrasena: String,
-    val cif: String,
-    val esJefe: Boolean
-)
-
+    var id: String= "",
+    var email: String = "",
+    var nombre: String = "",
+    var apellidos: String = "",
+    var contrasena: String = "",
+    var cif: String = "",
+    var esJefe: Boolean = false
+){
+    constructor() : this("","","","","", "", false)
+}

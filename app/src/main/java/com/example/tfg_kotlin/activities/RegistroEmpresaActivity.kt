@@ -1,24 +1,18 @@
 package com.example.tfg_kotlin.activities
 
-import android.content.Intent
+
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.ViewModelProvider
 import com.example.tfg_kotlin.R
 import com.example.tfg_kotlin.entities.Empresa
+import com.example.tfg_kotlin.utils.Validaciones.validarRegistroEmpresa
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.database.BBDDMaestra
-import com.example.tfg_kotlin.repository.MasterRepository
-import com.example.tfg_kotlin.viewmodel.RegistroEmpresaViewModel
-import com.example.tfg_kotlin.viewmodel.RegistroEmpresaViewModelFactory
-import kotlinx.coroutines.launch
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegistroEmpresaActivity : AppCompatActivity() {
 
@@ -29,6 +23,7 @@ class RegistroEmpresaActivity : AppCompatActivity() {
         private lateinit var tilCif: TextInputLayout
         private lateinit var etCif: TextInputEditText
         private lateinit var btnFinalizarRegistroEmpresa: Button
+        private val db = FirebaseFirestore.getInstance()
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
@@ -67,64 +62,50 @@ class RegistroEmpresaActivity : AppCompatActivity() {
                 dominio = "@$dominio"
             }
             val cif = etCif.text.toString().trim().uppercase()
-            val db = BBDDMaestra.getInstance(applicationContext)
-            val repository = MasterRepository(db.empresaDao())
-            val factory = RegistroEmpresaViewModelFactory(repository)
-            val viewModel = ViewModelProvider(this, factory)[RegistroEmpresaViewModel::class.java]
 
-
-            if (!validarCampos(nombre, dominio, cif)) return
-
+            if (!validarRegistroEmpresa(tilNombreEmpresa, etNombreEmpresa,
+                    tilDominioEmpresa, etDominioEmpresa,
+                    tilCif, etCif
+                )) return
             val empresa = Empresa(
-                cif = etCif.text.toString().trim().uppercase(),
-                nombre = etNombreEmpresa.text.toString().trim(),
-                dominio = etDominioEmpresa.text.toString().trim().lowercase()
+                cif = cif,
+                nombre = nombre,
+                dominio = dominio
             )
-            viewModel.registroExitoso.observe(this) { ok ->
-                if (ok) {
-                    Toast.makeText(this, "Empresa registrada correctamente", Toast.LENGTH_SHORT)
-                        .show()
-                    finish()
+            val empresasRef = db.collection("empresas")
+
+            empresasRef
+                .whereEqualTo("dominio", dominio)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (!querySnapshot.isEmpty) {
+                        tilDominioEmpresa.error = "Este dominio ya existe"
+                    } else {
+                        empresasRef.document(cif).set(empresa)
+                            .addOnSuccessListener {
+                                Toast.makeText(
+                                    this,
+                                    "Empresa registrada correctamente",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                finish()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(
+                                    this,
+                                    "Error al registrar la empresa",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                    }
                 }
-            }
-            viewModel.error.observe(this) { mensaje ->
-                if (mensaje != null) {
-                    tilCif.error = mensaje
-                    viewModel.limpiarEstado()
+                .addOnFailureListener {
+                    Toast.makeText(this, "Error al comprobar el dominio", Toast.LENGTH_SHORT).show()
                 }
-            }
-
-            viewModel.registrarEmpresa(empresa)
-
-            }
-
-
-        private fun validarCampos(nombre: String, dominio: String, cif: String): Boolean {
-            var esValido = true
-
-            if (nombre.isEmpty()) {
-                tilNombreEmpresa.error = "Este campo no puede estar vacío"
-                esValido = false
-            } else {
-                tilNombreEmpresa.error = null
-            }
-
-            if (dominio.isEmpty() || !dominio.contains(".")) {
-                tilDominioEmpresa.error = "Dominio no válido"
-                esValido = false
-            } else {
-                tilDominioEmpresa.error = null
-            }
-
-            if (cif.length != 9) {
-                tilCif.error = "CIF inválido"
-                esValido = false
-            } else {
-                tilCif.error = null
-            }
-
-            return esValido
         }
+
+
+
     // Flecha "Atrás"
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId) {

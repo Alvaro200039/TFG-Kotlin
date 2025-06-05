@@ -11,17 +11,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModelProvider
 import com.example.tfg_kotlin.R
-import com.example.tfg_kotlin.database.BBDDMaestra
+import com.example.tfg_kotlin.utils.Validaciones.validarLogin
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.database.GlobalDB
-import com.example.tfg_kotlin.repository.LoginRepository
-import com.example.tfg_kotlin.viewmodel.LoginViewModel
-import com.example.tfg_kotlin.viewmodel.LoginViewModelFactory
-import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
 
@@ -72,59 +67,45 @@ class LoginActivity : AppCompatActivity() {
         btnFinalizarLogin.setOnClickListener {
             val correo = etCorreo.text.toString().trim()
             val contrasena = etContrasena.text.toString().trim()
-            val dominioCorreo = "@" + correo.substringAfter("@").lowercase()
 
-            if (correo.isEmpty() || contrasena.isEmpty()) {
-                mostrarError("Rellena todos los campos")
+            if (!validarLogin(
+                    tilCorreo, etCorreo,
+                    tilContrasena, etContrasena))
                 return@setOnClickListener
-            }
 
-            lifecycleScope.launch {
 
-                val dbMaestra = BBDDMaestra.getInstance(applicationContext)
-                val empresaExiste = dbMaestra.empresaDao().getEmpresaPorDominio(dominioCorreo)
-
-                if (empresaExiste == null) {
-                    mostrarError("No existe ninguna empresa registrada con el dominio @$dominioCorreo")
-                    return@launch
-                }
-
-                // Base de datos específica de la empresa
-                val dominioSinArroba = dominioCorreo.substringAfter("@")
-                val dbEmpresa = GlobalDB.getDatabase(applicationContext, dominioSinArroba)
-                val loginRepository = LoginRepository(dbEmpresa.usuarioDao())
-                val viewModelFactory = LoginViewModelFactory(loginRepository)
-                val viewModel = ViewModelProvider(
-                    this@LoginActivity,
-                    viewModelFactory
-                )[LoginViewModel::class.java]
-
-                viewModel.usuario.observe(this@LoginActivity) { usuario ->
-                    usuario?.let {
-                        val destino =
-                            if (it.esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "Bienvenido ${if (it.esJefe) "jefe" else "empleado"}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        startActivity(Intent(this@LoginActivity, destino))
-                        finish()
+            FirebaseAuth.getInstance().signInWithEmailAndPassword(correo, contrasena)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val uid = FirebaseAuth.getInstance().currentUser?.uid
+                        if (uid != null) {
+                            FirebaseFirestore.getInstance()
+                                .collection("usuarios")
+                                .document(uid)
+                                .get()
+                                .addOnSuccessListener { document ->
+                                    if (document.exists()) {
+                                        val esJefe = document.getBoolean("esJefe") ?: false
+                                        val destino = if (esJefe) JefeActivity::class.java else EmpleadoActivity::class.java
+                                        Toast.makeText(this, "Bienvenido", Toast.LENGTH_SHORT).show()
+                                        startActivity(Intent(this, destino))
+                                        finish()
+                                    } else {
+                                        mostrarError("No se encontraron datos del usuario.")
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    mostrarError("Error al obtener datos del usuario.")
+                                }
+                        } else {
+                            mostrarError("No se pudo obtener el UID del usuario.")
+                        }
+                    } else {
+                        mostrarError("Correo o contraseña incorrectos.")
                     }
                 }
-
-                viewModel.error.observe(this@LoginActivity) { error ->
-                    error?.let {
-                        mostrarError(it)
-                        viewModel.limpiarEstado()
-                    }
-                }
-
-                viewModel.login(correo, contrasena)
-            }
         }
     }
-
 
 
     private fun mostrarError(mensaje: String) {

@@ -1,11 +1,10 @@
 package com.example.tfg_kotlin.entities
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "Empresa")
 data class Empresa(
-    @PrimaryKey val cif: String,
-    val nombre: String,
-    val dominio: String
+    var id: String = "",
+    var cif: String = "",
+    var dominio: String = "",
+    var nombre: String = ""
 )
+

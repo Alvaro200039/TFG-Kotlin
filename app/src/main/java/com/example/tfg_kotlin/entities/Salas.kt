@@ -1,21 +1,7 @@
 package com.example.tfg_kotlin.entities
 
-import androidx.room.*
-
-
-@Entity(
-    tableName = "salas",
-    foreignKeys = [
-        ForeignKey(
-            entity = Piso::class,
-            parentColumns = ["id"],
-            childColumns = ["pisoId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
 data class Salas(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val id: String? = null,
     var nombre: String,
     var tamaño: String,
     var pisoId: Int,

@@ -12,18 +12,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.tfg_kotlin.R
 import com.example.tfg_kotlin.utils.Validaciones
-import com.example.tfg_kotlin.database.BBDDMaestra
-import com.example.tfg_kotlin.utils.Validaciones.construirNombreBD
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModelProvider
-import com.example.tfg_kotlin.database.GlobalDB
-import com.example.tfg_kotlin.entities.Usuario
-import com.example.tfg_kotlin.viewmodel.RegistroPersonaViewModel
-import com.example.tfg_kotlin.viewmodel.RegistroPersonaViewModelFactory
-import com.example.tfg_kotlin.repository.RegistroPersonaRepository
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 
 
 class RegistroPersonaActivity : AppCompatActivity() {
@@ -42,6 +34,9 @@ class RegistroPersonaActivity : AppCompatActivity() {
     private lateinit var tilCif: TextInputLayout
     private lateinit var etCif: TextInputEditText
     private lateinit var btnFinalizarRegistro: Button
+
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,8 +100,8 @@ class RegistroPersonaActivity : AppCompatActivity() {
         if (!esValido) return false
 
         val contrasena = etContrasena.text.toString().trim()
-        if (contrasena.length < 4) {
-            tilContrasena.error = "Debe tener al menos 4 caracteres"
+        if (contrasena.length < 6) {
+            tilContrasena.error = "Debe tener al menos 6 caracteres"
             etContrasena.requestFocus()
             return false
         }
@@ -115,63 +110,66 @@ class RegistroPersonaActivity : AppCompatActivity() {
     }
 
     private fun registrarPersona() {
-        val correo = etCorreo.text.toString().trim()
-        val dominio = "@" + correo.substringAfter("@").lowercase()
-        val cifInput = etCif.text.toString().trim().uppercase()
+        val nombre = etNombre.text.toString().trim()
+        val apellidos = etApellidos.text.toString().trim()
+        val correo = etCorreo.text.toString().trim().lowercase()
+        val contrasena = etContrasena.text.toString().trim()
+        val cif = etCif.text.toString().trim().uppercase()
+        val dominio = "@" + correo.substringAfter("@")
 
-        Log.d("REGISTRO_PERSONA", "Dominio buscado: $dominio")
-
-        lifecycleScope.launch {
-            val dbMaestra = BBDDMaestra.getInstance(applicationContext)
-            val empresa = dbMaestra.empresaDao().getEmpresaPorDominio(dominio)
-
-            if (empresa == null) {
-                tilCorreo.error = "No existe ninguna empresa con el dominio @$dominio"
-                etCorreo.requestFocus()
-                return@launch
-            }
-
-            val nombreBD = construirNombreBD(dominio)
-            val dbEmpresa = GlobalDB.getDatabase(applicationContext, nombreBD)
-            val repository = RegistroPersonaRepository(
-                dbEmpresa.usuarioDao(),
-                dbEmpresa.salaDao(),
-                dbEmpresa.reservaDao(),
-                dbEmpresa.franjaHorariaDao(),
-                dbEmpresa.pisoDao()
-            )
-            val factory = RegistroPersonaViewModelFactory(repository)
-            val viewModel = ViewModelProvider(this@RegistroPersonaActivity, factory)[RegistroPersonaViewModel::class.java]
-
-            val esJefe = cifInput.isNotEmpty() && cifInput == empresa.cif
-
-            val usuario = Usuario(
-                nombre = etNombre.text.toString(),
-                apellidos = etApellidos.text.toString(),
-                email = correo,
-                contrasena = etContrasena.text.toString(),
-                cif = if (esJefe) cifInput else "",
-                esJefe = esJefe
-            )
-
-            viewModel.registroExitoso.observe(this@RegistroPersonaActivity) { ok ->
-                if (ok) {
-                    val intent = if (esJefe) Intent(this@RegistroPersonaActivity, JefeActivity::class.java)
-                    else Intent(this@RegistroPersonaActivity, EmpleadoActivity::class.java)
-                    startActivity(intent)
-                    finish()
+        // Paso 1: Comprobar si el dominio existe en la colección "empresas"
+        db.collection("empresas")
+            .whereEqualTo("dominio", dominio)
+            .get()
+            .addOnSuccessListener { documentos ->
+                if (documentos.isEmpty) {
+                    tilCorreo.error = "No existe ninguna empresa con ese dominio"
+                    return@addOnSuccessListener
                 }
-            }
 
-            viewModel.error.observe(this@RegistroPersonaActivity) { mensaje ->
-                if (mensaje != null) {
-                    tilCorreo.error = mensaje
-                    viewModel.limpiarEstado()
-                }
-            }
+                val empresaDoc = documentos.documents.first()
+                val cifEmpresa = empresaDoc.getString("cif") ?: ""
+                val esJefe = cif == cifEmpresa
 
-            viewModel.registrarUsuario(usuario)
-        }
+                // Paso 2: Registrar el usuario en FirebaseAuth
+                auth.createUserWithEmailAndPassword(correo, contrasena)
+                    .addOnSuccessListener {
+                        val uid = it.user?.uid ?: return@addOnSuccessListener
+
+                        val usuarioMap = hashMapOf(
+                            "id" to uid,
+                            "email" to correo,
+                            "nombre" to nombre,
+                            "apellidos" to apellidos,
+                            "contrasena" to contrasena,
+                            "cif" to if (esJefe) cif else "",
+                            "esJefe" to esJefe
+                        )
+
+                        // Paso 3: Guardar usuario en la colección "usuarios"
+                        db.collection("usuarios")
+                            .document(uid)
+                            .set(usuarioMap)
+                            .addOnSuccessListener {
+                                val intent = if (esJefe)
+                                    Intent(this, JefeActivity::class.java)
+                                else
+                                    Intent(this, EmpleadoActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            }
+                            .addOnFailureListener {
+                                Log.e("REGISTRO", "Error al guardar usuario", it)
+                            }
+                    }
+                    .addOnFailureListener {
+                        Log.e("REGISTRO", "Error al registrar auth", it)
+                        tilCorreo.error = "No se pudo registrar el usuario"
+                    }
+            }
+            .addOnFailureListener {
+                Log.e("REGISTRO", "Error al buscar empresa", it)
+            }
     }
 
     // Flecha "Atrás"
