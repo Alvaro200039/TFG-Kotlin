@@ -52,7 +52,9 @@
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@android:color/darker_gray"
+            app:hintTextColor="@android:color/darker_gray">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCorreo"
@@ -76,7 +78,9 @@
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@android:color/darker_gray"
+            app:hintTextColor="@android:color/darker_gray">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCif"
@@ -100,7 +104,9 @@
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@android:color/darker_gray"
+            app:hintTextColor="@android:color/darker_gray">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNombre"
@@ -124,7 +130,9 @@
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@android:color/darker_gray"
+            app:hintTextColor="@android:color/darker_gray">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etApellidos"
@@ -148,7 +156,9 @@
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="password_toggle"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@android:color/darker_gray"
+            app:hintTextColor="@android:color/darker_gray">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etContrasena"
@@ -172,7 +182,9 @@
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="password_toggle"
-            app:errorEnabled="true">
+            app:errorEnabled="true"
+            app:cursorColor="@android:color/darker_gray"
+            app:hintTextColor="@android:color/darker_gray">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRepetirContrasena"
