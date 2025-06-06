@@ -117,7 +117,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
         val cif = etCif.text.toString().trim().uppercase()
         val dominio = "@" + correo.substringAfter("@")
 
-        // Paso 1: Comprobar si el dominio existe en la colección "empresas"
+        //Comprobar si el dominio existe en la colección "empresas"
         db.collection("empresas")
             .whereEqualTo("dominio", dominio)
             .get()
@@ -131,7 +131,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
                 val cifEmpresa = empresaDoc.getString("cif") ?: ""
                 val esJefe = cif == cifEmpresa
 
-                // Paso 2: Registrar el usuario en FirebaseAuth
+                //Registrar el usuario en FirebaseAuth
                 auth.createUserWithEmailAndPassword(correo, contrasena)
                     .addOnSuccessListener {
                         val uid = it.user?.uid ?: return@addOnSuccessListener
@@ -146,7 +146,7 @@ class RegistroPersonaActivity : AppCompatActivity() {
                             "esJefe" to esJefe
                         )
 
-                        // Paso 3: Guardar usuario dentro de la colección empresas
+                        // Guardar usuario dentro de la colección empresas
                         empresaDoc.reference.collection("Usuarios")
                             .document(uid)
                             .set(usuarioMap)
