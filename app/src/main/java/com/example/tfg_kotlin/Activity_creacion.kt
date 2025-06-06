@@ -35,7 +35,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.graphics.toColorInt
@@ -54,7 +53,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import android.util.Base64
 import android.widget.ImageView
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 import com.example.tfg_kotlin.BBDD_Global.Entities.UsuarioSesion
