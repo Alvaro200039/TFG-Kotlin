@@ -27,6 +27,8 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
     private var codigoGenerado: String = ""
     private var correo: String = ""
+    private var cifEmpresa: String = ""
+    private var usuarioId: String = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,12 +94,12 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                             .addOnSuccessListener { userDocs ->
                                 Log.d("RecuperarContrasena", "Documentos encontrados: ${userDocs.size()}")
                                 if (!userDocs.isEmpty) {
-                                    for (doc in userDocs) {
-                                        Log.d("RecuperarContrasena", "Doc ID: ${doc.id} - Data: ${doc.data}")
-                                    }
+                                    val doc = userDocs.documents[0]
+                                    usuarioId = doc.id
+                                    cifEmpresa = cif
                                     codigoGenerado = (100000..999999).random().toString()
                                     Snackbar.make(findViewById(android.R.id.content), "Tu código es: $codigoGenerado", Snackbar.LENGTH_INDEFINITE)
-                                        .setDuration(8000) // 8 segundos
+                                        .setDuration(10000) // 10 segundos
                                         .show()
                                     layoutPaso1.visibility = LinearLayout.GONE
                                     layoutPaso2.visibility = LinearLayout.VISIBLE
@@ -147,25 +149,18 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
             val db = Firebase.firestore
 
-            db.collection("usuarios")
-                .whereEqualTo("email", correo)
-                .get()
-                .addOnSuccessListener { result ->
-                    if (!result.isEmpty) {
-                        val docId = result.documents[0].id
-                        db.collection("usuarios")
-                            .document(docId)
-                            .update("contrasena", nuevaPass)
-                            .addOnSuccessListener {
-                                Toast.makeText(this, "Contraseña actualizada correctamente", Toast.LENGTH_SHORT).show()
-                                finish()
-                            }
-                            .addOnFailureListener {
-                                Toast.makeText(this, "Error al actualizar la contraseña", Toast.LENGTH_SHORT).show()
-                            }
-                    } else {
-                        Toast.makeText(this, "No se encontró el usuario", Toast.LENGTH_SHORT).show()
-                    }
+            db.collection("empresas")
+                .document(cifEmpresa)
+                .collection("Usuarios")
+                .document(usuarioId)
+                .update("contrasena", nuevaPass)
+                .addOnSuccessListener {
+                    Toast.makeText(this, "Contraseña actualizada correctamente", Toast.LENGTH_SHORT)
+                        .show()
+                    finish()
+                }
+                .addOnFailureListener {
+                        Toast.makeText(this, "Error al actualizar la contraseña", Toast.LENGTH_SHORT).show()
                 }
         }
     }
