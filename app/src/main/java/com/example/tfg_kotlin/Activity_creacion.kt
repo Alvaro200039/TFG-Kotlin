@@ -55,9 +55,11 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import android.util.Base64
+import android.widget.ImageView
+import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.firestore
-import kotlin.math.log
 
 
 class Activity_creacion : AppCompatActivity() {
@@ -68,6 +70,8 @@ class Activity_creacion : AppCompatActivity() {
         private lateinit var firestore: FirebaseFirestore
         private lateinit var auth: FirebaseAuth
         private var imagen: ByteArray? = null
+        private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,15 +95,15 @@ class Activity_creacion : AppCompatActivity() {
             return
         }
 
-        // Obtener el CIF directamente del Intent
-        cif = intent.getStringExtra("cifUsuario") ?: ""
+        // Obtener el CIF desde Sesion.datos (en vez de Intent)
+        cif = Sesion.datos?.empresa?.cif ?: ""
         if (cif.isEmpty()) {
-            Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "CIF no disponible en sesión", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // Ahora que tenemos el CIF, seguimos con la inicialización:
+        // Inicializar UI con CIF obtenido de sesión
         inicializarUIConCIF(cif)
     }
 
@@ -214,6 +218,7 @@ class Activity_creacion : AppCompatActivity() {
 
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
         dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.BLACK)
 
         val cifNormalizado = cif.trim().uppercase()
         if (cifNormalizado.isBlank()) {
@@ -226,7 +231,7 @@ class Activity_creacion : AppCompatActivity() {
             try {
                 val firestore = FirebaseFirestore.getInstance()
 
-                // Buscar empresa por CIF
+                // Buscar empresa por CIF (ya que el ID del documento es el nombre)
                 val empresaSnapshot = firestore.collection("empresas")
                     .whereEqualTo("cif", cifNormalizado)
                     .get()
@@ -240,15 +245,10 @@ class Activity_creacion : AppCompatActivity() {
                     return@launch
                 }
 
-                val nombreEmpresa = empresaSnapshot.documents[0].getString("nombre") ?: run {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "Nombre de empresa no encontrado", Toast.LENGTH_SHORT).show()
-                        dialog.dismiss()
-                    }
-                    return@launch
-                }
+                // Obtener el ID del documento (nombre de la empresa)
+                val nombreEmpresa = empresaSnapshot.documents[0].id
 
-                // Cargar franjas existentes para la empresa encontrada
+                // Cargar franjas existentes
                 val snapshotFranjas = firestore.collection("empresas")
                     .document(nombreEmpresa)
                     .collection("franjasHorarias")
@@ -289,7 +289,7 @@ class Activity_creacion : AppCompatActivity() {
                                 .set(mapOf("activo" to true))
                                 .await()
 
-                            // Recargar lista después de guardar
+                            // Recargar lista
                             val nuevoSnapshot = firestore.collection("empresas")
                                 .document(nombreEmpresa)
                                 .collection("franjasHorarias")
@@ -312,6 +312,7 @@ class Activity_creacion : AppCompatActivity() {
                         }
                     }
                 }
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@Activity_creacion, "Error cargando franjas: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -321,48 +322,68 @@ class Activity_creacion : AppCompatActivity() {
         }
     }
 
-    private fun actualizarListaFranjas(franjas: List<String>, layoutFranjas: LinearLayout, nombreEmpresa: String) {
+    private fun actualizarListaFranjas(
+        franjas: List<String>,
+        layoutFranjas: LinearLayout,
+        nombreEmpresa: String
+    ) {
         layoutFranjas.removeAllViews()
-        for (hora in franjas.sorted()) {
-            val franjaView = LinearLayout(layoutFranjas.context).apply {
+        val firestore = FirebaseFirestore.getInstance()
+
+        franjas.sorted().forEach { franja ->
+            val itemLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
-
-                val textView = TextView(layoutFranjas.context).apply {
-                    text = hora
-                    textSize = 16f
-                    setPadding(8, 4, 8, 4)
+                setPadding(16, 8, 16, 8)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(0, 8, 0, 8)
                 }
+                background = ContextCompat.getDrawable(this@Activity_creacion, R.drawable.dialog_background)
+            }
 
-                val botonEliminar = Button(layoutFranjas.context).apply {
-                    text = "❌"
-                    textSize = 14f
-                    setBackgroundColor(Color.TRANSPARENT)
-                    setPadding(16, 0, 16, 0)
-                    setOnClickListener {
-                        lifecycleScope.launch {
-                            try {
-                                firestore.collection("empresas")
-                                    .document(nombreEmpresa)
-                                    .collection("franjasHorarias")
-                                    .document(hora)
-                                    .delete()
-                                    .await()
+            val textView = TextView(this).apply {
+                text = franja
+                textSize = 16f
+                setTextColor(Color.BLACK)
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
 
-                                val nuevasFranjas = franjas.toMutableList().apply { remove(hora) }
-                                actualizarListaFranjas(nuevasFranjas, layoutFranjas, nombreEmpresa)
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(this@Activity_creacion, "Error eliminando franja: ${e.message}", Toast.LENGTH_SHORT).show()
-                                }
+            val botonEliminar = ImageView(this).apply {
+                setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                setColorFilter(Color.RED)
+                setPadding(24, 0, 0, 0)
+                setOnClickListener {
+                    lifecycleScope.launch {
+                        try {
+                            firestore.collection("empresas")
+                                .document(nombreEmpresa)
+                                .collection("franjasHorarias")
+                                .document(franja)
+                                .delete()
+                                .await()
+
+                            val nuevoSnapshot = firestore.collection("empresas")
+                                .document(nombreEmpresa)
+                                .collection("franjasHorarias")
+                                .get()
+                                .await()
+
+                            val nuevasFranjas = nuevoSnapshot.documents.mapNotNull { it.id }
+                            actualizarListaFranjas(nuevasFranjas, layoutFranjas, nombreEmpresa)
+
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@Activity_creacion, "Error al eliminar: ${e.message}", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                 }
-
-                addView(textView)
-                addView(botonEliminar)
             }
-            layoutFranjas.addView(franjaView)
+            itemLayout.addView(textView)
+            itemLayout.addView(botonEliminar)
+            layoutFranjas.addView(itemLayout)
         }
     }
 
@@ -370,7 +391,6 @@ class Activity_creacion : AppCompatActivity() {
         getImage.launch("image/*")
     }
 
-    private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
 
     private fun addMovableButton() {
         // No compruebo pisoActual porque aún no existe piso guardado
@@ -409,8 +429,6 @@ class Activity_creacion : AppCompatActivity() {
             leftMargin = sala.x.toInt()
         }
         button.layoutParams = layoutParams
-
-        // Guardamos la sala en memoria, no en Room todavía
         salasEnMemoria.add(sala)
     }
 
@@ -482,7 +500,13 @@ class Activity_creacion : AppCompatActivity() {
         builder.setItems(options) { dialog, which ->
             when (which) {
                 0 -> showEditButtonDialog(button) // Editar texto
-                1 -> container.removeView(button) // Eliminar botón
+                1 -> {
+                    val sala = button.tag as? Salas
+                    if (sala != null) {
+                        salasEnMemoria.remove(sala)
+                    }
+                    container.removeView(button)
+                }
                 2 -> {
                     val sala = button.tag as? Salas
                     if (sala != null) {
@@ -644,147 +668,159 @@ class Activity_creacion : AppCompatActivity() {
         }
 
     private fun showEditButtonDialog(button: Button) {
-            val sala = button.tag as? Salas
-            if (sala == null) {
-                Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            val empresaCif = pisoActual?.empresaCif ?: return
-            val pisoId = pisoActual?.id ?: return
-
-            val layout = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(50, 40, 50, 10)
-            }
-
-            val editTextNombre = EditText(this).apply {
-                hint = "Nuevo nombre"
-                setText(sala.nombre)
-                filters = arrayOf(InputFilter.LengthFilter(20))
-            }
-
-            val charCountTextView = TextView(this).apply {
-                text = "${sala.nombre.length}/20"
-                setTextColor("#000000".toColorInt())
-            }
-
-            editTextNombre.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                override fun afterTextChanged(s: Editable?) {
-                    charCountTextView.text = "${s?.length ?: 0}/20"
-                }
-            })
-
-            val tamanios = listOf("Pequeño", "Grande")
-            val spinnerTamanio = Spinner(this).apply {
-                adapter = ArrayAdapter(this@Activity_creacion, android.R.layout.simple_spinner_dropdown_item, tamanios)
-                setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
-                background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
-                setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = 16; bottomMargin = 16 }
-            }
-
-            val checkWifi = CheckBox(this).apply {
-                text = "WiFi"
-                isChecked = sala.extras.contains("WiFi")
-                buttonTintList = ColorStateList.valueOf(Color.GRAY)
-            }
-            val checkProyector = CheckBox(this).apply {
-                text = "Proyector"
-                isChecked = sala.extras.contains("Proyector")
-                buttonTintList = ColorStateList.valueOf(Color.GRAY)
-            }
-            val checkPizarra = CheckBox(this).apply {
-                text = "Pizarra"
-                isChecked = sala.extras.contains("Pizarra")
-                buttonTintList = ColorStateList.valueOf(Color.GRAY)
-            }
-
-            layout.apply {
-                addView(editTextNombre)
-                addView(charCountTextView)
-                addView(spinnerTamanio)
-                addView(checkWifi)
-                addView(checkProyector)
-                addView(checkPizarra)
-            }
-
-            val builder = AlertDialog.Builder(this)
-                .setTitle("Editar sala")
-                .setView(layout)
-                .setPositiveButton("Guardar", null)
-                .setNegativeButton("Cancelar", null)
-
-            val dialog = builder.create()
-            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-
-            dialog.setOnShowListener {
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
-
-                val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                positiveButton.setOnClickListener {
-                    val nuevoNombre = editTextNombre.text.toString().trim()
-
-                    if (nuevoNombre.isEmpty()) {
-                        editTextNombre.error = "El nombre no puede estar vacío"
-                        return@setOnClickListener
-                    }
-
-                    val nombreRepetido = container.children
-                        .filterIsInstance<Button>()
-                        .filter { it != button }
-                        .mapNotNull { (it.tag as? Salas)?.nombre }
-                        .any { it.equals(nuevoNombre, ignoreCase = true) }
-
-                    if (nombreRepetido) {
-                        editTextNombre.error = "Ese nombre ya está en uso"
-                        return@setOnClickListener
-                    }
-
-                    // Crear la sala editada
-                    val salaEditada = sala.copy(
-                        nombre = nuevoNombre,
-                        tamaño = spinnerTamanio.selectedItem?.toString().toString(),
-                        extras = mutableListOf<String>().apply {
-                            if (checkWifi.isChecked) add("WiFi")
-                            if (checkProyector.isChecked) add("Proyector")
-                            if (checkPizarra.isChecked) add("Pizarra")
-                        }
-                    )
-
-                    // Guardar en Firestore
-                    lifecycleScope.launch {
-                        try {
-                            val docId = sala.id ?: return@launch
-                            val salaRef = firestore.collection("empresas")
-                                .document(empresaCif)
-                                .collection("pisos")
-                                .document(pisoId)
-                                .collection("salas")
-                                .document(docId)
-
-                            salaRef.set(salaEditada).await()
-
-                            actualizarBotonConSala(button, salaEditada)
-                            button.tag = salaEditada
-                            Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
-                            dialog.dismiss()
-                        } catch (e: Exception) {
-                            Toast.makeText(this@Activity_creacion, "Error al actualizar sala", Toast.LENGTH_SHORT).show()
-                            Log.e("Firestore", "Error: ${e.message}", e)
-                        }
-                    }
-                }
-            }
-
-            dialog.show()
+        val sala = button.tag as? Salas
+        if (sala == null) {
+            Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        val empresaCif = pisoActual?.empresaCif ?: run {
+            Toast.makeText(this, "No se encontró la empresa asociada", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val pisoId = pisoActual?.nombre ?: run {
+            Toast.makeText(this, "No se encontró el piso asociado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+        }
+
+        val editTextNombre = EditText(this).apply {
+            hint = "Nuevo nombre"
+            setText(sala.nombre)
+            filters = arrayOf(InputFilter.LengthFilter(20))
+        }
+
+        val charCountTextView = TextView(this).apply {
+            text = "${sala.nombre.length}/20"
+            setTextColor("#000000".toColorInt())
+        }
+
+        editTextNombre.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                charCountTextView.text = "${s?.length ?: 0}/20"
+            }
+        })
+
+        val tamanios = listOf("Pequeño", "Grande")
+        val spinnerTamanio = Spinner(this).apply {
+            adapter = ArrayAdapter(this@Activity_creacion, android.R.layout.simple_spinner_dropdown_item, tamanios)
+            setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
+            background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
+            setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = 16; bottomMargin = 16 }
+        }
+
+        val checkWifi = CheckBox(this).apply {
+            text = "WiFi"
+            isChecked = sala.extras.contains("WiFi")
+            buttonTintList = ColorStateList.valueOf(Color.GRAY)
+        }
+        val checkProyector = CheckBox(this).apply {
+            text = "Proyector"
+            isChecked = sala.extras.contains("Proyector")
+            buttonTintList = ColorStateList.valueOf(Color.GRAY)
+        }
+        val checkPizarra = CheckBox(this).apply {
+            text = "Pizarra"
+            isChecked = sala.extras.contains("Pizarra")
+            buttonTintList = ColorStateList.valueOf(Color.GRAY)
+        }
+
+        layout.apply {
+            addView(editTextNombre)
+            addView(charCountTextView)
+            addView(spinnerTamanio)
+            addView(checkWifi)
+            addView(checkProyector)
+            addView(checkPizarra)
+        }
+
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Editar sala")
+            .setView(layout)
+            .setPositiveButton("Guardar", null)
+            .setNegativeButton("Cancelar", null)
+
+        val dialog = builder.create()
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val nuevoNombre = editTextNombre.text.toString().trim()
+
+                if (nuevoNombre.isEmpty()) {
+                    editTextNombre.error = "El nombre no puede estar vacío"
+                    return@setOnClickListener
+                }
+
+                val nombreRepetido = container.children
+                    .filterIsInstance<Button>()
+                    .filter { it != button }
+                    .mapNotNull { (it.tag as? Salas)?.nombre }
+                    .any { it.equals(nuevoNombre, ignoreCase = true) }
+
+                if (nombreRepetido) {
+                    editTextNombre.error = "Ese nombre ya está en uso"
+                    return@setOnClickListener
+                }
+
+                // Crear la sala editada (nueva instancia)
+                val salaEditada = sala.copy(
+                    nombre = nuevoNombre,
+                    id = nuevoNombre,
+                    tamaño = spinnerTamanio.selectedItem?.toString().orEmpty(),
+                    extras = mutableListOf<String>().apply {
+                        if (checkWifi.isChecked) add("WiFi")
+                        if (checkProyector.isChecked) add("Proyector")
+                        if (checkPizarra.isChecked) add("Pizarra")
+                    }
+                )
+
+                lifecycleScope.launch {
+                    try {
+                        val docId = sala.nombre
+                        val salaRef = firestore.collection("empresas")
+                            .document(empresaCif)
+                            .collection("pisos")
+                            .document(pisoId)
+                            .collection("salas")
+                            .document(docId)
+
+                        salaRef.set(salaEditada).await()
+
+                        // Actualizar lista en memoria
+                        val index = salasEnMemoria.indexOfFirst { it.id == salaEditada.id }
+                        if (index >= 0) {
+                            salasEnMemoria[index] = salaEditada
+                        }
+
+                        actualizarBotonConSala(button, salaEditada)
+                        button.tag = salaEditada
+                        Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    } catch (e: Exception) {
+                        Toast.makeText(this@Activity_creacion, "Error al actualizar sala", Toast.LENGTH_SHORT).show()
+                        Log.e("Firestore", "Error: ${e.message}", e)
+                    }
+                }
+            }
+        }
+
+        dialog.show()
+    }
 
     private fun actualizarBotonConSala(button: Button, sala: Salas) {
         val builder = StringBuilder()
@@ -826,7 +862,7 @@ class Activity_creacion : AppCompatActivity() {
             val view = container.getChildAt(i)
             val sala = (view as? Button)?.tag as? Salas ?: return@mapNotNull null
             mapOf(
-                "id" to (sala.id ?: ""),
+                "id" to sala.nombre,
                 "nombre" to sala.nombre,
                 "tamaño" to sala.tamaño,
                 "x" to view.x,

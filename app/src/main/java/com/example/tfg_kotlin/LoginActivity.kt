@@ -2,14 +2,19 @@ package com.example.tfg_kotlin
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings.Global.putString
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.core.content.edit
+import com.google.firebase.firestore.DocumentSnapshot
+import com.example.tfg_kotlin.BBDD_Global.Entities.Empresa
+import com.example.tfg_kotlin.BBDD_Global.Entities.FranjaHoraria
+import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
+import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
+import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
+import com.example.tfg_kotlin.BBDD_Global.Entities.UsuarioSesion
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var etCorreo: EditText
@@ -31,9 +36,7 @@ class LoginActivity : AppCompatActivity() {
         btnLogin = findViewById(R.id.btnLogin)
         btnRegistro = findViewById(R.id.btnRegistro)
 
-        btnLogin.setOnClickListener {
-            iniciarSesion()
-        }
+        btnLogin.setOnClickListener { iniciarSesion() }
         btnRegistro.setOnClickListener {
             val registro = Intent(this, RegistroEmpleado::class.java)
             startActivity(registro)
@@ -59,7 +62,6 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null && user.email != null) {
-                        // Buscar usuario dentro de las empresas
                         buscarUsuarioEnEmpresas(correo)
                     }
                 } else {
@@ -84,46 +86,71 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    private fun buscarUsuarioRecursivo(empresas: List<com.google.firebase.firestore.DocumentSnapshot>, correo: String, index: Int) {
+    private fun buscarUsuarioRecursivo(
+        empresas: List<DocumentSnapshot>,
+        correo: String,
+        index: Int
+    ) {
         if (index >= empresas.size) {
             Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
             return
         }
 
         val empresaDoc = empresas[index]
-        empresaDoc.reference.collection("usuarios").document(correo)
+        val empresaRef = empresaDoc.reference
+        val cif = empresaDoc.id
+
+        empresaRef.collection("usuarios").document(correo)
             .get()
             .addOnSuccessListener { usuarioDoc ->
                 if (usuarioDoc != null && usuarioDoc.exists()) {
-                    val esJefe = usuarioDoc.getBoolean("esJefe") ?: false
-                    val nombre = usuarioDoc.getString("nombre") ?: ""
-                    val apellidos = usuarioDoc.getString("apellidos") ?: ""
-                    val cif = usuarioDoc.getString("cif") ?: empresaDoc.getString("cif") ?: ""
-                    val nombreEmpresa = empresaDoc.id
-
-                    val intent = if (esJefe) {
-                        Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
-                        Intent(this, Activity_menu_creador::class.java)
-                    } else {
-                        Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
-                        Intent(this, activity_menu_empleado::class.java)
+                    val usuario = usuarioDoc.toObject(Usuario::class.java) ?: return@addOnSuccessListener
+                    val empresa = empresaDoc.toObject(Empresa::class.java)
+                    if (empresa == null) {
+                        Toast.makeText(this, "Error al obtener empresa", Toast.LENGTH_SHORT).show()
+                        return@addOnSuccessListener
                     }
 
-                    val prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE)
-                    prefs.edit { putString("correo", correo) }
-                    prefs.edit{ putString("nombreUsuario", "$nombre $apellidos") }
-                    prefs.edit { putString("cifUsuario", cif) }
-                    prefs.edit { putString("nombreEmpresa", nombreEmpresa) }
+                    // Obtener pisos
+                    empresaRef.collection("pisos").get().addOnSuccessListener { pisosSnap ->
+                        val listaPisos = pisosSnap.mapNotNull { it.toObject(Piso::class.java) }
 
-                    startActivity(intent)
-                    finish()
+                        // Obtener franjas horarias
+                        empresaRef.collection("franjasHorarias").get().addOnSuccessListener { franjasSnap ->
+                            val listaFranjas = franjasSnap.mapNotNull { it.toObject(FranjaHoraria::class.java) }
+
+                            // 🔐 GUARDAR LA SESIÓN EN MEMORIA CON SINGLETON
+                            Sesion.datos = UsuarioSesion(
+                                empresa = empresa,
+                                usuario = usuario,
+                                pisos = listaPisos,
+                                franjasHorarias = listaFranjas
+                            )
+
+                            val intent = if (usuario.esJefe) {
+                                Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
+                                Intent(this, Activity_menu_creador::class.java)
+                            } else {
+                                Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
+                                Intent(this, activity_menu_empleado::class.java)
+                            }
+
+                            startActivity(intent)
+                            finish()
+
+                        }.addOnFailureListener {
+                            Toast.makeText(this, "Error al cargar franjas horarias", Toast.LENGTH_SHORT).show()
+                        }
+
+                    }.addOnFailureListener {
+                        Toast.makeText(this, "Error al cargar pisos", Toast.LENGTH_SHORT).show()
+                    }
 
                 } else {
                     // No encontrado en esta empresa, buscar en la siguiente
                     buscarUsuarioRecursivo(empresas, correo, index + 1)
                 }
-            }
-            .addOnFailureListener {
+            }.addOnFailureListener {
                 Toast.makeText(this, "Error al buscar usuario", Toast.LENGTH_SHORT).show()
             }
     }

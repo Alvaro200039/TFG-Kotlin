@@ -1,4 +1,4 @@
-package com.example.tfg_kotlin.BBDD_Maestra.Entities
+package com.example.tfg_kotlin.BBDD_Global.Entities
 
 data class Empresa(
     var cif: String = "",

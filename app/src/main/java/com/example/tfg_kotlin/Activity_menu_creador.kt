@@ -34,10 +34,12 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
+import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 import java.util.concurrent.TimeUnit
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.crashlytics.internal.common.AppData
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.tasks.await
@@ -45,8 +47,6 @@ import kotlinx.coroutines.tasks.await
 class Activity_menu_creador : AppCompatActivity() {
 
     private lateinit var firestore: FirebaseFirestore
-    private var idUsuario: String = ""
-    private var nombreUsuario: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,82 +69,74 @@ class Activity_menu_creador : AppCompatActivity() {
             return
         }
 
-        idUsuario = currentUser.uid
-        val cifUsuario = getSharedPreferences("MiAppPrefs", MODE_PRIVATE).getString("cifUsuario", null)
-        Toast.makeText(this, "cif recibido $cifUsuario", Toast.LENGTH_SHORT).show()
-
-        if (cifUsuario.isNullOrEmpty()) {
-            Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
+        // Accedemos a datos desde Sesion.datos
+        val sesion = Sesion.datos
+        if (sesion == null) {
+            Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        val correoUsuario = getSharedPreferences("MiAppPrefs", MODE_PRIVATE).getString("correo", null)
-        Toast.makeText(this, "correo recibido $correoUsuario", Toast.LENGTH_SHORT).show()
-        if (correoUsuario.isNullOrEmpty()) {
-            Toast.makeText(this, "Correo no recibido", Toast.LENGTH_SHORT).show()
+        val cifUsuario = sesion.empresa.cif
+        val correoUsuario = sesion.usuario.email
+        val idUsuario = sesion.usuario.id
+        var nombreUsuario = sesion.usuario.nombre
+
+        if (cifUsuario.isEmpty() || correoUsuario.isEmpty() || idUsuario == null) {
+            Toast.makeText(this, "Faltan datos de usuario", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // Carga el usuario para mostrar el nombre
-        firestore.collection("empresas")
-            .document(cifUsuario.toString())
-            .collection("usuarios")
-            .document(correoUsuario.toString())
-            .get()
-            .addOnSuccessListener { documentSnapshot ->
-                if (documentSnapshot.exists()) {
-                    val usuario = documentSnapshot.toObject<Usuario>()
-                    if (usuario != null) {
-                        nombreUsuario = usuario.nombre
-                        Toast.makeText(this, "Hola ${usuario.nombre}", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+        if (nombreUsuario.isEmpty()) {
+            // Si nombreUsuario no está cargado (raro porque debería venir en Sesion), lo cargamos desde Firestore
+            firestore.collection("empresas")
+                .document(cifUsuario)
+                .collection("usuarios")
+                .document(correoUsuario)
+                .get()
+                .addOnSuccessListener { documentSnapshot ->
+                    if (documentSnapshot.exists()) {
+                        val usuario = documentSnapshot.toObject(Usuario::class.java)
+                        if (usuario != null) {
+                            nombreUsuario = usuario.nombre
+                            // Actualizar también en la sesión para mantener coherencia
+                            Sesion.datos = sesion.copy(usuario = usuario)
+                            Toast.makeText(this, "Hola $nombreUsuario", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+                .addOnFailureListener { e ->
+                    Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            Toast.makeText(this, "Hola $nombreUsuario", Toast.LENGTH_SHORT).show()
+        }
 
-        // Botón: Crear o editar salas
-        val btnEditarSalas = findViewById<Button>(R.id.btnEditarSalas)
-        btnEditarSalas.setOnClickListener {
+        findViewById<Button>(R.id.btnEditarSalas).setOnClickListener {
             val intent = Intent(this, Activity_creacion::class.java)
-            intent.putExtra("cifUsuario", cifUsuario)
+            intent.putExtra("cifUsuario", cifUsuario) // Por compatibilidad, aunque ya está en Sesion
             startActivity(intent)
         }
 
-        // Botón: Hacer nueva reserva
-        val btnNuevaReserva = findViewById<Button>(R.id.btnNuevaReserva)
-        btnNuevaReserva.setOnClickListener {
+        findViewById<Button>(R.id.btnNuevaReserva).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    val cifNormalizado = cifUsuario.trim().uppercase()
-
-                    // 1. Buscar la empresa por CIF
                     val empresaSnapshot = firestore.collection("empresas")
-                        .whereEqualTo("cif", cifNormalizado)
+                        .whereEqualTo("cif", cifUsuario)
                         .get()
                         .await()
 
                     if (empresaSnapshot.isEmpty) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                this@Activity_menu_creador,
-                                "Empresa no encontrada para el CIF: $cifNormalizado",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(this@Activity_menu_creador, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
                         }
                         return@launch
                     }
 
-                    // Obtener el id del documento empresa (ejemplo: "empresa1")
                     val idEmpresa = empresaSnapshot.documents[0].id
-                    Log.d("DEBUG", "Empresa encontrada: $idEmpresa")
-
-                    // 2. Obtener los pisos dentro de la empresa
                     val pisosSnapshot = firestore.collection("empresas")
                         .document(idEmpresa)
                         .collection("pisos")
@@ -155,79 +147,39 @@ class Activity_menu_creador : AppCompatActivity() {
                         doc.toObject(Piso::class.java)?.apply { id = doc.id }
                     }
 
-                    Log.d("DEBUG", "Pisos encontrados: ${pisos.size}")
-
-                    lifecycleScope.launch {
-                        try {
-                            val doc = firestore.collection("usuarios").document(idUsuario).get().await()
-                            val nombre = doc.getString("nombre") ?: ""
-
-                            if (nombre.isNotEmpty()) {
-                                val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
-                                intent.putExtra("idUsuario", idUsuario)
-                                intent.putExtra("nombreUsuario", nombre)
-                                // otros extras como "nombre_piso"
-                                startActivity(intent)
-                            } else {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(this@Activity_menu_creador, "No se encontró nombre de usuario", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(this@Activity_menu_creador, "Error al obtener usuario: ${e.message}", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-
-
-
                     if (pisos.isNotEmpty()) {
-                        // Seleccionar el último piso (puedes cambiar la lógica)
                         val pisoSeleccionado = pisos.last()
                         val nombrePiso = pisoSeleccionado.nombre
 
                         withContext(Dispatchers.Main) {
-                            Log.d("DEBUG", "idUsuario: $idUsuario, nombreUsuario: $nombreUsuario")
-
                             val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
                             intent.putExtra("nombre_piso", nombrePiso)
+                            // PASAMOS LOS DATOS DESDE SESION, NO APPDATA
                             intent.putExtra("nombreUsuario", nombreUsuario)
+                            intent.putExtra("idUsuario", idUsuario)
                             startActivity(intent)
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                this@Activity_menu_creador,
-                                "No se ha creado ningún piso. Crea uno primero.",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(this@Activity_menu_creador, "No se ha creado ningún piso", Toast.LENGTH_SHORT).show()
                         }
                     }
 
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            this@Activity_menu_creador,
-                            "Error al cargar pisos: ${e.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(this@Activity_menu_creador, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
 
-
-        // Botón: Ver mis reservas
-        val btnVerReservas = findViewById<Button>(R.id.btnVerReservas)
-        btnVerReservas.setOnClickListener {
+        findViewById<Button>(R.id.btnVerReservas).setOnClickListener {
             mostrarDialogoReservas()
         }
 
-        // Botón: Cerrar sesión
-        val btnLogout = findViewById<Button>(R.id.btnLogout)
-        btnLogout?.setOnClickListener {
+        findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
+            Sesion.cerrarSesion() // Limpiar sesión al cerrar sesión
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
@@ -478,10 +430,18 @@ class Activity_menu_creador : AppCompatActivity() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val ahora = Date()
 
+        // Obtener idUsuario del objeto Sesion o de donde guardes
+        val idUsuario = Sesion.datos?.usuario?.id ?: ""
+
+        if (idUsuario == null) {
+            textView.text = "No hay usuario válido"
+            return
+        }
+
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val snapshot = firestore.collection("reservas")
-                    .whereEqualTo("idusuario", idUsuario)  // idUsuario debe ser String
+                    .whereEqualTo("idusuario", idUsuario)
                     .get()
                     .await()
 
@@ -558,6 +518,5 @@ class Activity_menu_creador : AppCompatActivity() {
             }
         }
     }
-
 }
 
