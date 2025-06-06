@@ -4,6 +4,7 @@ import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
@@ -39,7 +40,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.graphics.toColorInt
 import com.bumptech.glide.Glide
-import com.google.android.material.snackbar.Snackbar
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.Utils.naturalOrderKey
@@ -57,9 +57,10 @@ import java.io.ByteArrayOutputStream
 import android.util.Base64
 import android.widget.ImageView
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
+import com.example.tfg_kotlin.BBDD_Global.Entities.UsuarioSesion
 import com.google.firebase.Firebase
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.firestore
+import com.google.firebase.storage.FirebaseStorage
 
 
 class Activity_creacion : AppCompatActivity() {
@@ -68,6 +69,7 @@ class Activity_creacion : AppCompatActivity() {
         private var pisoActual: Piso? = null
         private var cif: String = ""
         private lateinit var firestore: FirebaseFirestore
+        private val storage = FirebaseStorage.getInstance()
         private lateinit var auth: FirebaseAuth
         private var imagen: ByteArray? = null
         private val salasEnMemoria = mutableListOf<Salas>() // Lista temporal en memoria
@@ -170,8 +172,8 @@ class Activity_creacion : AppCompatActivity() {
                 lifecycleScope.launch {
                     try {
                         // Aquí extraes la imagen de fondo desde el fondo del layout, si es necesario
-                        val fondoLayout = findViewById<View>(R.id.container)
-                        val fondoBitmap = fondoLayout.background?.toBitmapOrNull()
+                        val imageView = findViewById<ImageView>(R.id.image_fondo)
+                        val fondoBitmap = (imageView.drawable as? BitmapDrawable)?.bitmap
                         val fondoBytes = fondoBitmap?.let { bitmap ->
                             val stream = ByteArrayOutputStream()
                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
@@ -180,7 +182,8 @@ class Activity_creacion : AppCompatActivity() {
                         guardarDistribucion(
                             pisoNombre = toolbarTitle,
                             imagen = fondoBytes,
-                            container = findViewById(R.id.container)
+                            container = findViewById(R.id.container),
+                            sesion = Sesion.datos
                         )
                     } catch (e: Exception) {
                         Log.e("Activity_creacion", "Error guardando: ${e.message}", e)
@@ -391,7 +394,6 @@ class Activity_creacion : AppCompatActivity() {
         getImage.launch("image/*")
     }
 
-
     private fun addMovableButton() {
         // No compruebo pisoActual porque aún no existe piso guardado
 
@@ -486,7 +488,6 @@ class Activity_creacion : AppCompatActivity() {
             dialog.show()
         }
 
-
     private fun showToast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
@@ -536,7 +537,6 @@ class Activity_creacion : AppCompatActivity() {
         }
         dialog.show()
     }
-
 
     private fun mostrarDialogoCambiarTamanio(salaButton: Button, sala: Salas) {
         val layout = LinearLayout(this).apply {
@@ -673,9 +673,8 @@ class Activity_creacion : AppCompatActivity() {
             Toast.makeText(this, "No se encontró la sala asociada al botón", Toast.LENGTH_SHORT).show()
             return
         }
-
         val empresaCif = pisoActual?.empresaCif ?: run {
-            Toast.makeText(this, "No se encontró la empresa asociada", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Primero asigna un nombre al piso antes de editar salas", Toast.LENGTH_LONG).show()
             return
         }
         val pisoId = pisoActual?.nombre ?: run {
@@ -788,20 +787,9 @@ class Activity_creacion : AppCompatActivity() {
                         if (checkPizarra.isChecked) add("Pizarra")
                     }
                 )
-
                 lifecycleScope.launch {
                     try {
-                        val docId = sala.nombre
-                        val salaRef = firestore.collection("empresas")
-                            .document(empresaCif)
-                            .collection("pisos")
-                            .document(pisoId)
-                            .collection("salas")
-                            .document(docId)
-
-                        salaRef.set(salaEditada).await()
-
-                        // Actualizar lista en memoria
+                        // Solo actualizar lista en memoria
                         val index = salasEnMemoria.indexOfFirst { it.id == salaEditada.id }
                         if (index >= 0) {
                             salasEnMemoria[index] = salaEditada
@@ -809,11 +797,11 @@ class Activity_creacion : AppCompatActivity() {
 
                         actualizarBotonConSala(button, salaEditada)
                         button.tag = salaEditada
-                        Toast.makeText(this@Activity_creacion, "Sala actualizada", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@Activity_creacion, "Sala actualizada en memoria", Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
                     } catch (e: Exception) {
-                        Toast.makeText(this@Activity_creacion, "Error al actualizar sala", Toast.LENGTH_SHORT).show()
-                        Log.e("Firestore", "Error: ${e.message}", e)
+                        Toast.makeText(this@Activity_creacion, "Error al actualizar sala en memoria", Toast.LENGTH_SHORT).show()
+                        Log.e("Memoria", "Error: ${e.message}", e)
                     }
                 }
             }
@@ -839,139 +827,153 @@ class Activity_creacion : AppCompatActivity() {
         button.text = builder.toString()
     }
 
-
     suspend fun guardarDistribucion(
         pisoNombre: String,
         imagen: ByteArray?,
-        container: ViewGroup
+        container: ViewGroup,
+        sesion: UsuarioSesion?
     ) {
-
-        Log.d("DEBUG", "Valor cif = '${cif}' (length=${cif.length})")
-
-
-        if (cif.isBlank()) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(container.context, "Error: CIF de empresa no definido", Toast.LENGTH_SHORT).show()
-            }
-            return
-        }
-
         val db = FirebaseFirestore.getInstance()
 
         val salasGuardadas = (0 until container.childCount).mapNotNull { i ->
             val view = container.getChildAt(i)
             val sala = (view as? Button)?.tag as? Salas ?: return@mapNotNull null
-            mapOf(
-                "id" to sala.nombre,
-                "nombre" to sala.nombre,
-                "tamaño" to sala.tamaño,
-                "x" to view.x,
-                "y" to view.y,
-                "ancho" to view.width.toFloat(),
-                "alto" to view.height.toFloat(),
-                "extras" to sala.extras
+            sala.copy(
+                x = view.x,
+                y = view.y,
+                ancho = view.width.toFloat(),
+                alto = view.height.toFloat(),
+                id = sala.nombre
             )
         }
 
-        if (salasGuardadas.isEmpty()) {
+        if (salasGuardadas.isEmpty() || pisoNombre.isBlank()) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(container.context, "Debes colocar al menos una sala antes de guardar", Toast.LENGTH_SHORT).show()
+                Toast.makeText(container.context, "Debes colocar una sala y asignar nombre al piso", Toast.LENGTH_SHORT).show()
             }
             return
         }
 
-        if (pisoNombre.isBlank()) {
+        val empresaId = sesion?.empresa?.nombre
+        if (empresaId.isNullOrBlank()) {
             withContext(Dispatchers.Main) {
-                Snackbar.make(container, "Por favor, asigna un nombre al piso", Snackbar.LENGTH_LONG).show()
+                Toast.makeText(container.context, "Empresa en sesión no definida", Toast.LENGTH_SHORT).show()
             }
             return
         }
 
-        val encodedImage = imagen?.let { Base64.encodeToString(it, Base64.DEFAULT) }
-
-        val cifNormalizado = cif.trim().uppercase()
-        val empresaSnapshot = db.collection("empresas")
-            .whereEqualTo("cif", cifNormalizado)
-            .get()
-            .await()
-
-        if (empresaSnapshot.isEmpty) {
+        val empresaDoc = db.collection("empresas").document(empresaId).get().await()
+        if (!empresaDoc.exists()) {
             withContext(Dispatchers.Main) {
                 Toast.makeText(container.context, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
             }
             return
         }
 
-        val nombreEmpresa = empresaSnapshot.documents[0].getString("nombre") ?: return
+        // Subir la imagen a Firebase Storage y obtener URL
+        val urlImagen = imagen?.let {
+            subirImagenAFirebaseStorage(it, empresaId, pisoNombre)
+        }
 
         val pisoRef = db.collection("empresas")
-            .document(nombreEmpresa)
+            .document(empresaId)
             .collection("pisos")
             .document(pisoNombre)
 
-        val pisoData = mapOf(
+        val pisoData = mutableMapOf(
             "nombre" to pisoNombre,
-            "nombreEmpresa" to nombreEmpresa,
-            "imagenBase64" to encodedImage,
-            "salas" to salasGuardadas
+            "nombreEmpresa" to empresaId
         )
+        // Guardar URL en Firestore solo si no es nula
+        if (urlImagen != null) {
+            pisoData["imagenUrl"] = urlImagen
+        }
 
         pisoRef.set(pisoData).await()
 
+        val salasCollection = pisoRef.collection("salas")
+
+        for (sala in salasGuardadas) {
+            salasCollection.document(sala.nombre).set(sala).await()
+        }
+
         withContext(Dispatchers.Main) {
-            Toast.makeText(container.context, "Distribución guardada en Firestore", Toast.LENGTH_SHORT).show()
+            Toast.makeText(container.context, "Distribución guardada correctamente", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    suspend fun subirImagenAFirebaseStorage(
+        imagenBytes: ByteArray,
+        empresaId: String,
+        pisoNombre: String
+    ): String? {
+        val storageRef = storage.reference
+            .child("empresas")
+            .child(empresaId)
+            .child("pisos")
+            .child("$pisoNombre.png")
+
+        return try {
+            storageRef.putBytes(imagenBytes).await()
+            storageRef.downloadUrl.await().toString()
+        } catch (e: Exception) {
+            Log.e("FirebaseStorage", "Error subiendo imagen: ${e.message}")
+            null
         }
     }
 
     private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
         val db = Firebase.firestore
-        val empresaDoc = db.collection("empresas").document(empresaCif)
-        val pisosCollection = empresaDoc.collection("pisos")
 
         lifecycleScope.launch {
             try {
-                // Buscar piso por nombre
-                val querySnapshot = pisosCollection.whereEqualTo("nombre", nombrePiso).get().await()
-                val pisoDoc = querySnapshot.documents.firstOrNull()
+                // 1. Obtener empresa por CIF (como haces en guardarDistribucion)
+                val empresaSnapshot = db.collection("empresas")
+                    .whereEqualTo("cif", empresaCif.trim().uppercase())
+                    .get()
+                    .await()
 
-                if (pisoDoc != null) {
-                    val pisoId = pisoDoc.id
-
-                    // Eliminar salas asociadas a ese piso
-                    pisosCollection.document(pisoId).collection("salas").get().await().documents.forEach {
-                        it.reference.delete()
+                if (empresaSnapshot.isEmpty) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@Activity_creacion, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
                     }
+                    return@launch
+                }
 
-                    // Eliminar el piso
-                    pisosCollection.document(pisoId).delete().await()
+                val nombreEmpresa = empresaSnapshot.documents[0].getString("nombre") ?: return@launch
+                val empresaDoc = db.collection("empresas").document(nombreEmpresa)
+                val pisoRef = empresaDoc.collection("pisos").document(nombrePiso)
 
-                    // Actualizar preferencia local
-                    val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
-                    val pisoActual = prefNumeroPiso.getString("numero_piso", null)
+                // 2. Eliminar todas las salas del piso
+                val salasSnapshot = pisoRef.collection("salas").get().await()
+                for (doc in salasSnapshot.documents) {
+                    doc.reference.delete().await()
+                }
 
-                    if (pisoActual == nombrePiso) {
-                        val pisosRestantes = pisosCollection.get().await().documents
-                        val nombresPisos = pisosRestantes.mapNotNull { it.getString("nombre") }
+                // 3. Eliminar el piso
+                pisoRef.delete().await()
 
-                        prefNumeroPiso.edit().apply {
-                            if (nombresPisos.isNotEmpty()) {
-                                putString("numero_piso", nombresPisos.first())
-                            } else {
-                                remove("numero_piso")
-                            }
-                            apply()
+                // 4. Actualizar SharedPreferences
+                val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
+                val pisoActual = prefNumeroPiso.getString("numero_piso", null)
+
+                if (pisoActual == nombrePiso) {
+                    val pisosRestantes = empresaDoc.collection("pisos").get().await().documents
+                    val nombresPisos = pisosRestantes.mapNotNull { it.getString("nombre") }
+
+                    prefNumeroPiso.edit().apply {
+                        if (nombresPisos.isNotEmpty()) {
+                            putString("numero_piso", nombresPisos.first())
+                        } else {
+                            remove("numero_piso")
                         }
+                        apply()
                     }
+                }
 
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "Piso eliminado", Toast.LENGTH_SHORT).show()
-                        mostrarDialogoEliminarPisos()
-                    }
-
-                } else {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "Piso no encontrado", Toast.LENGTH_SHORT).show()
-                    }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_creacion, "Piso eliminado correctamente", Toast.LENGTH_SHORT).show()
+                    mostrarDialogoEliminarPisos()
                 }
 
             } catch (e: Exception) {
@@ -982,7 +984,6 @@ class Activity_creacion : AppCompatActivity() {
             }
         }
     }
-
 
     private fun mostrarDialogoEliminarPisos() {
         val db = Firebase.firestore
@@ -1056,7 +1057,7 @@ class Activity_creacion : AppCompatActivity() {
 
     private val getImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            imagen = contentResolver.openInputStream(uri)?.use { it.readBytes() } // convierte a byte array
+            imagen = contentResolver.openInputStream(uri)?.use { it.readBytes() } // Esto está bien
 
             Glide.with(this)
                 .load(uri)
