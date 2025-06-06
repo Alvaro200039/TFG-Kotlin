@@ -17,6 +17,13 @@ class Principal : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)
 
+        enableEdgeToEdge()
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.principalLayout)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
         btnEmpresa = findViewById(R.id.btnRegistroEmpresa)
         btnEmpleado = findViewById(R.id.btnRegistroEmpleado)
         btnLogin = findViewById(R.id.btnIniciarSesion)

@@ -1,16 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scrollView"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/registroempresaLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:padding="24dp">
+    tools:context=".RegistroEmpresa"
+    android:background="@drawable/wallpaper">
 
+    <!-- Toolbar transparente -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Campos de entrada -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/linearCampos"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="0dp"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
             android:id="@+id/tituloRegistro"
@@ -19,38 +38,102 @@
             android:text="Registro de Empresa"
             android:textSize="24sp"
             android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_gravity="center_horizontal"
             android:layout_marginBottom="24dp" />
 
-        <EditText
-            android:id="@+id/editNombreEmpresa"
+        <!-- Campo Nombre Empresa -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilNombreEmpresa"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nombre de la empresa"
-            android:inputType="textPersonName"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="220dp"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundMode="filled"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="clear_text"
+            app:errorEnabled="true">
 
-        <EditText
-            android:id="@+id/editDominio"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editNombreEmpresa"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@android:color/transparent"
+                android:hint="Nombre de la empresa"
+                android:inputType="textPersonName"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Campo Dominio -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilDominio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Dominio (ej: @empresa.com)"
-            android:inputType="textEmailAddress"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundMode="filled"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="clear_text"
+            app:errorEnabled="true">
 
-        <EditText
-            android:id="@+id/editCif"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editDominio"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@android:color/transparent"
+                android:hint="Dominio (ej: @empresa.com)"
+                android:inputType="textEmailAddress"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Campo CIF -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilCif"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="CIF (ej: A12345678)"
-            android:inputType="text"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="24dp"
+            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundMode="filled"
+            app:boxStrokeColor="@android:color/darker_gray"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:endIconMode="clear_text"
+            app:errorEnabled="true">
 
-        <Button
-            android:id="@+id/btnRegistrarEmpresa"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Registrar Empresa"
-            android:textColor="@android:color/white" />
-
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editCif"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@android:color/transparent"
+                android:hint="CIF (ej: A12345678)"
+                android:inputType="text"
+                android:paddingTop="16dp"
+                android:paddingBottom="0dp" />
+        </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
-</ScrollView>
+
+    <!-- Botón registrar empresa -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRegistrarEmpresa"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="24dp"
+        android:text="Registrar Empresa"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:backgroundTint="@android:color/holo_orange_dark"
+        app:cornerRadius="16dp"
+        app:layout_constraintTop_toBottomOf="@id/linearCampos"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

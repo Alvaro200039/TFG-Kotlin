@@ -20,7 +20,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.content.pm.PackageManager
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.widget.Button
@@ -39,9 +38,7 @@ import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 import java.util.concurrent.TimeUnit
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.crashlytics.internal.common.AppData
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.tasks.await
 
 class Activity_menu_creador : AppCompatActivity() {
