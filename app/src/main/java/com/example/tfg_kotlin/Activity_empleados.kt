@@ -68,6 +68,7 @@ class Activity_empleados : AppCompatActivity() {
     private var nombreUsuario: String = ""
     val db = FirebaseFirestore.getInstance()
     private lateinit var firestore: FirebaseFirestore
+    val sesion = Sesion.datos
 
 
 
@@ -84,7 +85,6 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         // Accedemos a datos desde Sesion.datos
-        val sesion = Sesion.datos
         if (sesion == null) {
             Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
             finish()
@@ -102,6 +102,7 @@ class Activity_empleados : AppCompatActivity() {
             finish()
             return
         }
+
 
         container = findViewById(R.id.contentLayout)
 
