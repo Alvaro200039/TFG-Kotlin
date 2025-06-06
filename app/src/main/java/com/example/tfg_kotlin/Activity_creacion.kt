@@ -106,10 +106,13 @@ class Activity_creacion : AppCompatActivity() {
         }
 
         // Inicializar UI con CIF obtenido de sesión
-        inicializarUIConCIF(cif)
+        inicializarUI()
     }
 
-    private fun inicializarUIConCIF(cif: String) {
+    private fun inicializarUI() {
+        // Obtener el nombre de la empresa desde la sesión
+        val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+
         // Toolbar
         val toolbar = findViewById<Toolbar>(R.id.my_toolbar)
         setSupportActionBar(toolbar)
@@ -122,9 +125,9 @@ class Activity_creacion : AppCompatActivity() {
             showChangeTitleDialog()
         }
 
-        // Obtener último piso desde Firestore usando empresaCif
+        // Cargar pisos desde Firestore
         firestore.collection("empresas")
-            .document(cif)
+            .document(nombreEmpresa)
             .collection("pisos")
             .orderBy("nombre", Query.Direction.ASCENDING)
             .get()
@@ -133,6 +136,12 @@ class Activity_creacion : AppCompatActivity() {
                 if (pisos.isNotEmpty()) {
                     pisoActual = pisos.last()
                     titleView.text = pisoActual?.nombre ?: "Sin nombre"
+
+                    // Guardar el nombre del piso si necesitas usarlo después
+                    getSharedPreferences("mi_preferencia", MODE_PRIVATE).edit().apply {
+                        putString("numero_piso", pisoActual?.nombre)
+                        apply()
+                    }
                 } else {
                     Toast.makeText(this, "No hay pisos creados", Toast.LENGTH_SHORT).show()
                 }
@@ -148,7 +157,7 @@ class Activity_creacion : AppCompatActivity() {
         val btnPisos = findViewById<LinearLayout>(R.id.btn_pisos)
 
         btnHoras.setOnClickListener { cargarFranjas() }
-        btnPisos.setOnClickListener { mostrarDialogoEliminarPisos() }
+        btnPisos.setOnClickListener { mostrarDialogoEliminarPisos(nombreEmpresa) }
         btnPlano.setOnClickListener { openGallery() }
         btnSala.setOnClickListener { addMovableButton() }
 
@@ -922,38 +931,24 @@ class Activity_creacion : AppCompatActivity() {
         }
     }
 
-    private fun eliminarPisoPorNombre(nombrePiso: String, empresaCif: String) {
+    private fun eliminarPisoPorNombre(nombrePiso: String, nombreEmpresa: String) {
         val db = Firebase.firestore
 
         lifecycleScope.launch {
             try {
-                // 1. Obtener empresa por CIF (como haces en guardarDistribucion)
-                val empresaSnapshot = db.collection("empresas")
-                    .whereEqualTo("cif", empresaCif.trim().uppercase())
-                    .get()
-                    .await()
-
-                if (empresaSnapshot.isEmpty) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
-                    }
-                    return@launch
-                }
-
-                val nombreEmpresa = empresaSnapshot.documents[0].getString("nombre") ?: return@launch
                 val empresaDoc = db.collection("empresas").document(nombreEmpresa)
                 val pisoRef = empresaDoc.collection("pisos").document(nombrePiso)
 
-                // 2. Eliminar todas las salas del piso
+                // 1. Eliminar todas las salas del piso
                 val salasSnapshot = pisoRef.collection("salas").get().await()
                 for (doc in salasSnapshot.documents) {
                     doc.reference.delete().await()
                 }
 
-                // 3. Eliminar el piso
+                // 2. Eliminar el piso
                 pisoRef.delete().await()
 
-                // 4. Actualizar SharedPreferences
+                // 3. Actualizar SharedPreferences
                 val prefNumeroPiso = getSharedPreferences("mi_preferencia", MODE_PRIVATE)
                 val pisoActual = prefNumeroPiso.getString("numero_piso", null)
 
@@ -973,7 +968,7 @@ class Activity_creacion : AppCompatActivity() {
 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@Activity_creacion, "Piso eliminado correctamente", Toast.LENGTH_SHORT).show()
-                    mostrarDialogoEliminarPisos()
+                    mostrarDialogoEliminarPisos(nombreEmpresa)
                 }
 
             } catch (e: Exception) {
@@ -985,9 +980,9 @@ class Activity_creacion : AppCompatActivity() {
         }
     }
 
-    private fun mostrarDialogoEliminarPisos() {
+    private fun mostrarDialogoEliminarPisos(nombreEmpresa: String) {
         val db = Firebase.firestore
-        val empresaDoc = db.collection("empresas").document(cif)
+        val empresaDoc = db.collection("empresas").document(nombreEmpresa)
         val pisosCollection = empresaDoc.collection("pisos")
 
         lifecycleScope.launch {
@@ -1002,7 +997,6 @@ class Activity_creacion : AppCompatActivity() {
                     return@launch
                 }
 
-                // Orden natural como antes
                 nombresPisos.sortWith { p1, p2 ->
                     val k1 = naturalOrderKey(p1)
                     val k2 = naturalOrderKey(p2)
@@ -1021,7 +1015,7 @@ class Activity_creacion : AppCompatActivity() {
                                 .setTitle("¿Eliminar '$pisoSeleccionado'?")
                                 .setMessage("Esta acción eliminará el piso y todas sus salas.")
                                 .setPositiveButton("Eliminar") { dialogConfirm, _ ->
-                                    eliminarPisoPorNombre(pisoSeleccionado, cif)
+                                    eliminarPisoPorNombre(pisoSeleccionado, nombreEmpresa)
                                     dialogConfirm.dismiss()
                                     dialogInterface.dismiss()
                                 }
