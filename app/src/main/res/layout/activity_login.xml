@@ -68,9 +68,9 @@
             app:boxStrokeColor="@android:color/darker_gray"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
-            app:cursorColor="@android:color/darker_gray"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
+            app:cursorColor="@android:color/darker_gray"
             app:hintTextColor="@android:color/darker_gray">
 
             <com.google.android.material.textfield.TextInputEditText
