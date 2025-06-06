@@ -50,7 +50,7 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
 import android.util.Base64
-
+import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 
 
 class Activity_empleados : AppCompatActivity() {
@@ -83,17 +83,22 @@ class Activity_empleados : AppCompatActivity() {
             insets
         }
 
-        idUsuario = intent.getStringExtra("idUsuario") ?: "-1"
-        if (idUsuario == "-1" || idUsuario.isEmpty()) {
-            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+        // Accedemos a datos desde Sesion.datos
+        val sesion = Sesion.datos
+        if (sesion == null) {
+            Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
+        val cifUsuario = sesion.empresa.cif
+        val correoUsuario = sesion.usuario.email
+        val idUsuario = sesion.usuario.id
+        var nombreUsuario = sesion.usuario.nombre
 
-        nombreUsuario = intent.getStringExtra("nombreUsuario") ?: ""
-        if (nombreUsuario.isEmpty()) {
-            Toast.makeText(this, "Usuario inexistente", Toast.LENGTH_SHORT).show()
+
+        if (idUsuario== null || cifUsuario.isEmpty() || correoUsuario.isEmpty() || nombreUsuario.isEmpty()) {
+            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
