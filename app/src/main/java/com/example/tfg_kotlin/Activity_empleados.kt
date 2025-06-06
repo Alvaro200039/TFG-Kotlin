@@ -97,7 +97,7 @@ class Activity_empleados : AppCompatActivity() {
         var nombreUsuario = sesion.usuario.nombre
 
 
-        if (idUsuario== null || cifUsuario.isEmpty() || correoUsuario.isEmpty() || nombreUsuario.isEmpty()) {
+        if (idUsuario === null || correoUsuario.isEmpty() || cifUsuario.isEmpty()) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             finish()
             return
