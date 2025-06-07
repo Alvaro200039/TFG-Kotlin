@@ -6,6 +6,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
@@ -48,6 +49,7 @@ import kotlin.collections.component2
 import kotlin.collections.iterator
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
 
 
 class Activity_empleados : AppCompatActivity() {
@@ -61,10 +63,7 @@ class Activity_empleados : AppCompatActivity() {
     private lateinit var textViewHora: TextView
     private var snackbarActivo: Snackbar? = null
     private lateinit var listaPisos: List<Piso>
-    private var idUsuario: String = ""
-    private var nombreUsuario: String = ""
     val db = FirebaseFirestore.getInstance()
-    private lateinit var firestore: FirebaseFirestore
     val sesion = Sesion.datos
 
 
@@ -88,10 +87,16 @@ class Activity_empleados : AppCompatActivity() {
             return
         }
 
+        // Accedemos a datos desde Sesion.datos
+        if (sesion == null) {
+            Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         val cifUsuario = sesion.empresa.cif
         val correoUsuario = sesion.usuario.email
         val idUsuario = sesion.usuario.id
-        var nombreUsuario = sesion.usuario.nombre
 
 
         if (idUsuario === null || correoUsuario.isEmpty() || cifUsuario.isEmpty()) {
@@ -128,7 +133,7 @@ class Activity_empleados : AppCompatActivity() {
             .collection("pisos")
             .get()
             .addOnSuccessListener { documents ->
-                listaPisos = documents.mapNotNull { it.toObject(Piso::class.java) }
+                listaPisos = documents.mapNotNull { it.toObject(Piso::class.java).apply { id = it.id } }
                 val nombresPisos = listaPisos.map { it.nombre }
                 val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresPisos)
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -143,11 +148,10 @@ class Activity_empleados : AppCompatActivity() {
                 val piso = listaPisos[position]
                 pisoSeleccionado = piso.id
                 val nombrePiso = piso.nombre
-                val empresaId: String = piso.empresaCif
 
-                cargarSalas(nombrePiso, empresaId)
+                cargarSalas()
                 lifecycleScope.launch {
-                    cargarImagenFondo(nombrePiso, empresaId)
+                    cargarImagenFondo(nombrePiso)
                 }
             }
 
@@ -233,83 +237,82 @@ class Activity_empleados : AppCompatActivity() {
         }
     }
 
-    private fun cargarSalas(nombrePiso: String, empresaId: String) {
+    private fun cargarSalas() {
         container.removeAllViews()
 
-        val docRef = db.collection("empresas")
+        val empresaId = sesion?.empresa?.nombre ?: ""
+        val pisoId = pisoSeleccionado.toString()
+
+        // Referencia a la subcolección salas dentro del piso
+        val salasRef = db.collection("empresas")
             .document(empresaId)
             .collection("pisos")
-            .document(nombrePiso)
+            .document(pisoId)
+            .collection("salas")
 
-        docRef.get()
-            .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val salasMap = document.get("salas") as? Map<String, Map<String, Any>>
-
-                    if (salasMap != null) {
-                        val salas = salasMap.mapNotNull { entry ->
-                            val datos = entry.value
-                            try {
-                                Salas(
-                                    id = entry.key,
-                                    nombre = datos["nombre"] as? String ?: "",
-                                    tamaño = datos["tamaño"] as? String ?: "",
-                                    x = (datos["x"] as? Long ?: 0L).toFloat(),
-                                    y = (datos["y"] as? Long ?: 0L).toFloat(),
-                                    ancho = (datos["ancho"] as? Long ?: 100L).toFloat(),
-                                    alto = (datos["alto"] as? Long ?: 100L).toFloat(),
-                                    extras = datos["extras"] as? List<String> ?: emptyList()
-                                )
-                            } catch (e: Exception) {
-                                null
-                            }
+        salasRef.get()
+            .addOnSuccessListener { querySnapshot ->
+                if (!querySnapshot.isEmpty) {
+                    val salas = querySnapshot.documents.mapNotNull { doc ->
+                        try {
+                            val datos = doc.data ?: return@mapNotNull null
+                            Salas(
+                                id = doc.id,
+                                nombre = datos["nombre"] as? String ?: "",
+                                tamaño = datos["tamaño"] as? String ?: "",
+                                x = (datos["x"] as? Number)?.toFloat() ?: 0f,
+                                y = (datos["y"] as? Number)?.toFloat() ?: 0f,
+                                ancho = (datos["ancho"] as? Number)?.toFloat() ?: 100f,
+                                alto = (datos["alto"] as? Number)?.toFloat() ?: 100f,
+                                extras = datos["extras"] as? List<String> ?: emptyList()
+                            )
+                        } catch (e: Exception) {
+                            null
                         }
+                    }
 
-                        for (sala in salas) {
-                            val salaButton = Button(this@Activity_empleados).apply {
-                                text = formatearTextoSala(sala)
-                                tag = sala
+                    for (sala in salas) {
+                        val salaButton = Button(this@Activity_empleados).apply {
+                            text = formatearTextoSala(sala)
+                            tag = sala
 
-                                setOnClickListener {
-                                    if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
-                                        snackbarActivo?.dismiss()
-                                        snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
-                                            .setAction("Seleccionar fecha") { mostrarDialogoFecha() }
-                                        snackbarActivo?.show()
-                                    } else {
-                                        mostrarDialogoDetallesSala(
-                                            sala,
-                                            pisoNombre = nombrePiso
-                                        )
-                                    }
-                                }
-
-                                background = GradientDrawable().apply {
-                                    setColor(Color.GREEN)
-                                    cornerRadius = 50f
-                                }
-
-                                layoutParams = ConstraintLayout.LayoutParams(
-                                    sala.ancho.toInt(),
-                                    sala.alto.toInt()
-                                ).apply {
-                                    leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
-                                    topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-                                    setMargins(sala.x.toInt(), sala.y.toInt(), 0, 0)
+                            setOnClickListener {
+                                if (fechaSeleccionada.isEmpty() || horaSeleccionada.isEmpty()) {
+                                    snackbarActivo = Snackbar.make(container, "Primero selecciona una fecha", Snackbar.LENGTH_LONG)
+                                        .setAction("Seleccionar fecha") { mostrarDialogoFecha() }
+                                    snackbarActivo?.show()
+                                } else {
+                                    mostrarDialogoDetallesSala(
+                                        sala,
+                                        pisoNombre = pisoId
+                                    )
                                 }
                             }
 
-                            container.addView(salaButton)
+                            background = GradientDrawable().apply {
+                                setColor(Color.GRAY)
+                                cornerRadius = 50f
+                            }
+                            snackbarActivo?.dismiss()
+
+                            layoutParams = ConstraintLayout.LayoutParams(
+                                sala.ancho.toInt(),
+                                sala.alto.toInt()
+                            ).apply {
+                                leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+                                topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                                setMargins(sala.x.toInt(), sala.y.toInt(), 0, 0)
+                            }
                         }
 
-                        if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
-                            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
-                        }
-                    } else {
-                        Toast.makeText(this, "No hay salas definidas para este piso", Toast.LENGTH_SHORT).show()
+                        container.addView(salaButton)
+                    }
+
+                    if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
+                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
                     }
                 } else {
-                    Toast.makeText(this, "Piso no encontrado en la base de datos", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "No hay salas definidas para este piso", Toast.LENGTH_SHORT).show()
                 }
             }
             .addOnFailureListener { e ->
@@ -317,16 +320,16 @@ class Activity_empleados : AppCompatActivity() {
             }
     }
 
-
-    private fun cargarImagenFondo(nombrePiso: String, empresaId: String) {
+    private fun cargarImagenFondo(nombrePiso: String) {
         val contentLayout = findViewById<ConstraintLayout>(R.id.contentLayout)
+
+        val empresaId = sesion?.empresa?.nombre ?: ""
 
         if (empresaId.isEmpty()) {
             contentLayout.setBackgroundResource(R.drawable.wallpaper)
+            Toast.makeText(this, "no se carga la imagen", Toast.LENGTH_SHORT).show()
             return
         }
-
-        val db = FirebaseFirestore.getInstance()
 
         db.collection("empresas")
             .document(empresaId)
@@ -407,7 +410,7 @@ class Activity_empleados : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val snapshot = firestore.collection("empresas")
+                val snapshot = db.collection("empresas")
                     .document(empresaId)
                     .collection("reservas")
                     .get()
@@ -460,7 +463,7 @@ class Activity_empleados : AppCompatActivity() {
                                             lifecycleScope.launch {
                                                 try {
                                                     reserva.id?.let { idDoc ->
-                                                        firestore.collection("empresas")
+                                                        db.collection("empresas")
                                                             .document(empresaId)
                                                             .collection("reservas")
                                                             .document(idDoc)
@@ -532,7 +535,7 @@ class Activity_empleados : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val snapshot = firestore.collection("empresas")
+                val snapshot = db.collection("empresas")
                     .document(empresaId)
                     .collection("reservas")
                     .get()
@@ -553,7 +556,7 @@ class Activity_empleados : AppCompatActivity() {
 
                 reservasAntiguas.forEach { reserva ->
                     reserva.id?.let { idDoc ->
-                        firestore.collection("empresas")
+                        db.collection("empresas")
                             .document(empresaId)
                             .collection("reservas")
                             .document(idDoc)
@@ -582,13 +585,13 @@ class Activity_empleados : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val franjasOriginales = withContext(Dispatchers.IO) {
-                    val snapshot = firestore.collection("empresas")
+                    val snapshot = db.collection("empresas")
                         .document(empresaId)
                         .collection("franjasHorarias")
                         .get()
                         .await()
 
-                    snapshot.documents.mapNotNull { it.getString("hora") }
+                    snapshot.documents.map { it.id } // ✅ usamos el ID como hora
                 }
 
                 if (franjasOriginales.isEmpty()) {
@@ -605,7 +608,7 @@ class Activity_empleados : AppCompatActivity() {
                 val horaActual = String.format("%02d:%02d", calendario.get(Calendar.HOUR_OF_DAY), calendario.get(Calendar.MINUTE))
 
                 val horasDisponibles = if (fechaSeleccionada == hoy) {
-                    franjasOriginales.filter { it >= horaActual }
+                    franjasOriginales.filter { it.split("-").first() >= horaActual }
                 } else {
                     franjasOriginales
                 }
@@ -637,7 +640,7 @@ class Activity_empleados : AppCompatActivity() {
 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_empleados, "Error al cargar franjas horarias.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@Activity_empleados, "Error al cargar franjas horarias: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
                 e.printStackTrace()
             }
@@ -663,13 +666,13 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun verificarDisponibilidad(fechaHora: String) {
         val db = FirebaseFirestore.getInstance()
-        val empresaId = intent.getStringExtra("empresaId") ?: ""
+        val nombreEmpresa = sesion?.empresa?.nombre ?: ""
 
         lifecycleScope.launch {
             try {
-                // 1. Obtener reservas para empresa y fechaHora
+                // 1. Obtener reservas de la empresa para esa fechaHora
                 val reservasSnapshot = withContext(Dispatchers.IO) {
-                    db.collection("empresas").document(empresaId)
+                    db.collection("empresas").document(nombreEmpresa)
                         .collection("reservas")
                         .whereEqualTo("fechaHora", fechaHora)
                         .get()
@@ -677,14 +680,12 @@ class Activity_empleados : AppCompatActivity() {
                 }
 
                 val reservas = reservasSnapshot.documents.mapNotNull { doc ->
-                    val idSala = doc.getString("idSala") ?: return@mapNotNull null
-                    val piso = doc.getString("piso") ?: return@mapNotNull null
-                    Pair(idSala.trim(), piso.trim())
+                    doc.toObject(Reserva::class.java)
                 }
 
-                // 2. Obtener pisos y sus salas para crear mapa salaId -> pisoNombre
+                // 2. Crear mapa de salaId -> pisoNombre recorriendo pisos y sus salas
                 val pisosSnapshot = withContext(Dispatchers.IO) {
-                    db.collection("empresas").document(empresaId)
+                    db.collection("empresas").document(nombreEmpresa)
                         .collection("pisos")
                         .get()
                         .await()
@@ -692,30 +693,29 @@ class Activity_empleados : AppCompatActivity() {
 
                 val mapaSalaAPiso = mutableMapOf<String, String>()
 
-                pisosSnapshot.documents.forEach { pisoDoc ->
-                    val pisoNombre = pisoDoc.getString("nombre") ?: ""
-                    val salasCollection = pisoDoc.reference.collection("salas")
-
-                    runBlocking {
-                        val salasSnapshot = salasCollection.get().await()
-                        salasSnapshot.documents.forEach { salaDoc ->
-                            val salaId = salaDoc.id
-                            mapaSalaAPiso[salaId] = pisoNombre
-                        }
+                for (pisoDoc in pisosSnapshot.documents) {
+                    val pisoNombre = pisoDoc.getString("nombre") ?: continue
+                    val salasSnapshot = pisoDoc.reference.collection("salas").get().await()
+                    for (salaDoc in salasSnapshot.documents) {
+                        val salaId = salaDoc.id.trim()
+                        mapaSalaAPiso[salaId] = pisoNombre.trim()
                     }
                 }
 
-                // 3. Recorrer vistas y pintar según disponibilidad
+                // 3. Recorrer botones y actualizar su color según disponibilidad
                 for (i in 0 until container.childCount) {
                     val view = container.getChildAt(i)
                     if (view is Button) {
                         val sala = view.tag as? Salas ?: continue
+                        val salaId = sala.id?.trim() ?: continue
+                        val pisoDeSala = mapaSalaAPiso[salaId] ?: continue
 
-                        val pisoDeSala = mapaSalaAPiso[sala.id] ?: ""
+                        val ocupada = reservas.any {
+                            val match = it.idSala.trim().equals(salaId.trim(), ignoreCase = true) &&
+                                    it.piso.trim().equals(pisoDeSala.trim(), ignoreCase = true)
 
-                        val ocupada = reservas.any { (idSalaRes, pisoRes) ->
-                            idSalaRes.equals(sala.id, ignoreCase = true) &&
-                                    pisoRes.equals(pisoDeSala, ignoreCase = true)
+                            Log.d("ReservaCheck", "Comparando Reserva: idSala=${it.idSala}, piso=${it.piso} con Botón: salaId=$salaId, pisoDeSala=$pisoDeSala => $match")
+                            match
                         }
 
                         val color = if (ocupada) Color.RED else Color.GREEN
@@ -734,30 +734,27 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun mostrarDialogoDetallesSala(sala: Salas, pisoNombre: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-        val empresaId = intent.getStringExtra("empresaId") ?: ""
+        val nombreEmpresa = sesion?.empresa?.nombre ?: ""
+        val nombreUsuario = sesion?.usuario?.nombre ?: ""
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val idUsuario = currentUser?.uid ?: ""
 
-        if (idUsuario == "-1") {
+        if (nombreUsuario == "") {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             return
         }
 
         lifecycleScope.launch {
             try {
-                // 1. Obtener documento del piso (para mostrar nombre o confirmar existencia)
-                val pisoSnapshot = firestore.collection("empresas").document(empresaId)
-                    .collection("pisos")
-                    .document(pisoNombre)
-                    .get()
-                    .await()
+                val pisoSnapshot = db.collection("empresas").document(nombreEmpresa)
+                    .collection("pisos").document(pisoNombre).get().await()
 
                 val pisoNombreReal = pisoSnapshot.getString("nombre") ?: pisoNombre
 
-                // 2. Obtener reservas para esa empresa y fechaHora
-                val reservasSnapshot = firestore.collection("empresas").document(empresaId)
+                val reservasSnapshot = db.collection("empresas").document(nombreEmpresa)
                     .collection("reservas")
                     .whereEqualTo("fechaHora", fechaHora)
-                    .get()
-                    .await()
+                    .get().await()
 
                 val reservas = reservasSnapshot.documents.map { doc ->
                     Reserva(
@@ -766,24 +763,17 @@ class Activity_empleados : AppCompatActivity() {
                         idSala = doc.getString("idSala") ?: "",
                         fechaHora = doc.getString("fechaHora") ?: "",
                         nombreUsuario = doc.getString("nombreUsuario") ?: "",
-                        idusuario = doc.getString("idusuario") ?: "",
+                        idusuario = doc.get("idusuario")?.toString() ?: "",
                         piso = doc.getString("piso") ?: ""
                     )
-                }.toMutableList()
+                }
 
-                // 3. Buscar reserva existente para esta sala, piso y fechaHora (comparando idSala)
+                val reservaUsuarioMismaHora = reservas.find { it.idusuario == idUsuario }
                 val reservaExistente = reservas.find {
                     it.idSala.trim().equals(sala.id?.trim(), ignoreCase = true) &&
-                            it.piso.trim().equals(pisoNombreReal.trim(), ignoreCase = true) &&
-                            it.fechaHora == fechaHora
+                            it.piso.trim().equals(pisoNombreReal.trim(), ignoreCase = true)
                 }
 
-                var nombreReservaPor: String? = null
-                if (reservaExistente != null && reservaExistente.idusuario != idUsuario.toString()) {
-                    nombreReservaPor = reservaExistente.nombreUsuario
-                }
-
-                // 4. Construir diálogo con detalles
                 val dialogView = layoutInflater.inflate(R.layout.dialog_detalles_sala, null)
                 dialogView.findViewById<TextView>(R.id.tvValorPiso).text = pisoNombreReal
                 dialogView.findViewById<TextView>(R.id.tvValorTamano).text = sala.tamaño
@@ -798,48 +788,55 @@ class Activity_empleados : AppCompatActivity() {
                     .setNegativeButton("Cerrar") { dialog, _ -> dialog.dismiss() }
 
                 when {
-                    reservaExistente != null && reservaExistente.idusuario == idUsuario.toString() -> {
+                    // Puedes cancelar tu propia reserva
+                    reservaExistente != null && reservaExistente.idusuario == idUsuario -> {
                         builder.setPositiveButton("Cancelar reserva") { _, _ ->
                             lifecycleScope.launch {
                                 try {
-                                    firestore.collection("empresas").document(empresaId)
-                                        .collection("reservas")
-                                        .document(reservaExistente.id.toString())
-                                        .delete()
-                                        .await()
-
+                                    db.collection("empresas").document(nombreEmpresa)
+                                        .collection("reservas").document(reservaExistente.id.toString())
+                                        .delete().await()
                                     verificarDisponibilidad(fechaHora)
-                                    Toast.makeText(this@Activity_empleados, "Reserva cancelada para ${sala.nombre}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this@Activity_empleados, "Reserva cancelada", Toast.LENGTH_SHORT).show()
                                 } catch (e: Exception) {
-                                    Toast.makeText(this@Activity_empleados, "Error al cancelar reserva: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this@Activity_empleados, "Error al cancelar: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
                     }
+
+                    // Ya tienes una reserva a esa hora, en otra sala
+                    reservaUsuarioMismaHora != null -> {
+                        builder.setPositiveButton("Ya tienes una reserva", null)
+                    }
+
+                    // No hay ninguna reserva para esta sala → puedes reservar
                     reservaExistente == null -> {
                         builder.setPositiveButton("Reservar") { _, _ ->
-                            reservarSala(sala.toString())
+                            reservarSala(sala, pisoNombreReal)
                         }
                     }
-                    else -> {
+
+                    // Sala reservada por otro usuario → no se puede reservar ni cancelar
+                    reservaExistente?.idusuario != idUsuario -> {
                         builder.setPositiveButton("Reservada", null)
                     }
                 }
+
 
                 val dialog = builder.create()
                 dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
 
                 dialog.setOnShowListener {
-                    val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                    val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                    val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    val negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                    positive?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                    negative?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
 
-                    positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
-                    negativeButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
-
-                    if (nombreReservaPor != null) {
-                        positiveButton?.isEnabled = false
-                        positiveButton?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.grey))
-                        Toast.makeText(this@Activity_empleados, "Sala reservada por $nombreReservaPor a esta hora", Toast.LENGTH_SHORT).show()
+                    if (reservaExistente != null && reservaExistente.idusuario != idUsuario) {
+                        positive?.isEnabled = false
+                        positive?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.grey))
+                        Toast.makeText(this@Activity_empleados, "Sala reservada por ${reservaExistente.nombreUsuario}", Toast.LENGTH_SHORT).show()
                     }
                 }
 
@@ -853,178 +850,78 @@ class Activity_empleados : AppCompatActivity() {
         }
     }
 
-    private fun reservarSala(nombreSala: String) {
+    private fun reservarSala(sala: Salas, pisoNombreReal: String) {
+        val sesion = Sesion.datos
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
-
+        val nombreUsuario = sesion?.usuario?.nombre ?: ""
         val nombreEmpresa = sesion?.empresa?.nombre ?: ""
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val idUsuario = currentUser?.uid ?: ""
 
-        if (idUsuario == "-1" || idUsuario.isEmpty()) {
-            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (nombreEmpresa.isEmpty()) {
-            Toast.makeText(this, "Empresa no seleccionada", Toast.LENGTH_SHORT).show()
+        if (nombreUsuario.isEmpty() || nombreEmpresa.isEmpty()) {
+            Toast.makeText(this, "Información de usuario o empresa incompleta", Toast.LENGTH_SHORT).show()
             return
         }
 
         lifecycleScope.launch {
             try {
-                // Obtener documento del piso dentro de la empresa
-                val pisoDocRef = firestore.collection("empresas")
-                    .document(nombreEmpresa)
-                    .collection("pisos")
-                    .document(pisoSeleccionado.toString()) // pisoSeleccionado = nombre del piso
 
-                val pisoDoc = pisoDocRef.get().await()
-                if (!pisoDoc.exists()) {
-                    Toast.makeText(this@Activity_empleados, "No se encontró el piso seleccionado", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
-                // Obtener el mapa de salas dentro del documento piso
-                val salasMap = pisoDoc.get("salas") as? Map<String, Map<String, Any>>
-                if (salasMap == null) {
-                    Toast.makeText(this@Activity_empleados, "No se encontró el mapa de salas", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
-                // Buscar la sala dentro del mapa por nombre (buscar valor con nombre == nombreSala)
-                val salaEntry = salasMap.entries.find { entry ->
-                    val salaData = entry.value
-                    (salaData["nombre"] as? String)?.equals(nombreSala, ignoreCase = true) ?: false
-                }
-
-                if (salaEntry == null) {
-                    Toast.makeText(this@Activity_empleados, "No se encontró la sala para reservar", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
-                val idSala = salaEntry.key // La clave en el mapa es el idSala
-
-                // Obtener reservas para la empresa y fechaHora
-                val reservasSnapshot = firestore.collection("empresas")
+                val reservasSnapshot = db.collection("empresas")
                     .document(nombreEmpresa)
                     .collection("reservas")
                     .whereEqualTo("fechaHora", fechaHora)
-                    .get()
-                    .await()
+                    .whereEqualTo("idusuario", idUsuario)
+                    .get().await()
 
-                val reservas = reservasSnapshot.documents.map { doc ->
-                    mapOf(
-                        "nombreSala" to (doc.getString("nombreSala") ?: ""),
-                        "piso" to (doc.getString("piso") ?: ""),
-                        "idusuario" to (doc.getString("idusuario") ?: ""),
-                        "nombreUsuario" to (doc.getString("nombreUsuario") ?: ""),
-                        "id" to doc.id
-                    )
-                }
-
-                // Buscar reserva existente para esta sala y piso
-                val reservaExistente = reservas.find {
-                    it["nombreSala"]!!.equals(nombreSala.trim(), ignoreCase = true) &&
-                            it["piso"]!!.equals(pisoSeleccionado?.trim(), ignoreCase = true)
-                }
-
-                // Buscar reserva del usuario a esa hora (cualquier sala)
-                val reservaUsuarioMismaHora = reservas.find {
-                    it["idusuario"] == idUsuario
-                }
-
-                if (reservaExistente != null) {
-                    val nombreReserva = reservaExistente["nombreUsuario"] ?: ""
-
-                    if (reservaExistente["idusuario"] == idUsuario) {
-                        // Diálogo para cancelar reserva propia
-                        val dialog = AlertDialog.Builder(this@Activity_empleados)
-                            .setTitle("Cancelar reserva")
-                            .setMessage("'$nombreUsuario', ¿Deseas cancelar tu reserva para '$nombreSala' en '$fechaHora'?")
-                            .setPositiveButton("Sí") { _, _ ->
-                                lifecycleScope.launch {
-                                    try {
-                                        firestore.collection("empresas")
-                                            .document(nombreEmpresa)
-                                            .collection("reservas")
-                                            .document(reservaExistente["id"] as String)
-                                            .delete()
-                                            .await()
-                                        verificarDisponibilidad(fechaHora)
-                                        Toast.makeText(this@Activity_empleados, "Reserva cancelada para $nombreSala", Toast.LENGTH_SHORT).show()
-                                    } catch (e: Exception) {
-                                        Toast.makeText(this@Activity_empleados, "Error al cancelar reserva: ${e.message}", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            }
-                            .setNegativeButton("No", null)
-                            .create()
-
-                        dialog.setOnShowListener {
-                            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
-                            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
-                        }
-                        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                        dialog.show()
-                    } else {
+                if (!reservasSnapshot.isEmpty) {
+                    withContext(Dispatchers.Main) {
+                        val reserva = reservasSnapshot.documents[0]
                         Toast.makeText(
                             this@Activity_empleados,
-                            "Sala ya reservada por $nombreReserva en este piso",
+                            "Ya tienes una reserva a esta hora en: ${reserva.getString("nombreSala")} ${reserva.getString("piso")}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                     return@launch
                 }
 
-                if (reservaUsuarioMismaHora != null) {
-                    Toast.makeText(
-                        this@Activity_empleados,
-                        "Ya tienes una reserva a esa hora en '${reservaUsuarioMismaHora["nombreSala"]}' (${reservaUsuarioMismaHora["piso"]})",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@launch
+                val reservas = reservasSnapshot.documents.map { doc ->
+                    Reserva(
+                        id = doc.id,
+                        nombreSala = doc.getString("nombreSala") ?: "",
+                        idSala = doc.getString("idSala") ?: "",
+                        fechaHora = doc.getString("fechaHora") ?: "",
+                        nombreUsuario = doc.getString("nombreUsuario") ?: "",
+                        idusuario = doc.get("idusuario")?.toString() ?: "",
+                        piso = doc.getString("piso") ?: ""
+                    )
                 }
 
-                // Confirmar reserva
-                val dialog = AlertDialog.Builder(this@Activity_empleados)
-                    .setTitle("Confirmar reserva")
-                    .setMessage("¿Deseas reservar '$nombreSala' en el '$pisoSeleccionado' para '$fechaHora'?")
-                    .setPositiveButton("Sí") { _, _ ->
-                        lifecycleScope.launch {
-                            try {
-                                val reservaMap = hashMapOf(
-                                    "nombreSala" to nombreSala,
-                                    "fechaHora" to fechaHora,
-                                    "nombreUsuario" to nombreUsuario,
-                                    "idusuario" to idUsuario,
-                                    "piso" to pisoSeleccionado,
-                                    "idSala" to idSala
-                                )
-                                firestore.collection("empresas")
-                                    .document(nombreEmpresa)
-                                    .collection("reservas")
-                                    .add(reservaMap)
-                                    .await()
+                // Si no hay conflicto, hacer reserva
+                val nuevaReserva = hashMapOf(
+                    "nombreSala" to sala.nombre,
+                    "idSala" to (sala.id ?: ""),
+                    "fechaHora" to fechaHora,
+                    "nombreUsuario" to nombreUsuario,
+                    "idusuario" to idUsuario,
+                    "piso" to pisoNombreReal
+                )
 
-                                verificarDisponibilidad(fechaHora)
-                                Toast.makeText(this@Activity_empleados, "Reserva realizada para $nombreSala en el $pisoSeleccionado", Toast.LENGTH_SHORT).show()
-                            } catch (e: Exception) {
-                                Toast.makeText(this@Activity_empleados, "Error al realizar reserva: ${e.message}", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-                    .setNegativeButton("No", null)
-                    .create()
+                db.collection("empresas").document(nombreEmpresa)
+                    .collection("reservas")
+                    .add(nuevaReserva)
+                    .await()
 
-                dialog.setOnShowListener {
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
-                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
+                withContext(Dispatchers.Main) {
+                    verificarDisponibilidad(fechaHora)
+                    Toast.makeText(this@Activity_empleados, "Reserva confirmada", Toast.LENGTH_SHORT).show()
                 }
-                dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                dialog.show()
 
             } catch (e: Exception) {
-                Toast.makeText(this@Activity_empleados, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@Activity_empleados, "Error al reservar: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
-
 }

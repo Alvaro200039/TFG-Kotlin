@@ -31,6 +31,8 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.tfg_kotlin.Activity_empleados
+import com.example.tfg_kotlin.BBDD_Global.Entities.Empresa
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
@@ -40,6 +42,9 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
 
 class Activity_menu_creador : AppCompatActivity() {
 
@@ -121,21 +126,36 @@ class Activity_menu_creador : AppCompatActivity() {
         findViewById<Button>(R.id.btnNuevaReserva).setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    val empresaSnapshot = firestore.collection("empresas")
-                        .whereEqualTo("cif", cifUsuario)
+                    val empresaId = sesion.empresa.nombre
+
+                    if (empresaId.isEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@Activity_menu_creador, "Empresa no identificada", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+
+                    // Obtener documento empresa
+                    val empresaDoc = firestore.collection("empresas")
+                        .document(empresaId)
                         .get()
                         .await()
 
-                    if (empresaSnapshot.isEmpty) {
+                    if (!empresaDoc.exists()) {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(this@Activity_menu_creador, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
                         }
                         return@launch
                     }
 
-                    val idEmpresa = empresaSnapshot.documents[0].id
+                    // Cargar empresa en sesión si hace falta
+                    val empresa = empresaDoc.toObject(Empresa::class.java)
+                    empresa?.nombre = empresaDoc.id
+                    empresa?.let { sesion.empresa = it }
+
+                    // Obtener pisos de la empresa
                     val pisosSnapshot = firestore.collection("empresas")
-                        .document(idEmpresa)
+                        .document(empresaId)
                         .collection("pisos")
                         .get()
                         .await()
@@ -145,16 +165,10 @@ class Activity_menu_creador : AppCompatActivity() {
                     }
 
                     if (pisos.isNotEmpty()) {
-                        val pisoSeleccionado = pisos.last()
-                        val nombrePiso = pisoSeleccionado.nombre
+                        sesion?.pisos = listOf(pisos.last()) // o sesion?.pisos = pisos si quieres todos
 
                         withContext(Dispatchers.Main) {
-                            val intent = Intent(this@Activity_menu_creador, Activity_empleados::class.java)
-                            intent.putExtra("nombre_piso", nombrePiso)
-                            // PASAMOS LOS DATOS DESDE SESION, NO APPDATA
-                            intent.putExtra("nombreUsuario", nombreUsuario)
-                            intent.putExtra("idUsuario", idUsuario)
-                            startActivity(intent)
+                            startActivity(Intent(this@Activity_menu_creador, Activity_empleados::class.java))
                         }
                     } else {
                         withContext(Dispatchers.Main) {
@@ -166,6 +180,7 @@ class Activity_menu_creador : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(this@Activity_menu_creador, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
+                    e.printStackTrace()
                 }
             }
         }
@@ -270,22 +285,30 @@ class Activity_menu_creador : AppCompatActivity() {
 
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
-
+        val sesion = Sesion.datos
+        val db = FirebaseFirestore.getInstance()
+        val nombreEmpresa = sesion?.empresa?.nombre
         val uidUsuario = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        if (uidUsuario.isEmpty()) {
-            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+        if (uidUsuario.isBlank() || nombreEmpresa.isNullOrBlank()) {
+            Toast.makeText(this, "Usuario o empresa no identificado", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val empresaId = nombreEmpresa
+
         lifecycleScope.launch {
             try {
-                val snapshot = firestore.collection("reservas").get().await()
+                val snapshot = db.collection("empresas")
+                    .document(empresaId)
+                    .collection("reservas")
+                    .get()
+                    .await()
+
                 val reservas = snapshot.documents.mapNotNull { doc ->
                     doc.toObject(Reserva::class.java)?.copy(id = doc.id)
                 }
 
-                // Filtrar por UID Firebase (String)
                 val reservasUsuario = reservas.filter { it.idusuario == uidUsuario }
 
                 if (reservasUsuario.isEmpty()) {
@@ -304,7 +327,6 @@ class Activity_menu_creador : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
                     val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
-
                     lateinit var dialog: AlertDialog
 
                     for ((piso, lista) in reservasPorPiso) {
@@ -330,13 +352,15 @@ class Activity_menu_creador : AppCompatActivity() {
                                             lifecycleScope.launch {
                                                 try {
                                                     reserva.id?.let { idDoc ->
-                                                        firestore.collection("reservas")
+                                                        db.collection("empresas")
+                                                            .document(empresaId)
+                                                            .collection("reservas")
                                                             .document(idDoc)
                                                             .delete()
                                                             .await()
                                                     }
                                                     dialog.dismiss()
-                                                    mostrarDialogoReservas() // Recargar
+                                                    mostrarDialogoReservas()
                                                 } catch (e: Exception) {
                                                     withContext(Dispatchers.Main) {
                                                         Toast.makeText(
@@ -352,10 +376,8 @@ class Activity_menu_creador : AppCompatActivity() {
                                         .create()
 
                                     confirmDialog.setOnShowListener {
-                                        confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                                            ?.setTextColor(Color.BLACK)
-                                        confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                                            ?.setTextColor(Color.RED)
+                                        confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+                                        confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
                                     }
                                     confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                                     confirmDialog.show()
@@ -428,9 +450,9 @@ class Activity_menu_creador : AppCompatActivity() {
         val ahora = Date()
 
         // Obtener idUsuario del objeto Sesion o de donde guardes
-        val idUsuario = Sesion.datos?.usuario?.id ?: ""
+        val uidUsuario = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        if (idUsuario == null) {
+        if (uidUsuario.isBlank()) {
             textView.text = "No hay usuario válido"
             return
         }
@@ -438,7 +460,7 @@ class Activity_menu_creador : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val snapshot = firestore.collection("reservas")
-                    .whereEqualTo("idusuario", idUsuario)
+                    .whereEqualTo("uid", uidUsuario)
                     .get()
                     .await()
 
