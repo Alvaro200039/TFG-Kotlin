@@ -79,6 +79,8 @@
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
+            app:counterEnabled="true"
+            app:counterMaxLength="9"
             app:cursorColor="@color/blue"
             app:hintTextColor="@color/black">
 
@@ -90,6 +92,7 @@
                 android:hint="Introduzca CIF de su empresa (opcional)"
                 android:inputType="text"
                 android:paddingTop="16dp"
+                android:maxLength="9"
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
 

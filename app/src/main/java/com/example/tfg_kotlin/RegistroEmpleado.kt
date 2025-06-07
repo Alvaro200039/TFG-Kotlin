@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -11,6 +12,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import androidx.appcompat.widget.Toolbar
 
 class RegistroEmpleado : AppCompatActivity() {
     private lateinit var etCorreo: EditText
@@ -34,6 +36,11 @@ class RegistroEmpleado : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Toolbar
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         etCorreo = findViewById(R.id.etCorreo)
         etCif = findViewById(R.id.etCif)
@@ -148,4 +155,15 @@ class RegistroEmpleado : AppCompatActivity() {
         etApellidos.text.clear()
         etCif.text.clear()
     }
+    // Flecha "Atrás"
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when(item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 }
+

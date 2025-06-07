@@ -85,7 +85,21 @@
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
+        <!-- Olvidar contraseña -->
+
+            <TextView
+                android:id="@+id/tvOlvidarContrasena"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="35dp"
+                android:text="@string/olvidaste_contra"
+                android:textColor="@color/enlace"
+                android:textStyle="normal"
+                android:textSize="14sp"
+                android:paddingTop="16dp"/>
+
     </LinearLayout>
+
 
     <!-- LinearLayout horizontal para botones -->
     <LinearLayout

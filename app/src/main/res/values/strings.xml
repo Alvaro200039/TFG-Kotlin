@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name" translatable="false">Ad Agora</string>
+    <string name="olvidaste_contra">¿Has olvidado tu contraseña?</string>
+
 </resources>
