@@ -100,7 +100,6 @@
 
     </LinearLayout>
 
-
     <!-- LinearLayout horizontal para botones -->
     <LinearLayout
         android:id="@id/linearBotones"
@@ -117,19 +116,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Botón registrarse -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRegistro"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:backgroundTint="@android:color/holo_blue_dark"
-            android:text="Registrarse"
-            android:layout_marginEnd="8dp"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            app:cornerRadius="20dp" />
-
         <!-- Botón iniciar sesión -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
@@ -143,6 +129,18 @@
             android:textSize="20sp"
             app:cornerRadius="20dp" />
 
+        <!-- Botón registrarse -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRegistro"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@android:color/holo_blue_dark"
+            android:text="Registrarse"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:cornerRadius="20dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

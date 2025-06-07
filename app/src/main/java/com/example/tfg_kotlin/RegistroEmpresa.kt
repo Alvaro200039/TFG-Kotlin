@@ -66,74 +66,80 @@ class RegistroEmpresa : AppCompatActivity() {
         val empresasRef = firestore.collection("empresas")
 
         // Primero comprobamos si ya existe empresa con ese CIF
-        empresasRef.document(cif).get()
-            .addOnSuccessListener { docCif ->
-                if (docCif.exists()) {
-                    Toast.makeText(this, "CIF existente", Toast.LENGTH_SHORT).show()
-                    editCif.requestFocus()
+        empresasRef.whereEqualTo("nombre", nombre).get()
+            .addOnSuccessListener { nombreSnapshot ->
+                if (!nombreSnapshot.isEmpty) {
+                    Toast.makeText(this, "Nombre de empresa ya registrado", Toast.LENGTH_SHORT).show()
+                    editNombre.requestFocus()
                 } else {
                     // Comprobamos si el dominio ya existe
                     empresasRef.whereEqualTo("dominio", dominio).get()
-                        .addOnSuccessListener { querySnapshot ->
-                            if (!querySnapshot.isEmpty) {
+                        .addOnSuccessListener { dominioSnapshot ->
+                            if (!dominioSnapshot.isEmpty) {
                                 Toast.makeText(this, "Dominio existente", Toast.LENGTH_SHORT).show()
                                 editDominio.requestFocus()
                             } else {
-                                // Insertamos nueva empresa en Firestore
-                                val empresaMap = hashMapOf(
-                                    "cif" to cif,
-                                    "nombre" to nombre,
-                                    "dominio" to dominio
-                                )
+                                empresasRef.whereEqualTo("cif", cif).get()
+                                    .addOnSuccessListener { cifSnapshot ->
+                                        if (!cifSnapshot.isEmpty){
+                                            Toast.makeText(this, "CIF existente", Toast.LENGTH_SHORT).show()
+                                            editCif.requestFocus()
+                                        } else {
+                                            // Insertamos nueva empresa en Firestore
+                                            val empresaMap = hashMapOf(
+                                                "cif" to cif,
+                                                "nombre" to nombre,
+                                                "dominio" to dominio
+                                            )
 
-                                empresasRef.document(nombre).set(empresaMap)
-                                    .addOnSuccessListener {
-                                        Toast.makeText(
-                                            this,
-                                            "Empresa registrada",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        editCif.text.clear()
-                                        editNombre.text.clear()
-                                        editDominio.text.clear()
-                                        Log.d(
-                                            "DB_LOG",
-                                            "Empresa registrada: CIF=$cif, Nombre=$nombre, Dominio=$dominio"
-                                        )
+                                            empresasRef.document(nombre).set(empresaMap)
+                                                .addOnSuccessListener {
+                                                    Toast.makeText(
+                                                        this,
+                                                        "Empresa registrada",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                    editCif.text.clear()
+                                                    editNombre.text.clear()
+                                                    editDominio.text.clear()
+                                                    Log.d(
+                                                        "DB_LOG",
+                                                        "Empresa registrada: CIF=$cif, Nombre=$nombre, Dominio=$dominio"
+                                                    )
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Toast.makeText(this, "Error al registrar empresa", Toast.LENGTH_SHORT).show()
+                                                    e.printStackTrace()
+                                                }
+                                        }
                                     }
                                     .addOnFailureListener { e ->
-                                        Toast.makeText(
-                                            this,
-                                            "Error al registrar empresa",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        Toast.makeText(this, "Error validando CIF", Toast.LENGTH_SHORT).show()
                                         e.printStackTrace()
                                     }
                             }
                         }
                         .addOnFailureListener { e ->
-                            Toast.makeText(this, "Error validando dominio", Toast.LENGTH_SHORT)
-                                .show()
+                            Toast.makeText(this, "Error validando dominio", Toast.LENGTH_SHORT).show()
                             e.printStackTrace()
                         }
                 }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "Error validando CIF", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Error validando nombre de empresa", Toast.LENGTH_SHORT).show()
                 e.printStackTrace()
             }
-
     }
+
     // Flecha "Atrás"
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when(item.itemId) {
+        return when (item.itemId) {
             android.R.id.home -> {
                 onBackPressed()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
 }
-
-

@@ -66,6 +66,7 @@ class LoginActivity : AppCompatActivity() {
             startActivity(registro)
         }
     }
+
     // Configura el botón de "¿Has olvidado tu contraseña?" para que abra la pantalla de RecuperarContrasenaActivity
     private fun configurarRecuperarContrasena() {
         tvOlvidarContrasena.setOnClickListener {
@@ -95,7 +96,11 @@ class LoginActivity : AppCompatActivity() {
                         buscarUsuarioEnEmpresas(correo)
                     }
                 } else {
-                    Toast.makeText(this, "Credenciales incorrectas o error de red", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "Credenciales incorrectas o error de red",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
     }
@@ -134,7 +139,8 @@ class LoginActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { usuarioDoc ->
                 if (usuarioDoc != null && usuarioDoc.exists()) {
-                    val usuario = usuarioDoc.toObject(Usuario::class.java) ?: return@addOnSuccessListener
+                    val usuario =
+                        usuarioDoc.toObject(Usuario::class.java) ?: return@addOnSuccessListener
                     val empresa = empresaDoc.toObject(Empresa::class.java)
                     if (empresa == null) {
                         Toast.makeText(this, "Error al obtener empresa", Toast.LENGTH_SHORT).show()
@@ -146,30 +152,38 @@ class LoginActivity : AppCompatActivity() {
                         val listaPisos = pisosSnap.mapNotNull { it.toObject(Piso::class.java) }
 
                         // Obtener franjas horarias
-                        empresaRef.collection("franjasHorarias").get().addOnSuccessListener { franjasSnap ->
-                            val listaFranjas = franjasSnap.mapNotNull { it.toObject(FranjaHoraria::class.java) }
+                        empresaRef.collection("franjasHorarias").get()
+                            .addOnSuccessListener { franjasSnap ->
+                                val listaFranjas =
+                                    franjasSnap.mapNotNull { it.toObject(FranjaHoraria::class.java) }
 
-                            // 🔐 GUARDAR LA SESIÓN EN MEMORIA CON SINGLETON
-                            Sesion.datos = UsuarioSesion(
-                                empresa = empresa,
-                                usuario = usuario,
-                                pisos = listaPisos,
-                                franjasHorarias = listaFranjas
-                            )
+                                // 🔐 GUARDAR LA SESIÓN EN MEMORIA CON SINGLETON
+                                Sesion.datos = UsuarioSesion(
+                                    empresa = empresa,
+                                    usuario = usuario,
+                                    pisos = listaPisos,
+                                    franjasHorarias = listaFranjas
+                                )
 
-                            val intent = if (usuario.esJefe) {
-                                Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
-                                Intent(this, Activity_menu_creador::class.java)
-                            } else {
-                                Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
-                                Intent(this, activity_menu_empleado::class.java)
-                            }
+                                val intent = if (usuario.esJefe) {
+                                    Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT)
+                                        .show()
+                                    Intent(this, Activity_menu_creador::class.java)
+                                } else {
+                                    Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT)
+                                        .show()
+                                    Intent(this, activity_menu_empleado::class.java)
+                                }
 
-                            startActivity(intent)
-                            finish()
+                                startActivity(intent)
+                                finish()
 
-                        }.addOnFailureListener {
-                            Toast.makeText(this, "Error al cargar franjas horarias", Toast.LENGTH_SHORT).show()
+                            }.addOnFailureListener {
+                            Toast.makeText(
+                                this,
+                                "Error al cargar franjas horarias",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
 
                     }.addOnFailureListener {
@@ -184,13 +198,16 @@ class LoginActivity : AppCompatActivity() {
                 Toast.makeText(this, "Error al buscar usuario", Toast.LENGTH_SHORT).show()
             }
     }
+
     // Flecha "Atrás"
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when(item.itemId) {
+        return when (item.itemId) {
             android.R.id.home -> {
                 onBackPressed()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
+}
