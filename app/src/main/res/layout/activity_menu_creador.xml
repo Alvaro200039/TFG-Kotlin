@@ -79,7 +79,7 @@
                 android:layout_height="100dp"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:backgroundTint="@android:color/holo_purple"
+                android:backgroundTint="@android:color/holo_blue_light"
                 app:cornerRadius="16dp"
                 android:text="Crear o editar estancias"
                 android:textColor="@color/white"/>
