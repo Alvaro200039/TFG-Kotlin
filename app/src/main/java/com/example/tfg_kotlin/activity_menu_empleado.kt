@@ -408,9 +408,19 @@ class activity_menu_empleado : AppCompatActivity() {
     private fun limpiarReservasPasadas() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
+        val sesion = Sesion.datos
+        val nombreEmpresa = sesion?.empresa?.nombre
+
+        if (nombreEmpresa.isNullOrBlank()) return
+
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val snapshot = firestore.collection("reservas").get().await()
+                val snapshot = firestore.collection("empresas")
+                    .document(nombreEmpresa)
+                    .collection("reservas")
+                    .get()
+                    .await()
+
                 val reservas = snapshot.documents.mapNotNull { doc ->
                     doc.toObject(Reserva::class.java)?.copy(id = doc.id)
                 }
@@ -426,11 +436,16 @@ class activity_menu_empleado : AppCompatActivity() {
 
                 reservasAntiguas.forEach { reserva ->
                     reserva.id?.let { idDoc ->
-                        firestore.collection("reservas").document(idDoc).delete().await()
+                        firestore.collection("empresas")
+                            .document(nombreEmpresa)
+                            .collection("reservas")
+                            .document(idDoc)
+                            .delete()
+                            .await()
                     }
                 }
             } catch (e: Exception) {
-                // Opcional: Log.e("limpiarReservasPasadas", "Error al limpiar reservas", e)
+                // Log.e("limpiarReservasPasadas", "Error al limpiar reservas", e)
             }
         }
     }
@@ -440,18 +455,21 @@ class activity_menu_empleado : AppCompatActivity() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val ahora = Date()
 
-        // Obtener idUsuario del objeto Sesion o de donde guardes
+        val sesion = Sesion.datos
+        val nombreEmpresa = sesion?.empresa?.nombre
         val uidUsuario = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        if (uidUsuario.isBlank()) {
-            textView.text = "No hay usuario válido"
+        if (uidUsuario.isBlank() || nombreEmpresa.isNullOrBlank()) {
+            textView.text = "No hay usuario o empresa válidos"
             return
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val snapshot = firestore.collection("reservas")
-                    .whereEqualTo("uid", uidUsuario)
+                val snapshot = firestore.collection("empresas")
+                    .document(nombreEmpresa)
+                    .collection("reservas")
+                    .whereEqualTo("idusuario", uidUsuario)
                     .get()
                     .await()
 

@@ -860,18 +860,6 @@ class Activity_empleados : AppCompatActivity() {
                     return@launch
                 }
 
-                val reservas = reservasSnapshot.documents.map { doc ->
-                    Reserva(
-                        id = doc.id,
-                        nombreSala = doc.getString("nombreSala") ?: "",
-                        idSala = doc.getString("idSala") ?: "",
-                        fechaHora = doc.getString("fechaHora") ?: "",
-                        nombreUsuario = doc.getString("nombreUsuario") ?: "",
-                        idusuario = doc.get("idusuario")?.toString() ?: "",
-                        piso = doc.getString("piso") ?: ""
-                    )
-                }
-
                 // Si no hay conflicto, hacer reserva
                 val nuevaReserva = hashMapOf(
                     "nombreSala" to sala.nombre,
