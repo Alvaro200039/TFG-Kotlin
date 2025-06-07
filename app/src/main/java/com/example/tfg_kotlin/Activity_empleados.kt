@@ -7,7 +7,6 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
@@ -49,9 +48,6 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
-import kotlinx.coroutines.runBlocking
-import java.util.UUID
-
 
 class Activity_empleados : AppCompatActivity() {
 
@@ -81,6 +77,12 @@ class Activity_empleados : AppCompatActivity() {
             insets
         }
 
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = ""
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
+
         // Accedemos a datos desde Sesion.datos
         if (sesion == null) {
             Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
@@ -108,11 +110,6 @@ class Activity_empleados : AppCompatActivity() {
 
 
         container = findViewById(R.id.contentLayout)
-
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = ""
 
         spinnerPisos = Spinner(this).apply {
             setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
@@ -344,7 +341,7 @@ class Activity_empleados : AppCompatActivity() {
                     val imagenUrl = document.getString("imagenUrl")
 
                     if (imagenUrl.isNullOrEmpty()) {
-                        contentLayout.setBackgroundResource(R.drawable.wallpaper)
+                        Toast.makeText(this, "No hay imagen de fondo para este piso", Toast.LENGTH_SHORT).show()
                     } else {
                         Glide.with(this@Activity_empleados)
                             .load(imagenUrl)

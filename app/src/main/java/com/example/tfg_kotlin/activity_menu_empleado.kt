@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -21,6 +22,7 @@ import java.util.Locale
 import android.content.pm.PackageManager
 import android.view.LayoutInflater
 import android.view.Menu
+import android.widget.Button
 import android.widget.NumberPicker
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -30,7 +32,8 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.tfg_kotlin.Activity_menu_creador
+import com.example.tfg_kotlin.BBDD_Global.Entities.Empresa
+import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
@@ -38,13 +41,11 @@ import java.util.concurrent.TimeUnit
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.tasks.await
 
 class activity_menu_empleado : AppCompatActivity() {
 
     private lateinit var firestore: FirebaseFirestore
-    private var idUsuario: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +58,12 @@ class activity_menu_empleado : AppCompatActivity() {
             insets
         }
 
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = ""
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
+
         val auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
@@ -67,40 +74,127 @@ class activity_menu_empleado : AppCompatActivity() {
             return
         }
 
-        idUsuario = currentUser.uid  // asignamos directamente el UID string
-
-        val cifUsuario = intent.getStringExtra("cifUsuario") ?: ""
-
-        if (cifUsuario.isEmpty()) {
-            Toast.makeText(this, "CIF no recibido", Toast.LENGTH_SHORT).show()
+        // Accedemos a datos desde Sesion.datos
+        val sesion = Sesion.datos
+        if (sesion == null) {
+            Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        firestore.collection("empresas")
-            .document(cifUsuario)
-            .collection("usuarios")
-            .document(currentUser.uid)
-            .get()
-            .addOnSuccessListener { documentSnapshot ->
-                if (documentSnapshot.exists()) {
-                    val usuario = documentSnapshot.toObject<Usuario>()
-                    if (usuario != null) {
-                        Toast.makeText(this, "Hola ${usuario.nombre}", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+        val cifUsuario = sesion.empresa.cif
+        val correoUsuario = sesion.usuario.email
+        val idUsuario = sesion.usuario.id
+        var nombreUsuario = sesion.usuario.nombre
+
+        if (cifUsuario.isEmpty() || correoUsuario.isEmpty() || idUsuario == null) {
+            Toast.makeText(this, "Faltan datos de usuario", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        if (nombreUsuario.isEmpty()) {
+            // Si nombreUsuario no está cargado (raro porque debería venir en Sesion), lo cargamos desde Firestore
+            firestore.collection("empresas")
+                .document(cifUsuario)
+                .collection("usuarios")
+                .document(correoUsuario)
+                .get()
+                .addOnSuccessListener { documentSnapshot ->
+                    if (documentSnapshot.exists()) {
+                        val usuario = documentSnapshot.toObject(Usuario::class.java)
+                        if (usuario != null) {
+                            nombreUsuario = usuario.nombre
+                            // Actualizar también en la sesión para mantener coherencia
+                            Sesion.datos = sesion.copy(usuario = usuario)
+                            Toast.makeText(this, "Hola $nombreUsuario", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                } else {
-                    Toast.makeText(this, "Usuario no existe en esta empresa", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            Toast.makeText(this, "Hola $nombreUsuario", Toast.LENGTH_SHORT).show()
+        }
+
+        findViewById<Button>(R.id.btnNuevaReserva).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    val empresaId = sesion.empresa.nombre
+
+                    if (empresaId.isEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@activity_menu_empleado, "Empresa no identificada", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+
+                    // Obtener documento empresa
+                    val empresaDoc = firestore.collection("empresas")
+                        .document(empresaId)
+                        .get()
+                        .await()
+
+                    if (!empresaDoc.exists()) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@activity_menu_empleado, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+
+                    // Cargar empresa en sesión si hace falta
+                    val empresa = empresaDoc.toObject(Empresa::class.java)
+                    empresa?.nombre = empresaDoc.id
+                    empresa?.let { sesion.empresa = it }
+
+                    // Obtener pisos de la empresa
+                    val pisosSnapshot = firestore.collection("empresas")
+                        .document(empresaId)
+                        .collection("pisos")
+                        .get()
+                        .await()
+
+                    val pisos = pisosSnapshot.documents.mapNotNull { doc ->
+                        doc.toObject(Piso::class.java)?.apply { id = doc.id }
+                    }
+
+                    if (pisos.isNotEmpty()) {
+                        sesion?.pisos = listOf(pisos.last()) // o sesion?.pisos = pisos si quieres todos
+
+                        withContext(Dispatchers.Main) {
+                            startActivity(Intent(this@activity_menu_empleado, Activity_empleados::class.java))
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@activity_menu_empleado, "No se ha creado ningún piso", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@activity_menu_empleado, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                    e.printStackTrace()
                 }
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        }
+
+        findViewById<Button>(R.id.btnVerReservas).setOnClickListener {
+            mostrarDialogoReservas()
+        }
+
+        findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
+            Sesion.cerrarSesion() // Limpiar sesión al cerrar sesión
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+        }
     }
 
-
-    override fun onResume(){
+    override fun onResume() {
         super.onResume()
         limpiarReservasPasadas()
         mostrarSiguienteReserva()
@@ -124,7 +218,6 @@ class activity_menu_empleado : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,

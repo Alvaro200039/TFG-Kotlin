@@ -116,6 +116,8 @@ class Activity_creacion : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
+
 
         val titleView = findViewById<TextView>(R.id.toolbar_title)
         titleView.text = "Piso nº" // provisional
