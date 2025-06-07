@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -51,7 +52,8 @@ class RegistroEmpleado : AppCompatActivity() {
 
         inicializarVistas()
         auth = FirebaseAuth.getInstance()
-        btnRegistrar.setOnClickListener { registrarEmpleado() }
+        configurarBotonRegistrar()
+
     }
 
     private fun inicializarVistas() {
@@ -76,15 +78,38 @@ class RegistroEmpleado : AppCompatActivity() {
         btnRegistrar = findViewById(R.id.btnRegistrar)
     }
 
+    private fun configurarBotonRegistrar() {
+        btnRegistrar.setOnClickListener {
+            if (!validarFormulario()) return@setOnClickListener
+            registrarEmpleado()
+        }
+    }
+
+    private fun validarFormulario(): Boolean {
+        val esValido = Validaciones.validarRegistroPersona(
+            tilNombre, etNombre,
+            tilApellidos, etApellidos,
+            tilCorreo, etCorreo,
+            tilContrasena, etContrasena,
+            tilRepetirContrasena, etRepetirContrasena,
+            tilCif, etCif
+        )
+
+        if (!esValido) return false
+
+        val contrasena = etContrasena.text.toString().trim()
+        if (contrasena.length < 6) {
+            tilContrasena.error = "Debe tener al menos 6 caracteres"
+            etContrasena.requestFocus()
+            return false
+        }
+
+        return true
+    }
+
+
+
     private fun registrarEmpleado() {
-        if (!Validaciones.validarRegistroPersona(
-                tilNombre, etNombre,
-                tilApellidos, etApellidos,
-                tilCorreo, etCorreo,
-                tilContrasena, etContrasena,
-                tilRepetirContrasena, etRepetirContrasena,
-                tilCif, etCif
-            )) return
 
         val correo = etCorreo.text.toString().trim()
         val cif = etCif.text.toString().trim()
@@ -93,9 +118,9 @@ class RegistroEmpleado : AppCompatActivity() {
         val apellidos = etApellidos.text.toString().trim()
 
         val dominio = '@' + correo.substringAfterLast("@")
-        //val dominioConArroba = "@$dominio"
+        val dominioConArroba = "@$dominio"
 
-        firestore.collection("empresas").whereEqualTo("dominio", dominio).get()
+        firestore.collection("empresas").whereEqualTo("dominio", dominioConArroba).get()
             .addOnSuccessListener { empresasSnapshot ->
                 if (empresasSnapshot.isEmpty) {
                     tilCorreo.error = "El dominio introducido no existe"
@@ -108,13 +133,8 @@ class RegistroEmpleado : AppCompatActivity() {
 
                 auth.createUserWithEmailAndPassword(correo, contrasena)
                     .addOnSuccessListener {
-                        val user = it.user
-                        if (user == null) {
-                            mostrarToast("Error: UID no encontrado al registrar el usuario")
-                            return@addOnSuccessListener
-                        }
+                        val uid = it.user?.uid ?: return@addOnSuccessListener
 
-                        val uid = user.uid
                         val usuarioMap = hashMapOf(
                             "id" to uid,
                             "email" to correo,
@@ -126,21 +146,24 @@ class RegistroEmpleado : AppCompatActivity() {
                         )
 
                         empresaDoc.reference.collection("usuarios")
-                            .document(correo)
+                            .document(uid)
                             .set(usuarioMap)
                             .addOnSuccessListener {
                                 mostrarToast("Empleado registrado${if (esJefe) " como Jefe" else ""}")
                                 limpiarCampos()
                             }
                             .addOnFailureListener {
+                                it.printStackTrace()
                                 mostrarToast("Error guardando usuario en Firestore")
                             }
                     }
                     .addOnFailureListener {
+                        it.printStackTrace()
                         tilCorreo.error = "Error registrando usuario: ${it.message}"
                     }
             }
             .addOnFailureListener {
+                it.printStackTrace()
                 tilCorreo.error = "Error buscando empresa: ${it.message}"
             }
     }
@@ -156,6 +179,16 @@ class RegistroEmpleado : AppCompatActivity() {
         etNombre.text?.clear()
         etApellidos.text?.clear()
         etCif.text?.clear()
+    }
+    // Flecha "Atrás"
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when(item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }
 

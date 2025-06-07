@@ -13,7 +13,28 @@
         android:theme="@style/Theme.TFGKotlin"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".RegistroEmpresa"
+            android:exported="false" />
+        <activity
+            android:name=".RegistroEmpleado"
+            android:exported="false" />
+        <activity
+            android:name=".Activity_menu_creador"
+            android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity_menu_empleado"
+            android:exported="false" />
+        <activity
+            android:name=".Activity_creacion"
+            android:exported="true" />
+        <activity
+            android:name=".Activity_empleados"
+            android:exported="false" />
+        <activity
+            android:name=".Principal"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
