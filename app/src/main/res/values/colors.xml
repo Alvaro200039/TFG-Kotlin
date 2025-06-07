@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="grey">@android:color/darker_gray</color>
+    <color name="red">@android:color/holo_red_dark</color>
+    <color name="azul">#1976D2</color>
+    <color name="blue_600">#1E88E5</color>
+    <color name="enlace">#1E88E5</color>
 </resources>

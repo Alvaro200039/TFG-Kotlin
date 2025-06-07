@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/principalLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Principal"
+    android:background="@drawable/wallpaper">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="350dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Botón Registrar Empresa -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRegistroEmpresa"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@android:color/holo_orange_dark"
+            android:text="Registrar Empresa"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:cornerRadius="16dp" />
+
+        <!-- Botón Registrar Empleado -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRegistroEmpleado"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@android:color/holo_blue_dark"
+            android:text="Registrar Empleado"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:cornerRadius="16dp" />
+
+        <!-- Botón Iniciar Sesión -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnIniciarSesion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@android:color/holo_orange_dark"
+            android:text="Iniciar Sesión"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:cornerRadius="16dp" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
