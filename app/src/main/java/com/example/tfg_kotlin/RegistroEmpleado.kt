@@ -123,16 +123,25 @@ class RegistroEmpleado : AppCompatActivity() {
         val dominioConArroba = "@$dominio"
         val empresasRef = firestore.collection("empresas")
 
-        firestore.collection("empresas").whereEqualTo("dominio", dominioConArroba).get()
+        firestore.collection("empresas").get()
             .addOnSuccessListener { empresasSnapshot ->
+                val empresaDoc = empresasSnapshot.documents.firstOrNull {
+                    it.getString("dominio") == dominioConArroba
+                }
+
+                if (empresaDoc == null) {
+                    tilCorreo.error = "El dominio introducido no existe"
+                    return@addOnSuccessListener
+                }
+
                 if (empresasSnapshot.isEmpty) {
                     tilCorreo.error = "El dominio introducido no existe"
                     return@addOnSuccessListener
-                }else{
-                    val empresaDoc = empresasSnapshot.documents[0]
+                } else {
                     val empresaCif = empresaDoc.getString("cif") ?: ""
                     val esJefe = cif.equals(empresaCif, ignoreCase = true)
                     val cifFinal = empresaCif // se use o no, se guarda el cif correcto siempre
+
                     if (esJefe && cif != empresaCif) {
                         mostrarToast("El CIF no coincide con el dominio. Corrígelo para continuar.")
                         etCif.requestFocus()
@@ -180,10 +189,7 @@ class RegistroEmpleado : AppCompatActivity() {
                         }
                 }
             }
-            .addOnFailureListener { e ->
-                mostrarToast("Error buscando empresa")
-                e.printStackTrace()
-            }
+
     }
 
     private fun mostrarToast(mensaje: String) {
