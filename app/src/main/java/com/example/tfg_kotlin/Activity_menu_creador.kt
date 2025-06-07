@@ -24,6 +24,7 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.widget.Button
 import android.widget.NumberPicker
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -31,7 +32,6 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.tfg_kotlin.Activity_empleados
 import com.example.tfg_kotlin.BBDD_Global.Entities.Empresa
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
@@ -60,6 +60,12 @@ class Activity_menu_creador : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = ""
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
 
         val auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()

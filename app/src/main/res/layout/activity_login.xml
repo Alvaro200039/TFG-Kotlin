@@ -18,19 +18,22 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- LinearLayout vertical con los campos -->
+
+
+    <!-- LinearLayout horizontal para botones -->
     <LinearLayout
         android:id="@+id/linearCampos"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="0dp"
-        android:orientation="vertical"
         android:gravity="bottom|center"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/linearBotones"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
 
         <!-- Campo correo -->
         <com.google.android.material.textfield.TextInputLayout
@@ -40,13 +43,13 @@
             android:layout_marginBottom="20dp"
             app:boxBackgroundColor="@android:color/white"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@android:color/darker_gray"
+            app:boxStrokeColor="@color/black"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
-            app:cursorColor="@android:color/darker_gray"
+            app:cursorColor="@color/blue"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
-            app:hintTextColor="@android:color/darker_gray">
+            app:hintTextColor="@color/black">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCorreo"
@@ -67,13 +70,13 @@
             android:layout_marginBottom="20dp"
             app:boxBackgroundColor="@android:color/white"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@android:color/darker_gray"
+            app:boxStrokeColor="@color/black"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
+            app:cursorColor="@color/blue"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
-            app:cursorColor="@android:color/darker_gray"
-            app:hintTextColor="@android:color/darker_gray">
+            app:hintTextColor="@color/black">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etContrasena"
@@ -87,20 +90,19 @@
         </com.google.android.material.textfield.TextInputLayout>
         <!-- Olvidar contraseña -->
 
-            <TextView
-                android:id="@+id/tvOlvidarContrasena"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="35dp"
-                android:text="@string/olvidaste_contra"
-                android:textColor="@color/enlace"
-                android:textStyle="normal"
-                android:textSize="14sp"
-                android:paddingTop="16dp"/>
+        <TextView
+            android:id="@+id/tvOlvidarContrasena"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="35dp"
+            android:paddingTop="16dp"
+            android:text="@string/olvidaste_contra"
+            android:textColor="@color/enlace"
+            android:textSize="14sp"
+            android:textStyle="normal" />
 
     </LinearLayout>
 
-    <!-- LinearLayout horizontal para botones -->
     <LinearLayout
         android:id="@id/linearBotones"
         android:layout_width="0dp"
@@ -116,6 +118,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Botón registrarse -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRegistro"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@android:color/holo_blue_dark"
+            android:text="Registrarse"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            app:cornerRadius="20dp" />
+
         <!-- Botón iniciar sesión -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
@@ -129,18 +144,6 @@
             android:textSize="20sp"
             app:cornerRadius="20dp" />
 
-        <!-- Botón registrarse -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRegistro"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:backgroundTint="@android:color/holo_blue_dark"
-            android:text="Registrarse"
-            android:layout_marginEnd="8dp"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            app:cornerRadius="20dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/recuperarcontrasena"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/wallpaper">
 
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
@@ -27,6 +28,7 @@
         android:layout_height="0dp"
         android:orientation="vertical"
         android:layout_margin="16dp"
+        android:gravity="bottom|center"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,17 +48,16 @@
                 android:id="@+id/tilCorreoRec"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
                 android:layout_marginBottom="20dp"
-                app:boxBackgroundMode="filled"
                 app:boxBackgroundColor="@android:color/white"
+                app:boxBackgroundMode="filled"
+                app:boxStrokeColor="@color/black"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="2dp"
+                app:cursorColor="@color/blue"
                 app:endIconMode="clear_text"
                 app:errorEnabled="true"
-                app:cursorColor="@color/blue"
-                app:boxStrokeColor="@android:color/darker_gray"
-                app:hintTextColor="@color/blue">
+                app:hintTextColor="@color/black">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etCorreoRec"
@@ -74,13 +75,13 @@
                 android:id="@+id/btnEnviarCodigo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="0dp"
-                android:layout_marginEnd="0dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
                 android:backgroundTint="@color/blue"
                 android:text="Enviar código"
                 android:textColor="@color/white"
                 android:textSize="20sp"
-                app:cornerRadius="16dp" />
+                app:cornerRadius="20dp" />
 
         </LinearLayout>
     </LinearLayout>

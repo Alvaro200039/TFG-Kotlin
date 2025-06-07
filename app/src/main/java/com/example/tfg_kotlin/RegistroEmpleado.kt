@@ -41,6 +41,8 @@ class RegistroEmpleado : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = ""
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
 
         etCorreo = findViewById(R.id.etCorreo)
         etCif = findViewById(R.id.etCif)

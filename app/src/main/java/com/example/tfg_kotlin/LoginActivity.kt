@@ -47,6 +47,8 @@ class LoginActivity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = ""
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
