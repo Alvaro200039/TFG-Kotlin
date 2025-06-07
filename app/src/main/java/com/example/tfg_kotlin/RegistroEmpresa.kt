@@ -2,11 +2,13 @@ package com.example.tfg_kotlin
 
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,6 +31,11 @@ class RegistroEmpresa : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Toolbar
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         editNombre = findViewById(R.id.editNombreEmpresa)
         editDominio = findViewById(R.id.editDominio)
@@ -81,20 +88,32 @@ class RegistroEmpresa : AppCompatActivity() {
 
                                 empresasRef.document(nombre).set(empresaMap)
                                     .addOnSuccessListener {
-                                        Toast.makeText(this, "Empresa registrada", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            this,
+                                            "Empresa registrada",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         editCif.text.clear()
                                         editNombre.text.clear()
                                         editDominio.text.clear()
-                                        Log.d("DB_LOG", "Empresa registrada: CIF=$cif, Nombre=$nombre, Dominio=$dominio")
+                                        Log.d(
+                                            "DB_LOG",
+                                            "Empresa registrada: CIF=$cif, Nombre=$nombre, Dominio=$dominio"
+                                        )
                                     }
                                     .addOnFailureListener { e ->
-                                        Toast.makeText(this, "Error al registrar empresa", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            this,
+                                            "Error al registrar empresa",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         e.printStackTrace()
                                     }
                             }
                         }
                         .addOnFailureListener { e ->
-                            Toast.makeText(this, "Error validando dominio", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Error validando dominio", Toast.LENGTH_SHORT)
+                                .show()
                             e.printStackTrace()
                         }
                 }
@@ -103,5 +122,18 @@ class RegistroEmpresa : AppCompatActivity() {
                 Toast.makeText(this, "Error validando CIF", Toast.LENGTH_SHORT).show()
                 e.printStackTrace()
             }
+
+    }
+    // Flecha "Atrás"
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when(item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }
+
+

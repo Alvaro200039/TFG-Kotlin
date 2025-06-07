@@ -2,11 +2,14 @@ package com.example.tfg_kotlin
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
@@ -24,6 +27,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var etContrasena: EditText
     private lateinit var btnLogin: Button
     private lateinit var btnRegistro: Button
+    private lateinit var tvOlvidarContrasena: TextView
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
@@ -39,6 +43,11 @@ class LoginActivity : AppCompatActivity() {
             insets
         }
 
+        // Toolbar
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
@@ -46,11 +55,21 @@ class LoginActivity : AppCompatActivity() {
         etContrasena = findViewById(R.id.etContrasena)
         btnLogin = findViewById(R.id.btnLogin)
         btnRegistro = findViewById(R.id.btnRegistro)
+        tvOlvidarContrasena = findViewById(R.id.tvOlvidarContrasena)
+
+
+        configurarRecuperarContrasena()
 
         btnLogin.setOnClickListener { iniciarSesion() }
         btnRegistro.setOnClickListener {
             val registro = Intent(this, RegistroEmpleado::class.java)
             startActivity(registro)
+        }
+    }
+    // Configura el botón de "¿Has olvidado tu contraseña?" para que abra la pantalla de RecuperarContrasenaActivity
+    private fun configurarRecuperarContrasena() {
+        tvOlvidarContrasena.setOnClickListener {
+            startActivity(Intent(this, RecuperarContrasenaActivity::class.java))
         }
     }
 
@@ -165,4 +184,13 @@ class LoginActivity : AppCompatActivity() {
                 Toast.makeText(this, "Error al buscar usuario", Toast.LENGTH_SHORT).show()
             }
     }
-}
+    // Flecha "Atrás"
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when(item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
