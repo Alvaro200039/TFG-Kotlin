@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin
 
 import android.app.DatePickerDialog
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
@@ -309,7 +310,9 @@ class Activity_empleados : AppCompatActivity() {
                     }
 
                     if (fechaSeleccionada.isNotEmpty() && horaSeleccionada.isNotEmpty()) {
-                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+                        verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada",
+                            pisoSeleccionado.toString()
+                        )
                     }
                 } else {
                     Toast.makeText(this, "No hay salas definidas para este piso", Toast.LENGTH_SHORT).show()
@@ -628,7 +631,9 @@ class Activity_empleados : AppCompatActivity() {
                         .setItems(horasArray) { _, which ->
                             horaSeleccionada = horasArray[which]
                             textViewHora.text = "Hora: $horaSeleccionada"
-                            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada")
+                            verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada",
+                                pisoSeleccionado.toString()
+                            )
                         }
                         .setNegativeButton("Cerrar", null)
                         .create()
@@ -664,70 +669,43 @@ class Activity_empleados : AppCompatActivity() {
         return builder.toString()
     }
 
-    private fun verificarDisponibilidad(fechaHora: String) {
-        val db = FirebaseFirestore.getInstance()
-        val nombreEmpresa = sesion?.empresa?.nombre ?: ""
+    private fun verificarDisponibilidad(fechaHora: String, nombrePiso: String) {
+        val nombreEmpresa = sesion?.empresa?.nombre ?: return
 
         lifecycleScope.launch {
             try {
-                // 1. Obtener reservas de la empresa para esa fechaHora
-                val reservasSnapshot = withContext(Dispatchers.IO) {
-                    db.collection("empresas").document(nombreEmpresa)
-                        .collection("reservas")
-                        .whereEqualTo("fechaHora", fechaHora)
-                        .get()
-                        .await()
-                }
+                val reservasSnapshot = db.collection("empresas")
+                    .document(nombreEmpresa)
+                    .collection("reservas")
+                    .whereEqualTo("fechaHora", fechaHora)
+                    .get()
+                    .await()
 
                 val reservas = reservasSnapshot.documents.mapNotNull { doc ->
-                    doc.toObject(Reserva::class.java)
+                    val idSala = doc.getString("idSala") ?: return@mapNotNull null
+                    val piso = doc.getString("piso") ?: return@mapNotNull null
+                    Pair(idSala.trim(), piso.trim())
                 }
 
-                // 2. Crear mapa de salaId -> pisoNombre recorriendo pisos y sus salas
-                val pisosSnapshot = withContext(Dispatchers.IO) {
-                    db.collection("empresas").document(nombreEmpresa)
-                        .collection("pisos")
-                        .get()
-                        .await()
-                }
-
-                val mapaSalaAPiso = mutableMapOf<String, String>()
-
-                for (pisoDoc in pisosSnapshot.documents) {
-                    val pisoNombre = pisoDoc.getString("nombre") ?: continue
-                    val salasSnapshot = pisoDoc.reference.collection("salas").get().await()
-                    for (salaDoc in salasSnapshot.documents) {
-                        val salaId = salaDoc.id.trim()
-                        mapaSalaAPiso[salaId] = pisoNombre.trim()
-                    }
-                }
-
-                // 3. Recorrer botones y actualizar su color según disponibilidad
                 for (i in 0 until container.childCount) {
                     val view = container.getChildAt(i)
-                    if (view is Button) {
-                        val sala = view.tag as? Salas ?: continue
-                        val salaId = sala.id?.trim() ?: continue
-                        val pisoDeSala = mapaSalaAPiso[salaId] ?: continue
-
-                        val ocupada = reservas.any {
-                            val match = it.idSala.trim().equals(salaId.trim(), ignoreCase = true) &&
-                                    it.piso.trim().equals(pisoDeSala.trim(), ignoreCase = true)
-
-                            Log.d("ReservaCheck", "Comparando Reserva: idSala=${it.idSala}, piso=${it.piso} con Botón: salaId=$salaId, pisoDeSala=$pisoDeSala => $match")
-                            match
+                    if (view.tag is Salas) {
+                        val sala = view.tag as Salas
+                        val estaReservada = reservas.any { (idSalaRes, pisoRes) ->
+                            idSalaRes.equals(sala.id?.trim(), ignoreCase = true) &&
+                                    pisoRes.equals(nombrePiso.trim(), ignoreCase = true)
                         }
 
-                        val color = if (ocupada) Color.RED else Color.GREEN
-                        view.background = GradientDrawable().apply {
-                            setColor(color)
-                            cornerRadius = 50f
+                        view.backgroundTintList = if (estaReservada) {
+                            ColorStateList.valueOf(ContextCompat.getColor(this@Activity_empleados, R.color.red))
+                        } else {
+                            ColorStateList.valueOf(ContextCompat.getColor(this@Activity_empleados, R.color.green))
                         }
                     }
                 }
+
             } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(this@Activity_empleados, "Error al verificar disponibilidad", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@Activity_empleados, "Error al verificar disponibilidad: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -796,7 +774,7 @@ class Activity_empleados : AppCompatActivity() {
                                     db.collection("empresas").document(nombreEmpresa)
                                         .collection("reservas").document(reservaExistente.id.toString())
                                         .delete().await()
-                                    verificarDisponibilidad(fechaHora)
+                                    verificarDisponibilidad(fechaHora, pisoNombreReal)
                                     Toast.makeText(this@Activity_empleados, "Reserva cancelada", Toast.LENGTH_SHORT).show()
                                 } catch (e: Exception) {
                                     Toast.makeText(this@Activity_empleados, "Error al cancelar: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -913,7 +891,7 @@ class Activity_empleados : AppCompatActivity() {
                     .await()
 
                 withContext(Dispatchers.Main) {
-                    verificarDisponibilidad(fechaHora)
+                    verificarDisponibilidad(fechaHora, pisoNombreReal)
                     Toast.makeText(this@Activity_empleados, "Reserva confirmada", Toast.LENGTH_SHORT).show()
                 }
 

@@ -29,7 +29,9 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.tfg_kotlin.Activity_menu_creador
 import com.example.tfg_kotlin.BBDD_Global.Entities.Reserva
+import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 import java.util.concurrent.TimeUnit
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -178,25 +180,32 @@ class activity_menu_empleado : AppCompatActivity() {
             ?.setTextColor(ContextCompat.getColor(this, R.color.red))
     }
 
-
     private fun mostrarDialogoReservas() {
         limpiarReservasPasadas()
-
+        val sesion = Sesion.datos
+        val db = FirebaseFirestore.getInstance()
+        val nombreEmpresa = sesion?.empresa?.nombre
         val uidUsuario = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        if (uidUsuario.isEmpty()) {
-            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
+        if (uidUsuario.isBlank() || nombreEmpresa.isNullOrBlank()) {
+            Toast.makeText(this, "Usuario o empresa no identificado", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val empresaId = nombreEmpresa
+
         lifecycleScope.launch {
             try {
-                val snapshot = firestore.collection("reservas").get().await()
+                val snapshot = db.collection("empresas")
+                    .document(empresaId)
+                    .collection("reservas")
+                    .get()
+                    .await()
+
                 val reservas = snapshot.documents.mapNotNull { doc ->
                     doc.toObject(Reserva::class.java)?.copy(id = doc.id)
                 }
 
-                // Filtrar por UID Firebase (String)
                 val reservasUsuario = reservas.filter { it.idusuario == uidUsuario }
 
                 if (reservasUsuario.isEmpty()) {
@@ -215,7 +224,6 @@ class activity_menu_empleado : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     val dialogView = layoutInflater.inflate(R.layout.dialog_reservas, null)
                     val contenedor = dialogView.findViewById<LinearLayout>(R.id.contenedor_reservas)
-
                     lateinit var dialog: AlertDialog
 
                     for ((piso, lista) in reservasPorPiso) {
@@ -241,13 +249,15 @@ class activity_menu_empleado : AppCompatActivity() {
                                             lifecycleScope.launch {
                                                 try {
                                                     reserva.id?.let { idDoc ->
-                                                        firestore.collection("reservas")
+                                                        db.collection("empresas")
+                                                            .document(empresaId)
+                                                            .collection("reservas")
                                                             .document(idDoc)
                                                             .delete()
                                                             .await()
                                                     }
                                                     dialog.dismiss()
-                                                    mostrarDialogoReservas() // Recargar
+                                                    mostrarDialogoReservas()
                                                 } catch (e: Exception) {
                                                     withContext(Dispatchers.Main) {
                                                         Toast.makeText(
@@ -263,10 +273,8 @@ class activity_menu_empleado : AppCompatActivity() {
                                         .create()
 
                                     confirmDialog.setOnShowListener {
-                                        confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                                            ?.setTextColor(Color.BLACK)
-                                        confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                                            ?.setTextColor(Color.RED)
+                                        confirmDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
+                                        confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
                                     }
                                     confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                                     confirmDialog.show()
@@ -338,10 +346,18 @@ class activity_menu_empleado : AppCompatActivity() {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
         val ahora = Date()
 
+        // Obtener idUsuario del objeto Sesion o de donde guardes
+        val uidUsuario = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+        if (uidUsuario.isBlank()) {
+            textView.text = "No hay usuario válido"
+            return
+        }
+
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val snapshot = firestore.collection("reservas")
-                    .whereEqualTo("idusuario", idUsuario)  // idUsuario debe ser String
+                    .whereEqualTo("uid", uidUsuario)
                     .get()
                     .await()
 
