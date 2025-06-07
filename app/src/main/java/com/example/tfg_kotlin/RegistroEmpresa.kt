@@ -80,7 +80,7 @@ class RegistroEmpresa : AppCompatActivity() {
                         if (!querySnapshot.isEmpty) {
                             tilDominioEmpresa.error = "Este dominio ya existe"
                         } else {
-                            empresasRef.document(cif).set(empresa)
+                            empresasRef.document(nombre).set(empresa)
                                 .addOnSuccessListener {
                                     Toast.makeText(
                                         this,

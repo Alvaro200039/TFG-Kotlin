@@ -21,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.example.tfg_kotlin.Activity_menu_creador
 import com.example.tfg_kotlin.activity_menu_empleado
+import com.google.firebase.FirebaseApp
 
 class LoginActivity : AppCompatActivity() {
 
@@ -52,6 +53,7 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
+
 
         inicializarVistas()
         configurarEventos()

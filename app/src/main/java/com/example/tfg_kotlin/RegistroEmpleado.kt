@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin
 
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +13,7 @@ import com.example.tfg_kotlin.utils.Validaciones
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -49,7 +51,7 @@ class RegistroEmpleado : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-
+        FirebaseApp.initializeApp(this)
         inicializarVistas()
         auth = FirebaseAuth.getInstance()
         configurarBotonRegistrar()
@@ -117,54 +119,70 @@ class RegistroEmpleado : AppCompatActivity() {
         val nombre = etNombre.text.toString().trim()
         val apellidos = etApellidos.text.toString().trim()
 
-        val dominio = '@' + correo.substringAfterLast("@")
+        val dominio = correo.substringAfterLast("@")
         val dominioConArroba = "@$dominio"
+        val empresasRef = firestore.collection("empresas")
 
         firestore.collection("empresas").whereEqualTo("dominio", dominioConArroba).get()
             .addOnSuccessListener { empresasSnapshot ->
                 if (empresasSnapshot.isEmpty) {
                     tilCorreo.error = "El dominio introducido no existe"
                     return@addOnSuccessListener
+                }else{
+                    val empresaDoc = empresasSnapshot.documents[0]
+                    val empresaCif = empresaDoc.getString("cif") ?: ""
+                    val esJefe = cif.equals(empresaCif, ignoreCase = true)
+                    val cifFinal = empresaCif // se use o no, se guarda el cif correcto siempre
+                    if (esJefe && cif != empresaCif) {
+                        mostrarToast("El CIF no coincide con el dominio. Corrígelo para continuar.")
+                        etCif.requestFocus()
+                        return@addOnSuccessListener
+                    }
+
+                    // Creamos el usuario en Firebase Authentication
+                    auth.createUserWithEmailAndPassword(correo, contrasena)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val uid = task.result.user?.uid
+                                if (uid == null) {
+                                    mostrarToast("Error: UID no disponible")
+                                    return@addOnCompleteListener
+                                }
+
+                                val nuevoUsuario = hashMapOf(
+                                    "email" to correo,
+                                    "cif" to cifFinal,
+                                    "esJefe" to esJefe,
+                                    "nombre" to nombre,
+                                    "apellidos" to apellidos,
+                                    "uid" to uid
+                                )
+
+                                // Guardamos datos extra en Firestore, colección "usuarios"
+                                empresaDoc.reference.collection("usuarios").document(correo)
+                                    .set(nuevoUsuario)
+                                    .addOnSuccessListener {
+                                        if (esJefe) {
+                                            mostrarToast("Empleado registrado como Jefe")
+                                        } else {
+                                            mostrarToast("Empleado registrado")
+                                        }
+                                        limpiarCampos()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        mostrarToast("Error guardando datos de usuario")
+                                        e.printStackTrace()
+                                    }
+                            } else {
+                                Log.e("REGISTRO_FIREBASE", "Fallo FirebaseAuth", task.exception)
+                                mostrarToast("Error registrando usuario: ${task.exception?.message}")
+                            }
+                        }
                 }
-
-                val empresaDoc = empresasSnapshot.documents.first()
-                val empresaCif = empresaDoc.getString("cif") ?: ""
-                val esJefe = cif.equals(empresaCif, ignoreCase = true)
-
-                auth.createUserWithEmailAndPassword(correo, contrasena)
-                    .addOnSuccessListener {
-                        val uid = it.user?.uid ?: return@addOnSuccessListener
-
-                        val usuarioMap = hashMapOf(
-                            "id" to uid,
-                            "email" to correo,
-                            "nombre" to nombre,
-                            "apellidos" to apellidos,
-                            "contrasena" to contrasena,
-                            "cif" to if (esJefe) cif else "",
-                            "esJefe" to esJefe
-                        )
-
-                        empresaDoc.reference.collection("usuarios")
-                            .document(uid)
-                            .set(usuarioMap)
-                            .addOnSuccessListener {
-                                mostrarToast("Empleado registrado${if (esJefe) " como Jefe" else ""}")
-                                limpiarCampos()
-                            }
-                            .addOnFailureListener {
-                                it.printStackTrace()
-                                mostrarToast("Error guardando usuario en Firestore")
-                            }
-                    }
-                    .addOnFailureListener {
-                        it.printStackTrace()
-                        tilCorreo.error = "Error registrando usuario: ${it.message}"
-                    }
             }
-            .addOnFailureListener {
-                it.printStackTrace()
-                tilCorreo.error = "Error buscando empresa: ${it.message}"
+            .addOnFailureListener { e ->
+                mostrarToast("Error buscando empresa")
+                e.printStackTrace()
             }
     }
 
