@@ -660,6 +660,7 @@ class Activity_empleados : AppCompatActivity() {
 
     private fun verificarDisponibilidad(fechaHora: String, nombrePiso: String) {
         val nombreEmpresa = sesion?.empresa?.nombre ?: return
+        val idUsuarioActual = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         lifecycleScope.launch {
             try {
@@ -670,34 +671,47 @@ class Activity_empleados : AppCompatActivity() {
                     .get()
                     .await()
 
+                // Mapeamos todas las reservas con idSala, piso y idusuario
                 val reservas = reservasSnapshot.documents.mapNotNull { doc ->
-                    val idSala = doc.getString("idSala") ?: return@mapNotNull null
-                    val piso = doc.getString("piso") ?: return@mapNotNull null
-                    Pair(idSala.trim(), piso.trim())
+                    val idSala = doc.getString("idSala")?.trim() ?: return@mapNotNull null
+                    val piso = doc.getString("piso")?.trim() ?: return@mapNotNull null
+                    val idusuario = doc.getString("idusuario") ?: return@mapNotNull null
+                    Triple(idSala, piso, idusuario)
                 }
 
                 for (i in 0 until container.childCount) {
                     val view = container.getChildAt(i)
                     if (view.tag is Salas) {
                         val sala = view.tag as Salas
-                        val estaReservada = reservas.any { (idSalaRes, pisoRes) ->
+
+                        // Buscamos si está reservada
+                        val reserva = reservas.find { (idSalaRes, pisoRes, _) ->
                             idSalaRes.equals(sala.id?.trim(), ignoreCase = true) &&
                                     pisoRes.equals(nombrePiso.trim(), ignoreCase = true)
                         }
 
-                        view.backgroundTintList = if (estaReservada) {
-                            ColorStateList.valueOf(ContextCompat.getColor(this@Activity_empleados, R.color.red))
-                        } else {
-                            ColorStateList.valueOf(ContextCompat.getColor(this@Activity_empleados, R.color.green))
+                        val color = when {
+                            reserva == null -> R.color.green // libre
+                            reserva.third == idUsuarioActual -> R.color.orange // ocupada por mí
+                            else -> R.color.red // ocupada por otro
                         }
+
+                        view.backgroundTintList = ColorStateList.valueOf(
+                            ContextCompat.getColor(this@Activity_empleados, color)
+                        )
                     }
                 }
 
             } catch (e: Exception) {
-                Toast.makeText(this@Activity_empleados, "Error al verificar disponibilidad: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@Activity_empleados,
+                    "Error al verificar disponibilidad: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
+
 
     private fun mostrarDialogoDetallesSala(sala: Salas, pisoNombre: String) {
         val fechaHora = "$fechaSeleccionada $horaSeleccionada"
