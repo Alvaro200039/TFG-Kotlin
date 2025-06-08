@@ -110,7 +110,6 @@ class Activity_menu_creador : AppCompatActivity() {
                             nombreUsuario = usuario.nombre
                             // Actualizar también en la sesión para mantener coherencia
                             Sesion.datos = sesion.copy(usuario = usuario)
-                            Toast.makeText(this, "Bienvenido $nombreUsuario", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
                         }
@@ -119,8 +118,6 @@ class Activity_menu_creador : AppCompatActivity() {
                 .addOnFailureListener { e ->
                     Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-        } else {
-            Toast.makeText(this, "Bienvenido $nombreUsuario", Toast.LENGTH_SHORT).show()
         }
 
         findViewById<Button>(R.id.btnEditarSalas).setOnClickListener {
