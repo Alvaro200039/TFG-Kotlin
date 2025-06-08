@@ -221,10 +221,10 @@ class LoginActivity : AppCompatActivity() {
 
                                 // Valida si un empleado es Jefe o no, cada uno tiene su activity porque no pueden hacer lo mismo
                                 val intent = if (usuario.esJefe) {
-                                    Toast.makeText(this, "Bienvenido Jefe", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this, "Bienvenido ${usuario.nombre}: Iniciada sesión como Jefe", Toast.LENGTH_SHORT).show()
                                     Intent(this, Activity_menu_creador::class.java)
                                 } else {
-                                    Toast.makeText(this, "Bienvenido Empleado", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this, "Bienvenido ${usuario.nombre}: Iniciada sesión como Empleado", Toast.LENGTH_SHORT).show()
                                     Intent(this, activity_menu_empleado::class.java)
                                 }
 

@@ -176,7 +176,7 @@ class RegistroEmpleado : AppCompatActivity() {
         Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
     }
 
-    // Función que pòne los campos en blanco
+    // Función que pone los campos en blanco
     private fun limpiarCampos() {
         etCorreo.text.clear()
         etContrasena.text.clear()

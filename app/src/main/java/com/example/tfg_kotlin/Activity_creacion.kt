@@ -282,6 +282,29 @@ class Activity_creacion : AppCompatActivity() {
                         return@setOnClickListener
                     }
 
+                    val hInicioInt = hInicio.toIntOrNull()
+                    val mInicioInt = mInicio.toIntOrNull()
+                    val hFinInt = hFin.toIntOrNull()
+                    val mFinInt = mFin.toIntOrNull()
+
+                    // Validar que sean números válidos
+                    if (hInicioInt == null || mInicioInt == null || hFinInt == null || mFinInt == null) {
+                        Toast.makeText(this@Activity_creacion, "Introduce solo números válidos", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    // Validación de rangos
+                    if (hInicioInt !in 0..23 || hFinInt !in 0..23) {
+                        Toast.makeText(this@Activity_creacion, "La hora debe estar entre 0 y 23", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    if (mInicioInt !in 0..59 || mFinInt !in 0..59) {
+                        Toast.makeText(this@Activity_creacion, "Los minutos deben estar entre 0 y 59", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    // Crear hora en formato string para comparar
                     val horaInicio = "$hInicio:$mInicio"
                     val horaFin = "$hFin:$mFin"
 
@@ -290,6 +313,7 @@ class Activity_creacion : AppCompatActivity() {
                         return@setOnClickListener
                     }
 
+                    // Ya puedes crear la franja
                     val franja = "$horaInicio-$horaFin"
 
                     lifecycleScope.launch {
