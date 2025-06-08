@@ -233,13 +233,13 @@ class activity_menu_empleado : AppCompatActivity() {
 
     // Opciones a realizar con la toolbar
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Volber a la pantalla anterior
+        // Volver a la pantalla anterior
         return when (item.itemId) {
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
                 true
             }
-            // Mopstrar diñalogo para notificiones
+            // Mostrar diálogo para notificiones
             R.id.action_options -> {
                 mostrarDialogoNotificaciones()
                 true
@@ -433,7 +433,7 @@ class activity_menu_empleado : AppCompatActivity() {
                                         confirmDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
                                     }
                                     confirmDialog.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
-                                    confirmDialog.show() // Mouestra el diálogo
+                                    confirmDialog.show() // Muestra el diálogo
                                 }
                             }
                             // Añade la reserva al piso
@@ -475,7 +475,7 @@ class activity_menu_empleado : AppCompatActivity() {
 
     // Función para eliminar reservas pasadas
     private fun limpiarReservasPasadas() {
-        // VAriabel que guarda el formato de fecha-hora
+        // Variable que guarda el formato de fecha-hora
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
         // Accede al nombre de la empresa en firebase
@@ -519,7 +519,7 @@ class activity_menu_empleado : AppCompatActivity() {
                             .collection("reservas")
                             .document(idDoc)
                             .delete()
-                            .await()// Espera hasta que realiza la acción
+                            .await() // Espera hasta que realiza la acción
                     }
                 }
             // Crea una excepción
