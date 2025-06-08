@@ -1,9 +1,12 @@
 package com.example.tfg_kotlin
 
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -21,6 +24,7 @@ import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
 import com.example.tfg_kotlin.BBDD_Global.Entities.UsuarioSesion
+import androidx.core.content.edit
 
 class LoginActivity : AppCompatActivity() {
 
@@ -67,6 +71,16 @@ class LoginActivity : AppCompatActivity() {
         // Llamamos a la funnción de recuperación de contraseña
         configurarRecuperarContrasena()
 
+        //Cargamos la contraseña guardada si el checkbox está marcado
+        val prefs = getSharedPreferences("loginPrefs", MODE_PRIVATE)
+        val recordar = prefs.getBoolean("recordar", false)
+
+        if (recordar) {
+            etCorreo.setText(prefs.getString("correo", ""))
+            etContrasena.setText(prefs.getString("contrasena", ""))
+            findViewById<CheckBox>(R.id.cbRecordar).isChecked = true
+        }
+
         // Acciones de botón de inicio de sesion y redireccionamiento a activity con botón de regegistro
         btnLogin.setOnClickListener { iniciarSesion() }
         btnRegistro.setOnClickListener {
@@ -108,6 +122,20 @@ class LoginActivity : AppCompatActivity() {
                     val user = auth.currentUser
                     // Comprobamos que el usuario exista y que el correo corresponde con el de la BD
                     if (user != null && user.email != null) {
+
+                        //Configuramos la contraseña y el checkbox para recordarlo
+                        val cbRecordar = findViewById<CheckBox>(R.id.cbRecordar)
+                        val prefs = getSharedPreferences("loginPrefs", MODE_PRIVATE)
+                        if (cbRecordar.isChecked) {
+                            prefs.edit().apply {
+                                putString("correo", correo)
+                                putString("contrasena", contrasena)
+                                putBoolean("recordar", true)
+                                apply()
+                            }
+                        } else {
+                            prefs.edit() { clear() }
+                        }
                         // Usamos la función de buscar usaurio por correo (campo Id de los usuarios)
                         buscarUsuarioEnEmpresas(correo)
                     }
