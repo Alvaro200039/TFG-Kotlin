@@ -367,6 +367,7 @@ class Activity_menu_creador : AppCompatActivity() {
                                                     }
                                                     dialog.dismiss()
                                                     mostrarDialogoReservas()
+                                                    mostrarSiguienteReserva()
                                                 } catch (e: Exception) {
                                                     withContext(Dispatchers.Main) {
                                                         Toast.makeText(

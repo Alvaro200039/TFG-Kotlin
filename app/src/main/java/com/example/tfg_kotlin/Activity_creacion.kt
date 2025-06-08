@@ -1025,6 +1025,7 @@ class Activity_creacion : AppCompatActivity() {
                             dialogConfirmacion.setOnShowListener {
                                 dialogConfirmacion.window?.setBackgroundDrawableResource(R.drawable.dialog_background)
                                 dialogConfirmacion.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+                                dialogConfirmacion.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.BLACK)
                             }
 
                             dialogConfirmacion.show()

@@ -177,7 +177,7 @@ class Activity_empleados : AppCompatActivity() {
         }
 
         val botonSeleccionarFechaHora = ImageButton(this).apply {
-            setImageResource(R.drawable.time)
+            setImageResource(R.drawable.ic_calendar)
             setBackgroundColor(Color.TRANSPARENT)
             setOnClickListener { mostrarDialogoFecha() }
             layoutParams = Toolbar.LayoutParams(

@@ -14,7 +14,7 @@
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:padding="20dp"
-        android:scrollbarThumbHorizontal="@drawable/time">
+        android:scrollbarThumbHorizontal="@drawable/ic_horario">
 
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switchNotificaciones"

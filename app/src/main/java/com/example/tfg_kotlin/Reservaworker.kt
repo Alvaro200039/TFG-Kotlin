@@ -55,12 +55,12 @@ class ReservaWorker(context: Context, params: WorkerParameters) : Worker(context
         )
 
         val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(R.drawable.reserva) // asegúrate que existe
+            .setSmallIcon(R.drawable.ic_reserva)
             .setContentTitle(titulo)
             .setContentText(mensaje)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .setContentIntent(pendingIntent) // 👈 Este es el punto clave
+            .setContentIntent(pendingIntent)
             .build()
 
         val manager = NotificationManagerCompat.from(applicationContext)

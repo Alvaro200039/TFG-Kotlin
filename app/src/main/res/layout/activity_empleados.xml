@@ -53,7 +53,7 @@
                 android:id="@+id/icono_btn_reservas"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/reserva"
+                android:src="@drawable/ic_reserva"
                 android:contentDescription="Icono reservas" />
 
             <TextView
@@ -82,7 +82,7 @@
                 android:id="@+id/icono_btn_franja"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/horario"
+                android:src="@drawable/ic_horario"
                 android:contentDescription="Icono franja" />
 
             <TextView
