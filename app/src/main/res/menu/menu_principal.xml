@@ -3,9 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
     tools:ignore="AppCompatResource">
+
     <item
         android:id="@+id/action_options"
-        android:icon="@drawable/notificaciones"
+        android:icon="@drawable/ic_notifications"
         app:showAsAction="always"
-        android:title="Opciones" />
+        android:title="Notificaciones" />
 </menu>

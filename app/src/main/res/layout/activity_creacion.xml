@@ -76,7 +76,7 @@
                 android:id="@+id/icono_btn_horas"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/time"
+                android:src="@drawable/ic_horario"
                 android:contentDescription="Icono horas" />
 
             <TextView
@@ -105,7 +105,7 @@
                 android:id="@+id/icono_btn_plano"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/plano"
+                android:src="@drawable/ic_plano"
                 android:contentDescription="Icono plano" />
 
             <TextView
@@ -133,7 +133,7 @@
                 android:id="@+id/icono_btn_pisos"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/edit"
+                android:src="@drawable/ic_eliminar"
                 android:contentDescription="Icono pisos" />
 
             <TextView
@@ -162,7 +162,7 @@
                 android:id="@+id/icono_btn_sala"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/plus_add"
+                android:src="@drawable/ic_add"
                 android:contentDescription="Icono sala" />
 
             <TextView

@@ -5,7 +5,7 @@
     tools:ignore="AppCompatResource">
     <item
         android:id="@+id/action_save"
-        android:icon="@drawable/save"
+        android:icon="@drawable/ic_save"
         app:showAsAction="always"
-        android:title="Guardar" />
+        android:title="Guardar"/>
 </menu>

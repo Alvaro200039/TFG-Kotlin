@@ -79,7 +79,7 @@
         android:layout_marginTop="16dp"
         android:text="Añadir franja"
         android:layout_gravity="center_horizontal"
-        android:backgroundTint="#98000000"/>
+        android:backgroundTint="@color/blue"/>
 
     <LinearLayout
         android:id="@+id/layoutFranjas"
