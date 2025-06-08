@@ -21,15 +21,16 @@
 
 
     <!-- LinearLayout horizontal para botones -->
+
     <LinearLayout
         android:id="@+id/linearCampos"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="96dp"
         android:layout_marginEnd="16dp"
         android:gravity="bottom|center"
         android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/linearBotones"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +41,6 @@
             android:id="@+id/tilCorreo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
             app:boxBackgroundColor="@android:color/white"
             app:boxBackgroundMode="filled"
             app:boxStrokeColor="@color/black"
@@ -89,7 +89,6 @@
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
         <!-- Olvidar contraseña -->
-
         <TextView
             android:id="@+id/tvOlvidarContrasena"
             android:layout_width="wrap_content"
@@ -107,26 +106,26 @@
         android:id="@id/linearBotones"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:gravity="bottom|center"
-        android:layout_marginBottom="10dp"
-        app:layout_constraintTop_toBottomOf="@id/linearCampos"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/linearCampos"
+        app:layout_constraintVertical_bias="0.264">
 
         <!-- Botón registrarse -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRegistro"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:backgroundTint="@android:color/holo_blue_dark"
             android:text="Registrarse"
-            android:layout_marginEnd="8dp"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:cornerRadius="20dp" />
@@ -136,9 +135,9 @@
             android:id="@+id/btnLogin"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:backgroundTint="@color/green"
-            android:layout_marginStart="8dp"
             android:text="Iniciar Sesión"
             android:textColor="@color/white"
             android:textSize="20sp"
