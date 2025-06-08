@@ -401,7 +401,7 @@ class Activity_menu_creador : AppCompatActivity() {
 
                         // Recorre la lista de pisos de ese piso
                         lista.forEach { reserva ->
-                            // Crea un  textView para cada reserva y guarda los valores del formato con el que se verá
+                            // Recorre la lista de pisos de ese piso
                             val reservaText = TextView(this@Activity_menu_creador).apply {
                                 // Nombre de sala + fecha y hora
                                 text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
@@ -500,6 +500,7 @@ class Activity_menu_creador : AppCompatActivity() {
         // En caso de no encontra el nombre de la empresa
         if (nombreEmpresa.isNullOrBlank()) return
 
+        // Acciones que se realizan en una corrutina
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 // Acceso a la coleccion de reservas de firestore
