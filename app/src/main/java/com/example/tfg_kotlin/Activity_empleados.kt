@@ -90,13 +90,6 @@ class Activity_empleados : AppCompatActivity() {
             return
         }
 
-        // Accedemos a datos desde Sesion.datos
-        if (sesion == null) {
-            Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
         val cifUsuario = sesion.empresa.cif
         val correoUsuario = sesion.usuario.email
         val idUsuario = sesion.usuario.id
@@ -107,7 +100,6 @@ class Activity_empleados : AppCompatActivity() {
             finish()
             return
         }
-
 
         container = findViewById(R.id.contentLayout)
 
@@ -122,8 +114,6 @@ class Activity_empleados : AppCompatActivity() {
             }
         }
         toolbar.addView(spinnerPisos)
-
-
 
         val nombreEmpresa = sesion.empresa.nombre
         db.collection("empresas")
@@ -472,6 +462,8 @@ class Activity_empleados : AppCompatActivity() {
                                                     }
                                                     dialog.dismiss()
                                                     mostrarDialogoReservas()
+                                                    verificarDisponibilidad("$fechaSeleccionada $horaSeleccionada",
+                                                        pisoSeleccionado.toString())
                                                 } catch (e: Exception) {
                                                     withContext(Dispatchers.Main) {
                                                         Toast.makeText(
