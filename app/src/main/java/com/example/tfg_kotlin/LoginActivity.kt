@@ -189,7 +189,7 @@ class LoginActivity : AppCompatActivity() {
 
                 // Verifica que la rama de usarios no esté vacía o no exista
                 if (usuarioDoc != null && usuarioDoc.exists()) {
-                    // Convierte a los uasuarios en objetos de la dataClass correspondiente
+                    // Convierte a los usuarios en objetos de la dataClass correspondiente
                     val usuario = usuarioDoc.toObject(Usuario::class.java) ?: return@addOnSuccessListener
                     //  Convierte a los uasuarios en objetos de la dataClass correspondiente
                     val empresa = empresaDoc.toObject(Empresa::class.java)
