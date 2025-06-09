@@ -53,6 +53,8 @@
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
                 android:hint="Introduzca su correo"
+                android:textColorHint="@color/black"
+                android:textColor="@color/black"
                 android:inputType="textEmailAddress"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
