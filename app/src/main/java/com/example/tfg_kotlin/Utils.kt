@@ -2,6 +2,7 @@ package com.example.tfg_kotlin
 
 import java.util.Locale
 
+
 object Utils {
     fun naturalOrderKey(s: String): List<Any> {
         val regex = Regex("""(\d+|\D+)""")
