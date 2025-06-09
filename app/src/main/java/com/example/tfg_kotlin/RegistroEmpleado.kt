@@ -171,7 +171,7 @@ class RegistroEmpleado : AppCompatActivity() {
             }
     }
 
-    // Función que del toast que muestra qué tipo de empleado es
+    // Función que del toast que muestra qué tipo de usuario eres
     private fun mostrarToast(mensaje: String) {
         Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
     }
@@ -185,8 +185,7 @@ class RegistroEmpleado : AppCompatActivity() {
         etApellidos.text.clear()
         etCif.text.clear()
     }
-
-    // Se le añade la funcionalidad al botón de la toolbar
+    // Definición dd acción de la toolbar
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId) {
             android.R.id.home -> {
