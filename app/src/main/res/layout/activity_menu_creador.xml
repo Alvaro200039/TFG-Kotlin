@@ -5,7 +5,7 @@
     android:id="@+id/menucreacion"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Activity_menu_creador"
+    tools:context=".MenuCreadorActivity"
     android:background="@drawable/wallpaper">
 
     <androidx.appcompat.widget.Toolbar
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:paddingBottom="16dp"
-            android:text="Reservas de Espacios"
+            android:text="@string/title_reservas_espacios"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@color/black"/>
@@ -68,7 +68,7 @@
                 android:layout_weight="1"
                 android:backgroundTint="@android:color/holo_green_dark"
                 app:cornerRadius="16dp"
-                android:text="Realizar nueva reserva"
+                android:text="@string/btn_nueva_reserva"
                 android:textColor="@color/white"
                />
 
@@ -81,7 +81,7 @@
                 android:layout_weight="1"
                 android:backgroundTint="@android:color/holo_blue_light"
                 app:cornerRadius="16dp"
-                android:text="Crear o editar estancias"
+                android:text="@string/btn_crear_editar_estancias"
                 android:textColor="@color/white"/>
 
         </LinearLayout>
@@ -94,7 +94,7 @@
             app:cornerRadius="16dp"
             android:backgroundTint="@android:color/darker_gray"
             android:layout_marginTop="24dp"
-            android:text="Ver mis reservas"
+            android:text="@string/btn_ver_reservas"
             android:textColor="@color/white"
             />
 
@@ -105,7 +105,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             app:cornerRadius="16dp"
-            android:text="Cerrar sesión"
+            android:text="@string/btn_cerrar_sesion"
             android:textColor="@color/white"
             android:backgroundTint="@android:color/holo_red_dark"/>
     </LinearLayout>

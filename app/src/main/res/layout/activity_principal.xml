@@ -48,7 +48,7 @@
             android:layout_height="100dp"
             android:layout_marginBottom="16dp"
             android:backgroundTint="@color/green"
-            android:text="Registrar Empresa"
+            android:text="@string/btn_registrar_empresa"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:cornerRadius="20dp" />
@@ -60,7 +60,7 @@
             android:layout_height="100dp"
             android:layout_marginBottom="16dp"
             android:backgroundTint="@android:color/holo_blue_dark"
-            android:text="Registrar Empleado"
+            android:text="@string/btn_registrar_empleado"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:cornerRadius="20dp" />
@@ -71,7 +71,7 @@
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:backgroundTint="@color/grey"
-            android:text="Iniciar Sesión"
+            android:text="@string/btn_iniciar_sesion"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:cornerRadius="20dp" />

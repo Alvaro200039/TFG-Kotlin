@@ -77,7 +77,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Añadir franja"
+        android:text="@string/btn_anadir_franja"
         android:layout_gravity="center_horizontal"
         android:backgroundTint="@color/blue"/>
 

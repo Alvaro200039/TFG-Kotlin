@@ -17,7 +17,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.DocumentSnapshot
 import com.example.tfg_kotlin.BBDD_Global.Entities.Empresa
 import com.example.tfg_kotlin.BBDD_Global.Entities.FranjaHoraria
 import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
@@ -71,20 +70,25 @@ class LoginActivity : AppCompatActivity() {
         // Llamamos a la funnción de recuperación de contraseña
         configurarRecuperarContrasena()
 
-        //Cargamos la contraseña guardada si el checkbox está marcado
+        // Cargamos el correo guardado si el checkbox está marcado
         val prefs = getSharedPreferences("loginPrefs", MODE_PRIVATE)
         val recordar = prefs.getBoolean("recordar", false)
 
         if (recordar) {
             etCorreo.setText(prefs.getString("correo", ""))
-            etContrasena.setText(prefs.getString("contrasena", ""))
             findViewById<CheckBox>(R.id.cbRecordar).isChecked = true
+
+            // Si Firebase mantiene la sesión activa, auto-login sin pedir contraseña
+            val usuarioActivo = FirebaseAuth.getInstance().currentUser
+            if (usuarioActivo != null && usuarioActivo.email != null) {
+                buscarUsuarioEnEmpresas(usuarioActivo.email!!)
+            }
         }
 
         // Acciones de botón de inicio de sesion y redireccionamiento a activity con botón de regegistro
         btnLogin.setOnClickListener { iniciarSesion() }
         btnRegistro.setOnClickListener {
-            val registro = Intent(this, RegistroEmpleado::class.java)
+            val registro = Intent(this, RegistroEmpleadoActivity::class.java)
             startActivity(registro)
         }
     }
@@ -123,13 +127,12 @@ class LoginActivity : AppCompatActivity() {
                     // Comprobamos que el usuario exista y que el correo corresponde con el de la BD
                     if (user != null && user.email != null) {
 
-                        //Configuramos la contraseña y el checkbox para recordarlo
+                        // Configuramos el checkbox para recordar solo el correo (sin contraseña)
                         val cbRecordar = findViewById<CheckBox>(R.id.cbRecordar)
                         val prefs = getSharedPreferences("loginPrefs", MODE_PRIVATE)
                         if (cbRecordar.isChecked) {
                             prefs.edit().apply {
                                 putString("correo", correo)
-                                putString("contrasena", contrasena)
                                 putBoolean("recordar", true)
                                 apply()
                             }
@@ -146,72 +149,54 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    // Función para buscar usuarios por correo
+    // Función para buscar usuarios por correo usando collectionGroup (búsqueda global O(1))
+    // Busca al usuario en la subcolección "usuarios" de todas las empresas en una sola consulta
     private fun buscarUsuarioEnEmpresas(correo: String) {
-        // en firebase, busca en la coleción (rama) empresas
-        db.collection("empresas")
+        db.collectionGroup("usuarios")
+            .whereEqualTo("email", correo)
             .get()
-            .addOnSuccessListener { empresasSnapshot ->
-                // en caso de que no se encuentren empresas registradas con ese correo (dominio)
-                if (empresasSnapshot.isEmpty) {
-                    Toast.makeText(this, "No hay empresas registradas", Toast.LENGTH_SHORT).show()
+            .addOnSuccessListener { querySnapshot ->
+                // Si no se encuentra ningún documento del usuario
+                if (querySnapshot.isEmpty) {
+                    Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
-                // En caso de que sí existan empresas con el correo, accedemos a la siguiete colleción, "empleados"
-                buscarUsuarioRecursivo(empresasSnapshot.documents, correo, 0)
-            }
-            // Añadimos una excepción en caso de que haya algún error con la obtención de empresas
-            .addOnFailureListener {
-                Toast.makeText(this, "Error al obtener empresas", Toast.LENGTH_SHORT).show()
-            }
-    }
 
-    // Función para buscar de forma recursiva los usuarios de las empresas registradas
-    private fun buscarUsuarioRecursivo(
-        // Tiene en cuenta el correo, la lista de empresas y el númerop de empleados registrados en una empresa (index)
-        empresas: List<DocumentSnapshot>,
-        correo: String,
-        index: Int
-    ) {
-        // En caso de que no se encuentren usuarios registrados en una emppresa
-        if (index >= empresas.size) {
-            Toast.makeText(this, "No se encontraron datos del usuario", Toast.LENGTH_SHORT).show()
-            return
-        }
-        // En el caso de que sí haya empleados registrados
-        val empresaDoc = empresas[index]
-        val empresaRef = empresaDoc.reference
+                // Obtenemos el primer documento encontrado (el usuario)
+                val usuarioDoc = querySnapshot.documents[0]
+                val usuario = usuarioDoc.toObject(Usuario::class.java)
+                if (usuario == null) {
+                    Toast.makeText(this, "Error al obtener datos del usuario", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
 
-        // Buscamos en la rama secundaria de usuarios por correo (id de los usuarios)
-        empresaRef.collection("usuarios").document(correo)
-            .get()
-            .addOnSuccessListener { usuarioDoc ->
+                // Obtenemos la referencia de la empresa padre a partir de la ruta del documento
+                // Ruta: empresas/{empresaId}/usuarios/{correo}
+                val empresaRef = usuarioDoc.reference.parent.parent
+                if (empresaRef == null) {
+                    Toast.makeText(this, "Error al localizar la empresa del usuario", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
 
-                // Verifica que la rama de usarios no esté vacía o no exista
-                if (usuarioDoc != null && usuarioDoc.exists()) {
-                    // Convierte a los usuarios en objetos de la dataClass correspondiente
-                    val usuario = usuarioDoc.toObject(Usuario::class.java) ?: return@addOnSuccessListener
-                    //  Convierte a los uasuarios en objetos de la dataClass correspondiente
+                // Obtenemos los datos de la empresa
+                empresaRef.get().addOnSuccessListener { empresaDoc ->
                     val empresa = empresaDoc.toObject(Empresa::class.java)
-                    // Si falla la conversíon
                     if (empresa == null) {
                         Toast.makeText(this, "Error al obtener empresa", Toast.LENGTH_SHORT).show()
                         return@addOnSuccessListener
                     }
-                    // En caso de no fallar
-                    // Obtiene pisos de la empresa a la que el empleado corresponde
+
+                    // Obtenemos los pisos de la empresa
                     empresaRef.collection("pisos").get().addOnSuccessListener { pisosSnap ->
-                        // Convierte la lista de pisos en objetos de la dataClass correspondiente
                         val listaPisos = pisosSnap.mapNotNull { it.toObject(Piso::class.java) }
 
-                        // Obtener franjas horarias
+                        // Obtenemos las franjas horarias
                         empresaRef.collection("franjasHorarias").get()
                             .addOnSuccessListener { franjasSnap ->
                                 val listaFranjas =
-                                    // Convierte las franjas horarias en objetos de la dataClass correspondiente
                                     franjasSnap.mapNotNull { it.toObject(FranjaHoraria::class.java) }
 
-                                // 🔐 GUARDAR LA SESIÓN EN MEMORIA CON SINGLETON
+                                // Guardamos la sesión en memoria con el Singleton
                                 Sesion.datos = UsuarioSesion(
                                     empresa = empresa,
                                     usuario = usuario,
@@ -219,34 +204,30 @@ class LoginActivity : AppCompatActivity() {
                                     franjasHorarias = listaFranjas
                                 )
 
-                                // Valida si un empleado es Jefe o no, cada uno tiene su activity porque no pueden hacer lo mismo
+                                // Valida si un empleado es Jefe o no
                                 val intent = if (usuario.esJefe) {
                                     Toast.makeText(this, "Bienvenido ${usuario.nombre}: Iniciada sesión como Jefe", Toast.LENGTH_SHORT).show()
-                                    Intent(this, Activity_menu_creador::class.java)
+                                    Intent(this, MenuCreadorActivity::class.java)
                                 } else {
                                     Toast.makeText(this, "Bienvenido ${usuario.nombre}: Iniciada sesión como Empleado", Toast.LENGTH_SHORT).show()
-                                    Intent(this, activity_menu_empleado::class.java)
+                                    Intent(this, MenuEmpleadoActivity::class.java)
                                 }
 
-                                // Inicia la actívity según el tipo de empleado
+                                // Inicia la activity según el tipo de empleado
                                 startActivity(intent)
                                 finish()
 
-                            // Crea excepción si da error la carga de los horarios
                             }.addOnFailureListener {
-                            Toast.makeText(this, "Error al cargar franjas horarias", Toast.LENGTH_SHORT).show()
-                        }
-                    // Crea excepcioón si da error la carga se pisos
+                                Toast.makeText(this, "Error al cargar franjas horarias", Toast.LENGTH_SHORT).show()
+                            }
                     }.addOnFailureListener {
                         Toast.makeText(this, "Error al cargar pisos", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-
-                    // No encontrado en esta empresa, buscar en la siguiente
-                    buscarUsuarioRecursivo(empresas, correo, index + 1)
+                }.addOnFailureListener {
+                    Toast.makeText(this, "Error al obtener empresa", Toast.LENGTH_SHORT).show()
                 }
-            //Crea excepción si hay errpr al buscar un usiario
-            }.addOnFailureListener {
+            }
+            .addOnFailureListener {
                 Toast.makeText(this, "Error al buscar usuario", Toast.LENGTH_SHORT).show()
             }
     }

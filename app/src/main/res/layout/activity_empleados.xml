@@ -60,7 +60,7 @@
                 android:id="@+id/texto_btn_reservas"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Reservas activas"
+                android:text="@string/tab_reservas_activas"
                 android:textColor="@android:color/black"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -89,7 +89,7 @@
                 android:id="@+id/texto_btn_franja"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cambiar hora"
+                android:text="@string/btn_cambiar_hora"
                 android:textColor="@android:color/black"
                 android:textSize="12sp" />
         </LinearLayout>

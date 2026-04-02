@@ -30,11 +30,11 @@ class Principal : AppCompatActivity() {
         btnLogin = findViewById(R.id.btnIniciarSesion)
 
         btnEmpresa.setOnClickListener {
-            startActivity(Intent(this, RegistroEmpresa::class.java))
+            startActivity(Intent(this, RegistroEmpresaActivity::class.java))
         }
 
         btnEmpleado.setOnClickListener {
-            startActivity(Intent(this, RegistroEmpleado::class.java))
+            startActivity(Intent(this, RegistroEmpleadoActivity::class.java))
         }
 
         btnLogin.setOnClickListener {

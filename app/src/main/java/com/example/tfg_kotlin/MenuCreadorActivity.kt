@@ -46,7 +46,7 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
 
-class Activity_menu_creador : AppCompatActivity() {
+class MenuCreadorActivity : AppCompatActivity() {
 
     // Variable global para acceso a firestore
     private lateinit var firestore: FirebaseFirestore
@@ -136,7 +136,7 @@ class Activity_menu_creador : AppCompatActivity() {
 
         // Botón de editar salas abre la activity y guarda el cif del usuario
         findViewById<Button>(R.id.btnEditarSalas).setOnClickListener {
-            val intent = Intent(this, Activity_creacion::class.java)
+            val intent = Intent(this, CreacionActivity::class.java)
             intent.putExtra("cifUsuario", cifUsuario) // Por compatibilidad, aunque ya está en Sesion
             startActivity(intent)
         }
@@ -152,7 +152,7 @@ class Activity_menu_creador : AppCompatActivity() {
                     // Si no se encuentra la empresa, salta el siguiente mensaje en el hilo principal
                     if (empresaId.isEmpty()) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@Activity_menu_creador, "Empresa no identificada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MenuCreadorActivity, "Empresa no identificada", Toast.LENGTH_SHORT).show()
                         }
                         return@launch
                     }
@@ -166,7 +166,7 @@ class Activity_menu_creador : AppCompatActivity() {
                     // En caso de no existir, mostrará el siguiente mensaje en el hilo principal
                     if (!empresaDoc.exists()) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@Activity_menu_creador, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MenuCreadorActivity, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
                         }
                         return@launch
                     }
@@ -193,18 +193,18 @@ class Activity_menu_creador : AppCompatActivity() {
                         sesion?.pisos = listOf(pisos.last()) // o sesion?.pisos = pisos si quieres todos
                         // Abre la activity empleados en el hilo principal
                         withContext(Dispatchers.Main) {
-                            startActivity(Intent(this@Activity_menu_creador, Activity_empleados::class.java))
+                            startActivity(Intent(this@MenuCreadorActivity, EmpleadosActivity::class.java))
                         }
                     } else {
                         // En caso de no existir pisos, salta el mensaje en el hilo principal
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@Activity_menu_creador, "No se ha creado ningún piso", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MenuCreadorActivity, "No se ha creado ningún piso", Toast.LENGTH_SHORT).show()
                         }
                     }
                 // Crea una excepción que se ejecuata en el hilo principal en caso de haber una error al cargar los pisos
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_menu_creador, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MenuCreadorActivity, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                     e.printStackTrace()
                 }
@@ -368,7 +368,7 @@ class Activity_menu_creador : AppCompatActivity() {
                 if (reservasUsuario.isEmpty()) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
-                            this@Activity_menu_creador,
+                            this@MenuCreadorActivity,
                             "No tienes reservas activas.",
                             Toast.LENGTH_SHORT
                         ).show()
@@ -389,7 +389,7 @@ class Activity_menu_creador : AppCompatActivity() {
                     // Recorre el mapa de las reservas agrupadas por piso
                     for ((piso, lista) in reservasPorPiso) {
                         // TextView para nombre del piso, guarda valores para el formato del mensaje
-                        val pisoText = TextView(this@Activity_menu_creador).apply {
+                        val pisoText = TextView(this@MenuCreadorActivity).apply {
                             text = piso
                             textSize = 18f
                             setPadding(0, 16, 0, 8)
@@ -402,14 +402,14 @@ class Activity_menu_creador : AppCompatActivity() {
                         // Recorre la lista de pisos de ese piso
                         lista.forEach { reserva ->
                             // Recorre la lista de pisos de ese piso
-                            val reservaText = TextView(this@Activity_menu_creador).apply {
+                            val reservaText = TextView(this@MenuCreadorActivity).apply {
                                 // Nombre de sala + fecha y hora
                                 text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
                                 setPadding(16, 4, 0, 4)
                                 setTextColor(Color.DKGRAY)
                                 // Al hacer click en la reserva abre un mensaje de confirmación de conaclación con título, mensaje y dos botones
                                 setOnClickListener {
-                                    val confirmDialog = AlertDialog.Builder(this@Activity_menu_creador)
+                                    val confirmDialog = AlertDialog.Builder(this@MenuCreadorActivity)
                                         .setTitle("¿Cancelar reserva?")
                                         .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
                                         .setPositiveButton("Sí") { _, _ ->
@@ -433,7 +433,7 @@ class Activity_menu_creador : AppCompatActivity() {
                                                 // Cración de una excepción que mostrará el mensaje de error en el hilo pricipal
                                                 } catch (e: Exception) {
                                                     withContext(Dispatchers.Main) {
-                                                        Toast.makeText(this@Activity_menu_creador, "Error al eliminar la reserva", Toast.LENGTH_SHORT).show()
+                                                        Toast.makeText(this@MenuCreadorActivity, "Error al eliminar la reserva", Toast.LENGTH_SHORT).show()
                                                     }
                                                 }
                                             }
@@ -456,7 +456,7 @@ class Activity_menu_creador : AppCompatActivity() {
                         }
 
                         // Añade una línea divisoria entre los grupos de pisos
-                        val divider = View(this@Activity_menu_creador).apply {
+                        val divider = View(this@MenuCreadorActivity).apply {
                             setBackgroundColor(Color.LTGRAY)
                             layoutParams = LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -467,7 +467,7 @@ class Activity_menu_creador : AppCompatActivity() {
                     }
 
                     // Crea la el constructor para pantalla de diálogo para ver reservas activas
-                    dialog = AlertDialog.Builder(this@Activity_menu_creador)
+                    dialog = AlertDialog.Builder(this@MenuCreadorActivity)
                         // titulo, texto del diálogo, botón de cerrar que anula acciones
                         .setTitle("Tus reservas activas")
                         .setView(dialogView)
@@ -482,7 +482,7 @@ class Activity_menu_creador : AppCompatActivity() {
             // Creación de una ecepción en caso de error
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_menu_creador, "Error cargando reservas", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MenuCreadorActivity, "Error cargando reservas", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -643,7 +643,7 @@ class Activity_menu_creador : AppCompatActivity() {
                                 val workName = "recordatorio_reserva_${reserva.nombreSala}_${reserva.fechaHora}"
 
                                 // Evita dupicados, en caso de que exista el nombre, se reemplaza y se realiza
-                                WorkManager.getInstance(this@Activity_menu_creador)
+                                WorkManager.getInstance(this@MenuCreadorActivity)
                                     .enqueueUniqueWork(
                                         workName,
                                         ExistingWorkPolicy.REPLACE,

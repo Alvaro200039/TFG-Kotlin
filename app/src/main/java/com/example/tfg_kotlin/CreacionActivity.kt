@@ -62,7 +62,7 @@ import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.FirebaseStorage
 
 
-class Activity_creacion : AppCompatActivity() {
+class CreacionActivity : AppCompatActivity() {
 
          // Creación de variables globales
         private lateinit var container: ConstraintLayout
@@ -216,9 +216,9 @@ class Activity_creacion : AppCompatActivity() {
                         )
                         // Crea una exepción para controlar errores y muestra el mensaje en el hilo principal
                     } catch (e: Exception) {
-                        Log.e("Activity_creacion", "Error guardando: ${e.message}", e)
+                        Log.e("CreacionActivity", "Error guardando: ${e.message}", e)
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@Activity_creacion, "Error guardando: ${e.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@CreacionActivity, "Error guardando: ${e.message}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
@@ -283,7 +283,7 @@ class Activity_creacion : AppCompatActivity() {
                 // Si no se encuentra, muestra mensaje en el hilo principal y cierra el diálogo
                 if (empresaSnapshot.isEmpty) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
                     }
                     return@launch
@@ -314,7 +314,7 @@ class Activity_creacion : AppCompatActivity() {
 
                     // Verifica que no haya ningún vampo vacío
                     if (hInicio.isBlank() || mInicio.isBlank() || hFin.isBlank() || mFin.isBlank()) {
-                        Toast.makeText(this@Activity_creacion, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
 
@@ -326,19 +326,19 @@ class Activity_creacion : AppCompatActivity() {
 
                     // Validar que sean números válidos
                     if (hInicioInt == null || mInicioInt == null || hFinInt == null || mFinInt == null) {
-                        Toast.makeText(this@Activity_creacion, "Introduce solo números válidos", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "Introduce solo números válidos", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
 
                     // Validación de rangos de horas
                     if (hInicioInt !in 0..23 || hFinInt !in 0..23) {
-                        Toast.makeText(this@Activity_creacion, "La hora debe estar entre 0 y 23", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "La hora debe estar entre 0 y 23", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
 
                     // Validación de rangos de minutos
                     if (mInicioInt !in 0..59 || mFinInt !in 0..59) {
-                        Toast.makeText(this@Activity_creacion, "Los minutos deben estar entre 0 y 59", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "Los minutos deben estar entre 0 y 59", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
 
@@ -348,7 +348,7 @@ class Activity_creacion : AppCompatActivity() {
 
                     // En caso de que la hora de inicio sea mayor a la de final, dará el siguiente mensaje
                     if (horaInicio >= horaFin) {
-                        Toast.makeText(this@Activity_creacion, "La hora de inicio debe ser menor que la de fin", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "La hora de inicio debe ser menor que la de fin", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
 
@@ -384,7 +384,7 @@ class Activity_creacion : AppCompatActivity() {
                             // Crea exceoción en caso de haber fallo al intentar guardar la franja horaria, en el hilo principal mostrará el siguiente mensaje
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@Activity_creacion, "Error al guardar franja: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@CreacionActivity, "Error al guardar franja: ${e.message}", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -392,7 +392,7 @@ class Activity_creacion : AppCompatActivity() {
             // Crea excepción en caso de hacer fallo a la hora de cargar horarios, en el hilo principal mostrará el siguiente mensaje
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_creacion, "Error cargando franjas: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CreacionActivity, "Error cargando franjas: ${e.message}", Toast.LENGTH_SHORT).show()
                     dialog.dismiss()
                 }
             }
@@ -423,7 +423,7 @@ class Activity_creacion : AppCompatActivity() {
                 ).apply {
                     setMargins(0, 8, 0, 8)
                 }
-                background = ContextCompat.getDrawable(this@Activity_creacion, R.drawable.dialog_background)
+                background = ContextCompat.getDrawable(this@CreacionActivity, R.drawable.dialog_background)
             }
 
             // Crea textViev con formato para amlacenar los datos de la franja c
@@ -465,7 +465,7 @@ class Activity_creacion : AppCompatActivity() {
                         // Definició de una excepción en casdo de dar error al eliminar franjas; mostrará menseje en hilo principal
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@Activity_creacion, "Error al eliminar: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@CreacionActivity, "Error al eliminar: ${e.message}", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -869,7 +869,7 @@ class Activity_creacion : AppCompatActivity() {
         val tamanios = listOf("Pequeño", "Grande")
         // Pinner con aspecto perconalizado para seleccionar el tamaño deseado
         val spinnerTamanio = Spinner(this).apply {
-            adapter = ArrayAdapter(this@Activity_creacion, android.R.layout.simple_spinner_dropdown_item, tamanios)
+            adapter = ArrayAdapter(this@CreacionActivity, android.R.layout.simple_spinner_dropdown_item, tamanios)
             setSelection(tamanios.indexOf(sala.tamaño).takeIf { it >= 0 } ?: 0)
             background = ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background)
             setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
@@ -974,11 +974,11 @@ class Activity_creacion : AppCompatActivity() {
                         actualizarBotonConSala(button, salaEditada)
                         button.tag = salaEditada
                         // Mensaje de confirmación
-                        Toast.makeText(this@Activity_creacion, "Sala actualizada en memoria", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "Sala actualizada en memoria", Toast.LENGTH_SHORT).show()
                         dialog.dismiss() // Cierra el diálogo
                     // Crea una excepción en caso de que haya algún error, mostrará el siguiente mensaje
                     } catch (e: Exception) {
-                        Toast.makeText(this@Activity_creacion, "Error al actualizar sala en memoria", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "Error al actualizar sala en memoria", Toast.LENGTH_SHORT).show()
                         Log.e("Memoria", "Error: ${e.message}", e)
                     }
                 }
@@ -1168,7 +1168,7 @@ class Activity_creacion : AppCompatActivity() {
                 }
                 // Muestra mensaje de confirmación en el hilo principal
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_creacion, "Piso eliminado correctamente", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CreacionActivity, "Piso eliminado correctamente", Toast.LENGTH_SHORT).show()
                     mostrarDialogoEliminarPisos(nombreEmpresa)
                 }
 
@@ -1176,7 +1176,7 @@ class Activity_creacion : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("Firestore", "Error al eliminar piso: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_creacion, "Error eliminando el piso", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CreacionActivity, "Error eliminando el piso", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -1199,7 +1199,7 @@ class Activity_creacion : AppCompatActivity() {
                 // En caso de que no se encuentren pisos, apaerecerá el siguiente mensaje en el hilo principal
                 if (nombresPisos.isEmpty()) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_creacion, "No hay pisos guardados.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CreacionActivity, "No hay pisos guardados.", Toast.LENGTH_SHORT).show()
                     }
                     return@launch
                 }
@@ -1217,13 +1217,13 @@ class Activity_creacion : AppCompatActivity() {
                     val pisosArray = nombresPisos.toTypedArray()
 
                     // Creación de diálogo para eliminar pisos
-                    val dialogPrincipal = AlertDialog.Builder(this@Activity_creacion)
+                    val dialogPrincipal = AlertDialog.Builder(this@CreacionActivity)
                         .setTitle("Eliminar piso")
                         .setItems(pisosArray) { dialogInterface, which ->
                             val pisoSeleccionado = pisosArray[which]
 
                             // Creación del diálogo de confirmación con botón de eliminar que borrará el piso seleccionado
-                            val dialogConfirmacion = AlertDialog.Builder(this@Activity_creacion)
+                            val dialogConfirmacion = AlertDialog.Builder(this@CreacionActivity)
                                 .setTitle("¿Eliminar '$pisoSeleccionado'?")
                                 .setMessage("Esta acción eliminará el piso y todas sus salas.")
                                 .setPositiveButton("Eliminar") { dialogConfirm, _ ->
@@ -1261,7 +1261,7 @@ class Activity_creacion : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("Firestore", "Error al obtener pisos: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_creacion, "Error obteniendo pisos", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CreacionActivity, "Error obteniendo pisos", Toast.LENGTH_SHORT).show()
                 }
             }
         }

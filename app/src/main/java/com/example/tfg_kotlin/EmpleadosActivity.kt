@@ -49,7 +49,7 @@ import kotlin.collections.component2
 import kotlin.collections.iterator
 import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
 
-class Activity_empleados : AppCompatActivity() {
+class EmpleadosActivity : AppCompatActivity() {
 
     // Creación de variables globales
     private lateinit var container: ConstraintLayout
@@ -306,7 +306,7 @@ class Activity_empleados : AppCompatActivity() {
                     // Recorre las salas
                     for (sala in salas) {
                         // se crea un botón sala
-                        val salaButton = Button(this@Activity_empleados).apply {
+                        val salaButton = Button(this@EmpleadosActivity).apply {
                             // Muestra información de salas
                             text = formatearTextoSala(sala)
                             // guarda las salas como etiquetas
@@ -406,7 +406,7 @@ class Activity_empleados : AppCompatActivity() {
                     // En caso de existir imagen
                     } else {
                         //Guarda la imagen en un objeto, indicando actividad de referencia, imagen a cargar y dónde se quiere guardar
-                        Glide.with(this@Activity_empleados)
+                        Glide.with(this@EmpleadosActivity)
                             .load(imagenUrl)
                             .centerCrop()
                             // guardamos la imagen como drawable
@@ -511,7 +511,7 @@ class Activity_empleados : AppCompatActivity() {
                 if (reservasUsuario.isEmpty()) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
-                            this@Activity_empleados,
+                            this@EmpleadosActivity,
                             "No tienes reservas activas.",
                             Toast.LENGTH_SHORT
                         ).show()
@@ -532,7 +532,7 @@ class Activity_empleados : AppCompatActivity() {
                     // Recorre el mapa de las reservas agrupadas por piso
                     for ((piso, lista) in reservasPorPiso) {
                         // TextView para nombre del piso, guarda valores para el formato del mensaje
-                        val pisoText = TextView(this@Activity_empleados).apply {
+                        val pisoText = TextView(this@EmpleadosActivity).apply {
                             text = piso
                             textSize = 18f
                             setPadding(0, 16, 0, 8)
@@ -545,14 +545,14 @@ class Activity_empleados : AppCompatActivity() {
                         // Recorre la lista de pisos de ese piso
                         lista.forEach { reserva ->
                             // Recorre la lista de pisos de ese piso
-                            val reservaText = TextView(this@Activity_empleados).apply {
+                            val reservaText = TextView(this@EmpleadosActivity).apply {
                                 // Nombre de sala + fecha y hora
                                 text = "- ${reserva.nombreSala}  ${reserva.fechaHora}"
                                 setPadding(16, 4, 0, 4)
                                 setTextColor(Color.DKGRAY)
                                 // Al hacer click en la reserva abre un mensaje de confirmación de conaclación con título, mensaje y dos botones
                                 setOnClickListener {
-                                    val confirmDialog = AlertDialog.Builder(this@Activity_empleados)
+                                    val confirmDialog = AlertDialog.Builder(this@EmpleadosActivity)
                                         .setTitle("¿Cancelar reserva?")
                                         .setMessage("¿Deseas cancelar la reserva de '${reserva.nombreSala}' el ${reserva.fechaHora}?")
                                         .setPositiveButton("Sí") { _, _ ->
@@ -578,7 +578,7 @@ class Activity_empleados : AppCompatActivity() {
                                                 } catch (e: Exception) {
                                                     withContext(Dispatchers.Main) {
                                                         Toast.makeText(
-                                                            this@Activity_empleados,
+                                                            this@EmpleadosActivity,
                                                             "Error al eliminar la reserva",
                                                             Toast.LENGTH_SHORT
                                                         ).show()
@@ -604,7 +604,7 @@ class Activity_empleados : AppCompatActivity() {
                         }
 
                         // Añade una línea divisoria entre los grupos de pisos
-                        val divider = View(this@Activity_empleados).apply {
+                        val divider = View(this@EmpleadosActivity).apply {
                             setBackgroundColor(Color.LTGRAY)
                             layoutParams = LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -616,7 +616,7 @@ class Activity_empleados : AppCompatActivity() {
 
                     // Crea la el constructor para pantalla de diálogo para ver reservas activas
 
-                    dialog = AlertDialog.Builder(this@Activity_empleados)
+                    dialog = AlertDialog.Builder(this@EmpleadosActivity)
                         // titulo, texto del diálogo, botón de cerrar que anula acciones
                         .setTitle("Tus reservas activas")
                         .setView(dialogView)
@@ -631,7 +631,7 @@ class Activity_empleados : AppCompatActivity() {
             // Creación de una ecepción en caso de error
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_empleados, "Error cargando reservas", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EmpleadosActivity, "Error cargando reservas", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -727,7 +727,7 @@ class Activity_empleados : AppCompatActivity() {
                 // Si no hay franjas horarias, en el hilo pricipal mostrará el siguiente mensaje
                 if (franjasOriginales.isEmpty()) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_empleados, "No hay franjas horarias disponibles. Crea algunas primero.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@EmpleadosActivity, "No hay franjas horarias disponibles. Crea algunas primero.", Toast.LENGTH_SHORT).show()
                     }
                     return@launch
                 }
@@ -751,7 +751,7 @@ class Activity_empleados : AppCompatActivity() {
                 // En caso de no existir franjas horarias, en el hilo principal mostrará el siguiente mensaje
                 if (horasDisponibles.isEmpty()) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@Activity_empleados, "No hay franjas horarias disponibles para el día seleccionado.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@EmpleadosActivity, "No hay franjas horarias disponibles para el día seleccionado.", Toast.LENGTH_SHORT).show()
                     }
                     return@launch
                 }
@@ -762,7 +762,7 @@ class Activity_empleados : AppCompatActivity() {
                     val horasArray = horasDisponibles.toTypedArray()
 
                     // crea un constructor de diálogos con título
-                    val dialog = AlertDialog.Builder(this@Activity_empleados)
+                    val dialog = AlertDialog.Builder(this@EmpleadosActivity)
                         .setTitle("Selecciona una franja horaria para el $fechaSeleccionada")
                         .setItems(horasArray) { _, which ->
                             // Al seleccionar una hora, se guarda y muestra mensje
@@ -786,7 +786,7 @@ class Activity_empleados : AppCompatActivity() {
                 // Crea excepción en caso de que dé algún error
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_empleados, "Error al cargar franjas horarias: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EmpleadosActivity, "Error al cargar franjas horarias: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
                 e.printStackTrace()
             }
@@ -863,14 +863,14 @@ class Activity_empleados : AppCompatActivity() {
 
                         // Cambia el background de la sala según su estado
                         view.backgroundTintList = ColorStateList.valueOf(
-                            ContextCompat.getColor(this@Activity_empleados, color)
+                            ContextCompat.getColor(this@EmpleadosActivity, color)
                         )
                     }
                 }
             // Se crea una excepción en caso de que haya algún error
             } catch (e: Exception) {
                 Toast.makeText(
-                    this@Activity_empleados,
+                    this@EmpleadosActivity,
                     "Error al verificar disponibilidad: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
@@ -941,7 +941,7 @@ class Activity_empleados : AppCompatActivity() {
                 dialogView.findViewById<TextView>(R.id.tvValorHora).text = horaSeleccionada
 
                 // Creamos un constructor para el diálogo
-                val builder = AlertDialog.Builder(this@Activity_empleados)
+                val builder = AlertDialog.Builder(this@EmpleadosActivity)
                     .setTitle("Detalles de ${sala.nombre}")
                     .setView(dialogView)
                     .setNegativeButton("Cerrar") { dialog, _ -> dialog.dismiss() }
@@ -960,10 +960,10 @@ class Activity_empleados : AppCompatActivity() {
                                         .delete().await()
                                     verificarDisponibilidad(fechaHora, pisoNombreReal)
                                     // Muestra mensaje de cancelación de reserva
-                                    Toast.makeText(this@Activity_empleados, "Reserva cancelada", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this@EmpleadosActivity, "Reserva cancelada", Toast.LENGTH_SHORT).show()
                                 // Crea una excepción en caso de no poder cancelar la reserva
                                 } catch (e: Exception) {
-                                    Toast.makeText(this@Activity_empleados, "Error al cancelar: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this@EmpleadosActivity, "Error al cancelar: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -995,14 +995,14 @@ class Activity_empleados : AppCompatActivity() {
                 dialog.setOnShowListener {
                     val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                     val negative = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                    positive?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.black))
-                    negative?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.red))
+                    positive?.setTextColor(ContextCompat.getColor(this@EmpleadosActivity, R.color.black))
+                    negative?.setTextColor(ContextCompat.getColor(this@EmpleadosActivity, R.color.red))
 
                     // Si la sala está reservada por otra pesrsona, el botñon se descativa
                     if (reservaExistente != null && reservaExistente.idusuario != idUsuario) {
                         positive?.isEnabled = false
-                        positive?.setTextColor(ContextCompat.getColor(this@Activity_empleados, R.color.grey))
-                        Toast.makeText(this@Activity_empleados, "Sala reservada por ${reservaExistente.nombreUsuario}", Toast.LENGTH_SHORT).show()
+                        positive?.setTextColor(ContextCompat.getColor(this@EmpleadosActivity, R.color.grey))
+                        Toast.makeText(this@EmpleadosActivity, "Sala reservada por ${reservaExistente.nombreUsuario}", Toast.LENGTH_SHORT).show()
                     }
                 }
                 // Muestra el diálogoa
@@ -1011,7 +1011,7 @@ class Activity_empleados : AppCompatActivity() {
                 //Crea una execpión en caso de haver algún error
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_empleados, "Error al cargar detalles: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EmpleadosActivity, "Error al cargar detalles: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -1051,7 +1051,7 @@ class Activity_empleados : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         val reserva = reservasSnapshot.documents[0]
                         Toast.makeText(
-                            this@Activity_empleados,
+                            this@EmpleadosActivity,
                             "Ya tienes una reserva a esta hora en: ${reserva.getString("nombreSala")} ${reserva.getString("piso")}",
                             Toast.LENGTH_SHORT
                         ).show()
@@ -1078,12 +1078,12 @@ class Activity_empleados : AppCompatActivity() {
                 // Una vez guardado, en el hilo principal, motrará el siguiente mensaje
                 withContext(Dispatchers.Main) {
                     verificarDisponibilidad(fechaHora, pisoNombreReal)
-                    Toast.makeText(this@Activity_empleados, "Reserva confirmada", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EmpleadosActivity, "Reserva confirmada", Toast.LENGTH_SHORT).show()
                 }
             // Se crea una excepción en caso de que haya algún fayo a la hora de reservar
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@Activity_empleados, "Error al reservar: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EmpleadosActivity, "Error al reservar: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }

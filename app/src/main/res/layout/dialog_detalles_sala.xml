@@ -17,7 +17,7 @@
             android:id="@+id/tvTituloPiso"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Piso:"
+            android:text="@string/label_piso"
             android:textStyle="bold"
             android:textColor="@android:color/black" />
 
@@ -45,7 +45,7 @@
             android:id="@+id/tvTituloTamano"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tamaño:"
+            android:text="@string/label_tamano"
             android:textStyle="bold"
             android:textColor="@android:color/black" />
 
@@ -73,7 +73,7 @@
             android:id="@+id/tvTituloExtras"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Extras:"
+            android:text="@string/label_extras"
             android:textStyle="bold"
             android:textColor="@android:color/black" />
 
@@ -101,7 +101,7 @@
             android:id="@+id/tvTituloFecha"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fecha:"
+            android:text="@string/label_fecha"
             android:textStyle="bold"
             android:textColor="@android:color/black" />
 
@@ -129,7 +129,7 @@
             android:id="@+id/tvTituloHora"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Hora:"
+            android:text="@string/label_hora"
             android:textStyle="bold"
             android:textColor="@android:color/black" />
 

@@ -14,7 +14,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import androidx.appcompat.widget.Toolbar
 
-class RegistroEmpleado : AppCompatActivity() {
+class RegistroEmpleadoActivity : AppCompatActivity() {
 
     // Creación de variables globales
     private lateinit var etCorreo: EditText
@@ -173,7 +173,7 @@ class RegistroEmpleado : AppCompatActivity() {
 
     // Función que del toast que muestra qué tipo de usuario eres
     private fun mostrarToast(mensaje: String) {
-        Toast.makeText(this@RegistroEmpleado, mensaje, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this@RegistroEmpleadoActivity, mensaje, Toast.LENGTH_SHORT).show()
     }
 
     // Función que pone los campos en blanco

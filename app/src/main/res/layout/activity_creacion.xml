@@ -5,7 +5,7 @@
     android:id="@+id/creacion"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Activity_menu_creador"
+    tools:context=".CreacionActivity"
     android:background="@drawable/wallpaper">
 
     <androidx.appcompat.widget.Toolbar
@@ -83,7 +83,7 @@
                 android:id="@+id/texto_btn_horas"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Franja horaria"
+                android:text="@string/tab_franja_horaria"
                 android:textColor="@android:color/black"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -112,7 +112,7 @@
                 android:id="@+id/texto_btn_plano"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Plano"
+                android:text="@string/tab_plano"
                 android:textColor="@android:color/black"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -140,7 +140,7 @@
                 android:id="@+id/texto_btn_pisos"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Eliminar pisos"
+                android:text="@string/btn_eliminar_pisos"
                 android:textColor="@android:color/black"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -169,7 +169,7 @@
                 android:id="@+id/texto_btn_sala"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Añadir sala"
+                android:text="@string/btn_anadir_sala"
                 android:textColor="@android:color/black"
                 android:textSize="12sp" />
         </LinearLayout>

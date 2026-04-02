@@ -20,7 +20,7 @@
             android:id="@+id/switchNotificaciones"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Activar notificaciones"
+            android:text="@string/switch_activar_notificaciones"
             android:textColor="@color/black"
             app:thumbTint="#CC000000"
             app:thumbIconTint="@color/white"
@@ -31,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Minutos antes de la reserva:" />
+            android:text="@string/label_minutos_antes_reserva" />
 
         <NumberPicker
             android:id="@+id/pickerMinutos"

@@ -19,25 +19,25 @@
             android:name=".RecuperarContrasenaActivity"
             android:exported="false" />
         <activity
-            android:name=".RegistroEmpresa"
+            android:name=".RegistroEmpresaActivity"
             android:exported="false" />
         <activity
-            android:name=".RegistroEmpleado"
+            android:name=".RegistroEmpleadoActivity"
             android:exported="false" />
         <activity
-            android:name=".Activity_menu_creador"
+            android:name=".MenuCreadorActivity"
             android:exported="false" />
         <activity
             android:name=".LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".activity_menu_empleado"
+            android:name=".MenuEmpleadoActivity"
             android:exported="false" />
         <activity
-            android:name=".Activity_creacion"
+            android:name=".CreacionActivity"
             android:exported="true" />
         <activity
-            android:name=".Activity_empleados"
+            android:name=".EmpleadosActivity"
             android:exported="false" />
         <activity
             android:name=".Principal"

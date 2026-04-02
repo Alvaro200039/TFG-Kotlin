@@ -14,7 +14,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class RegistroEmpresa : AppCompatActivity() {
+class RegistroEmpresaActivity : AppCompatActivity() {
 
     //Creación de varibles globales
     private lateinit var editNombre: EditText

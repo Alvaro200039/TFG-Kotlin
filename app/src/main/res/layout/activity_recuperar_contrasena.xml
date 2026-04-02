@@ -78,7 +78,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
                 android:backgroundTint="@color/blue"
-                android:text="Enviar código"
+                android:text="@string/btn_enviar_codigo"
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 app:cornerRadius="20dp" />

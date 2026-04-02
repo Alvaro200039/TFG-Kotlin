@@ -2,4 +2,39 @@
     <string name="app_name" translatable="false">Ad Agora</string>
     <string name="olvidaste_contra">¿Has olvidado tu contraseña?</string>
 
+    <!-- Principal & Login -->
+    <string name="btn_registrar_empresa">Registrar Empresa</string>
+    <string name="btn_registrar_empleado">Registrar Empleado</string>
+    <string name="btn_iniciar_sesion">Iniciar Sesión</string>
+    <string name="cb_recordar_sesion">Recordar sesión</string>
+    <string name="btn_registrarse">Registrarse</string>
+    
+    <!-- Registro & Recuperacion -->
+    <string name="btn_crear_cuenta">Crear Cuenta</string>
+    <string name="btn_enviar_codigo">Enviar código</string>
+
+    <!-- Menús Principal -->
+    <string name="title_reservas_espacios">Reservas de Espacios</string>
+    <string name="btn_nueva_reserva">Realizar nueva reserva</string>
+    <string name="btn_ver_reservas">Ver mis reservas</string>
+    <string name="btn_cerrar_sesion">Cerrar sesión</string>
+    <string name="btn_crear_editar_estancias">Crear o editar estancias</string>
+
+    <!-- Activity Empleados / Creación -->
+    <string name="tab_reservas_activas">Reservas activas</string>
+    <string name="btn_cambiar_hora">Cambiar hora</string>
+    <string name="tab_franja_horaria">Franja horaria</string>
+    <string name="tab_plano">Plano</string>
+    <string name="btn_eliminar_pisos">Eliminar pisos</string>
+    <string name="btn_anadir_sala">Añadir sala</string>
+
+    <!-- Diálogos -->
+    <string name="switch_activar_notificaciones">Activar notificaciones</string>
+    <string name="label_minutos_antes_reserva">Minutos antes de la reserva:</string>
+    <string name="btn_anadir_franja">Añadir franja</string>
+    <string name="label_piso">Piso:</string>
+    <string name="label_tamano">Tamaño:</string>
+    <string name="label_extras">Extras:</string>
+    <string name="label_fecha">Fecha:</string>
+    <string name="label_hora">Hora:</string>
 </resources>
