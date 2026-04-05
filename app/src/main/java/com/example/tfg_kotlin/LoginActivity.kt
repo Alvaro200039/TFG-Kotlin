@@ -1,33 +1,15 @@
 package com.example.tfg_kotlin
 
 import android.content.Intent
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.example.tfg_kotlin.data.model.Empresa
-import com.example.tfg_kotlin.data.model.FranjaHoraria
-import com.example.tfg_kotlin.data.model.Piso
-import com.example.tfg_kotlin.data.model.Sesion
 import com.example.tfg_kotlin.data.model.Usuario
-import com.example.tfg_kotlin.data.model.UserSession
 import androidx.core.content.edit
-import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.data.repository.FirestoreRepository
-import kotlinx.coroutines.launch
-
 import androidx.activity.viewModels
 import com.example.tfg_kotlin.databinding.ActivityLoginBinding
 import com.example.tfg_kotlin.ui.viewmodel.LoginViewModel
@@ -122,13 +104,14 @@ class LoginActivity : AppCompatActivity() {
         // Manejo de SharedPreferences antes de llamar al ViewModel
         val prefs = getSharedPreferences("loginPrefs", MODE_PRIVATE)
         if (binding.cbRecordar.isChecked) {
-            prefs.edit().apply {
+            prefs.edit {
                 putString("correo", correo)
                 putBoolean("recordar", true)
-                apply()
             }
         } else {
-            prefs.edit().clear().apply()
+            prefs.edit {
+                clear()
+            }
         }
 
         viewModel.login(correo, contrasena)

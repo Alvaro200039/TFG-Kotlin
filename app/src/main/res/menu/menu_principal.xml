@@ -8,5 +8,5 @@
         android:id="@+id/action_options"
         android:icon="@drawable/ic_notifications"
         app:showAsAction="always"
-        android:title="Notificaciones" />
+        android:title="@string/title_notificaciones" />
 </menu>

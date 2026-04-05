@@ -157,7 +157,7 @@ class CreacionActivity : AppCompatActivity() {
                 true
             }
             R.id.action_save -> {
-                viewModel.guardarDistribucion(imagen)
+                viewModel.guardarDistribucion()
                 true
             }
             else -> super.onOptionsItemSelected(item)

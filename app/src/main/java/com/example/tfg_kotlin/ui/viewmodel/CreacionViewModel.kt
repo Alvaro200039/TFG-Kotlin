@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.tfg_kotlin.data.model.FranjaHoraria
 import com.example.tfg_kotlin.data.model.Piso
 import com.example.tfg_kotlin.data.model.Sala
 import com.example.tfg_kotlin.data.model.Sesion
@@ -98,7 +97,7 @@ class CreacionViewModel(
         }
     }
 
-    fun guardarDistribucion(imagen: ByteArray?) {
+    fun guardarDistribucion() {
         val piso = _pisoActual.value ?: return
         val salas = _salas.value ?: emptyList()
         val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return

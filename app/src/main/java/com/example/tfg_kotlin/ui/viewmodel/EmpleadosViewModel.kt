@@ -1,6 +1,5 @@
 package com.example.tfg_kotlin.ui.viewmodel
 
-import android.graphics.drawable.Drawable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,8 +12,6 @@ import com.example.tfg_kotlin.data.repository.FirestoreRepository
 import com.example.tfg_kotlin.data.repository.ReservationRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 class EmpleadosViewModel : ViewModel() {
 
@@ -31,10 +28,10 @@ class EmpleadosViewModel : ViewModel() {
     private val _reservas = MutableLiveData<List<Reserva>>()
     val reservas: LiveData<List<Reserva>> = _reservas
 
-    private val _fechaSeleccionada = MutableLiveData<String>("")
+    private val _fechaSeleccionada = MutableLiveData("")
     val fechaSeleccionada: LiveData<String> = _fechaSeleccionada
 
-    private val _horaSeleccionada = MutableLiveData<String>("")
+    private val _horaSeleccionada = MutableLiveData("")
     val horaSeleccionada: LiveData<String> = _horaSeleccionada
 
     private val _franjas = MutableLiveData<List<String>>()
@@ -56,7 +53,7 @@ class EmpleadosViewModel : ViewModel() {
             try {
                 _pisos.value = firestoreRepo.getPisosByEmpresa(empresaId)
                 _franjas.value = firestoreRepo.getFranjasByEmpresa(empresaId).map { it.hora }.sorted()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _error.value = "Error al cargar datos"
             } finally {
                 _loading.value = false
@@ -70,7 +67,7 @@ class EmpleadosViewModel : ViewModel() {
             try {
                 _salas.value = firestoreRepo.getSalasByPiso(empresaId, pisoId)
                 checkAvailability()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _error.value = "Error al cargar salas"
             }
         }
@@ -97,7 +94,7 @@ class EmpleadosViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _reservas.value = reservationRepo.getReservationsByDateTime(empresaId, fechaHora)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Silently fail availability check to not annoy user
             }
         }

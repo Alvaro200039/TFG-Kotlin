@@ -21,7 +21,6 @@
     <string name="btn_crear_editar_estancias">Crear o editar estancias</string>
 
     <!-- Activity Empleados / Creación -->
-    <string name="tab_reservas_activas">Reservas activas</string>
     <string name="btn_cambiar_hora">Cambiar hora</string>
     <string name="tab_franja_horaria">Franja horaria</string>
     <string name="tab_plano">Plano</string>
@@ -34,8 +33,6 @@
     <string name="btn_cerrar">Cerrar</string>
     <string name="btn_si">Sí</string>
     <string name="btn_no">No</string>
-    <string name="btn_aplicar">Aplicar</string>
-    <string name="btn_eliminar">Eliminar</string>
     <string name="switch_activar_notificaciones">Activar notificaciones</string>
     <string name="label_minutos_antes_reserva">Minutos antes de la reserva:</string>
     <string name="btn_anadir_franja">Añadir franja</string>
@@ -50,91 +47,36 @@
     <string name="title_inicio_sesion">Inicio Sesión</string>
     <string name="err_completar_campos">Completa todos los campos</string>
     <string name="err_correo_invalido">Correo inválido</string>
-    <string name="err_credenciales_incorrectas">Credenciales incorrectas o error de red</string>
-    <string name="err_usuario_no_encontrado">No se encontraron datos del usuario</string>
-    <string name="err_obtener_datos_usuario">Error al obtener datos del usuario</string>
-    <string name="err_localizar_empresa">Error al localizar la empresa del usuario</string>
-    <string name="err_obtener_empresa">Error al obtener empresa</string>
     <string name="msg_bienvenida_jefe">Bienvenido %1$s: Iniciada sesión como Jefe</string>
     <string name="msg_bienvenida_empleado">Bienvenido %1$s: Iniciada sesión como Empleado</string>
-    <string name="err_cargar_franjas">Error al cargar franjas horarias</string>
     <string name="err_cargar_pisos">Error al cargar pisos</string>
-    <string name="err_buscar_usuario">Error al buscar usuario</string>
 
     <!-- BaseMenuActivity Strings -->
-    <string name="err_permisos_notificaciones">No se podrán mostrar notificaciones de reservas.</string>
     <string name="title_notificaciones">Notificaciones</string>
-    <string name="msg_preferencias_guardadas">Preferencias guardadas</string>
-    <string name="err_usuario_empresa_no_identificado">Usuario o empresa no identificado</string>
     <string name="msg_no_reservas_activas">No tienes reservas activas.</string>
     <string name="title_cancelar_reserva">¿Cancelar reserva?</string>
     <string name="msg_confirmar_cancelar_reserva">¿Deseas cancelar la reserva de \'%1$s\' el %2$s?</string>
-    <string name="err_eliminar_reserva">Error al eliminar la reserva</string>
     <string name="title_tus_reservas">Tus reservas activas</string>
-    <string name="err_cargando_reservas">Error cargando reservas</string>
-    <string name="err_sesion_invalida">No hay usuario o empresa válidos</string>
     <string name="msg_no_hay_reservas_proximas">No hay reservas próximas</string>
     <string name="msg_siguiente_reserva">Siguiente reserva: %1$s \n%2$s el %3$s</string>
     <string name="reserva_item_format">- %1$s  %2$s</string>
 
     <!-- CreacionActivity Strings -->
-    <string name="err_usuario_no_autenticado">Usuario no autenticado</string>
-    <string name="err_cif_no_disponible">CIF no disponible en sesión</string>
     <string name="title_piso_n">Piso nº</string>
-    <string name="label_sin_nombre">Sin nombre</string>
-    <string name="msg_no_pisos_creados">No hay pisos creados</string>
-    <string name="err_guardando_general">Error guardando: %1$s</string>
-    <string name="title_anadir_franjas">Añadir franjas horarias</string>
-    <string name="err_cif_no_definido">Error: CIF de empresa no definido</string>
     <string name="err_empresa_no_encontrada">Empresa no encontrada</string>
-    <string name="err_numeros_validos">Introduce solo números válidos</string>
-    <string name="err_rango_hora">La hora debe estar entre 0 y 23</string>
-    <string name="err_rango_minutos">Los minutos deben estar entre 0 y 59</string>
-    <string name="err_hora_inicio_fin">La hora de inicio debe ser menor que la de fin</string>
-    <string name="err_guardar_franja">Error al guardar franja: %1$s</string>
-    <string name="err_cargar_franjas_msg">Error cargando franjas: %1$s</string>
-    <string name="err_eliminar_franja">Error al eliminar: %1$s</string>
     <string name="label_sala_defecto">Sala</string>
     <string name="title_crear_nuevo_piso">Crear nuevo piso</string>
     <string name="title_editar_nombre_piso">Editar nombre del piso</string>
-    <string name="err_piso_nombre_vacio">Por favor, cambie el nombre del piso antes de guardar</string>
-    <string name="msg_piso_modificado">Nombre del piso modificado (pendiente de guardar)</string>
     <string name="opt_editar">Editar</string>
     <string name="opt_eliminar">Eliminar</string>
     <string name="opt_cambiar_tamano">Cambiar tamaño</string>
     <string name="title_opciones_sala">Opciones de la sala</string>
-    <string name="err_modificar_sala_primero">Modifica primero la sala</string>
-    <string name="label_ancho_px">Ancho: %1$dpx</string>
-    <string name="label_alto_px">Alto: %1$dpx</string>
-    <string name="title_cambiar_tamano">Cambiar tamaño de %1$s</string>
-    <string name="err_actualizar_tamano_sala">Error al actualizar tamaño de sala: %1$s</string>
-    <string name="err_sala_asociada_no_encontrada">No se encontró la sala asociada al botón</string>
-    <string name="err_asignar_nombre_piso_antes">Primero asigna un nombre al piso antes de editar
-        salas</string>
-    <string name="err_piso_asociado_no_encontrado">No se encontró el piso asociado</string>
     <string name="hint_nuevo_nombre">Nuevo nombre</string>
-    <string name="tamano_pequeno">Pequeño</string>
-    <string name="tamano_grande">Grande</string>
     <string name="extra_wifi">WiFi</string>
     <string name="extra_proyector">Proyector</string>
     <string name="extra_pizarra">Pizarra</string>
-    <string name="title_editar_sala">Editar sala</string>
-    <string name="err_nombre_vacio">El nombre no puede estar vacío</string>
-    <string name="err_nombre_en_uso">Ese nombre ya está en uso</string>
-    <string name="msg_sala_actualizada_memoria">Sala actualizada en memoria</string>
-    <string name="err_actualizar_sala_memoria">Error al actualizar sala en memoria</string>
-    <string name="err_colocar_sala_nombre_piso">Debes colocar una sala y asignar nombre al piso</string>
     <string name="err_empresa_no_definida">Empresa en sesión no definida</string>
     <string name="msg_distribucion_guardada">Distribución guardada correctamente</string>
-    <string name="err_subiendo_imagen">Error subiendo imagen: %1$s</string>
-    <string name="msg_piso_eliminado">Piso eliminado correctamente</string>
-    <string name="err_eliminando_piso">Error eliminando el piso</string>
-    <string name="msg_no_hay_pisos_guardados">No hay pisos guardados.</string>
-    <string name="title_eliminar_piso">Eliminar piso</string>
-    <string name="title_confirmar_eliminar_piso">¿Eliminar \'%1$s\'?</string>
-    <string name="msg_confirmar_eliminar_piso">Esta acción eliminará el piso \'%1$s\' y todas sus
-        salas.</string>
-    <string name="err_obteniendo_pisos">Error obteniendo pisos</string>
 
     <string name="label_correo">Introduzca su correo</string>
     <string name="label_contrasena">Introduzca su contraseña</string>
@@ -195,6 +137,7 @@
     <string name="title_franjas_horarias">Franjas Horarias</string>
     <string name="title_selecciona_piso_eliminar">Selecciona el piso a eliminar</string>
     <string name="title_confirmar_eliminacion">Confirmar eliminación</string>
+    <string name="msg_confirmar_eliminar_piso">¿Deseas eliminar el piso %1$s?</string>
     <string name="title_editar_detalles_sala">Editar detalles de la sala</string>
     <string name="title_cambiar_tamano_sala">Cambiar tamaño de la sala</string>
     <string name="msg_operacion_exito">Operación realizada con éxito</string>
