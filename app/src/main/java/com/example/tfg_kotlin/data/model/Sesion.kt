@@ -1,8 +1,7 @@
-package com.example.tfg_kotlin.BBDD_Global.Entities
-
+package com.example.tfg_kotlin.data.model
 
 object Sesion {
-    var datos: UsuarioSesion? = null
+    var datos: UserSession? = null
 
     fun cerrarSesion() {
         datos = null

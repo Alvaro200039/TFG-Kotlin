@@ -1,5 +1,4 @@
-package com.example.tfg_kotlin.BBDD_Global.Entities
-
+package com.example.tfg_kotlin.data.model
 
 data class FranjaHoraria(
     val hora: String = ""

@@ -1,175 +1,100 @@
-package com.example.tfg_kotlin
-
-import android.content.Intent
-import android.os.Bundle
-import android.widget.Button
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.widget.Toolbar
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.BBDD_Global.Entities.Empresa
-import com.example.tfg_kotlin.BBDD_Global.Entities.Piso
-import com.example.tfg_kotlin.BBDD_Global.Entities.Sesion
-import com.example.tfg_kotlin.BBDD_Global.Entities.Usuario
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
+import androidx.activity.viewModels
+import com.example.tfg_kotlin.databinding.ActivityMenuCreadorBinding
+import com.example.tfg_kotlin.ui.viewmodel.MenuViewModel
 
 class MenuCreadorActivity : BaseMenuActivity() {
 
+    private lateinit var binding: ActivityMenuCreadorBinding
+    override val menuViewModel: MenuViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_menu_creador)
+        binding = ActivityMenuCreadorBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         enableEdgeToEdge()
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.menucreacion)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.menucreacion) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Toolbar con icono y funcionalidad
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = ""
-        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
+        setupToolbar()
+        setupObservers()
+        setupListeners()
+        
+        setupBaseObservers(binding.textProximaReserva)
+    }
 
-        // Instanciación de Firebase
-        val auth = FirebaseAuth.getInstance()
-        firestore = FirebaseFirestore.getInstance()
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            title = ""
+            setHomeAsUpIndicator(R.drawable.ic_adagora)
+        }
+    }
 
-        // Comprueba el usuario actualmente logueado
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            Toast.makeText(this, "No hay usuario logueado", Toast.LENGTH_SHORT).show()
-            finish()
-            return
+    private fun setupObservers() {
+        menuViewModel.usuario.observe(this) { usuario ->
+            // Update UI if needed based on user data
         }
 
-        // Accedemos a datos desde Sesion.datos
-        val sesion = Sesion.datos
-        if (sesion == null) {
-            Toast.makeText(this, "Sesión no iniciada", Toast.LENGTH_SHORT).show()
-            finish()
-            return
+        menuViewModel.error.observe(this) { msg ->
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupListeners() {
+        binding.btnEditarSalas.setOnClickListener {
+            startActivity(Intent(this, CreacionActivity::class.java))
         }
 
-        // Variables de sesión
-        val correoUsuario = sesion.usuario.email
-        val uidUsuario = sesion.usuario.uid
-        var nombreUsuario = sesion.usuario.nombre
-        val nombreEmpresa = sesion.empresa.nombre
-
-        // Validación de datos requeridos
-        if (correoUsuario.isEmpty() || nombreEmpresa.isEmpty()) {
-            Toast.makeText(this, "Faltan datos de usuario", Toast.LENGTH_SHORT).show()
-            finish()
-            return
+        binding.btnNuevaReserva.setOnClickListener {
+            handleNuevaReserva()
         }
 
-        // Si no se encuentra el nombre del usuario, lo carga desde Firestore
-        if (nombreUsuario.isEmpty()) {
-            firestore.collection("empresas")
-                .document(nombreEmpresa)
-                .collection("usuarios")
-                .document(correoUsuario)
-                .get()
-                .addOnSuccessListener { documentSnapshot ->
-                    if (documentSnapshot.exists()) {
-                        val usuario = documentSnapshot.toObject(Usuario::class.java)
-                        if (usuario != null) {
-                            nombreUsuario = usuario.nombre
-                            Sesion.datos = sesion.copy(usuario = usuario)
-                        } else {
-                            Toast.makeText(this, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(this, "Error cargando usuario: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-        }
-
-        // Botón de editar salas abre la activity de creación
-        findViewById<Button>(R.id.btnEditarSalas).setOnClickListener {
-            val intent = Intent(this, CreacionActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Botón de nueva reserva
-        findViewById<Button>(R.id.btnNuevaReserva).setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    val empresaId = sesion.empresa.nombre
-                    if (empresaId.isEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(this@MenuCreadorActivity, "Empresa no identificada", Toast.LENGTH_SHORT).show()
-                        }
-                        return@launch
-                    }
-
-                    val empresaDoc = firestore.collection("empresas")
-                        .document(empresaId)
-                        .get()
-                        .await()
-
-                    if (!empresaDoc.exists()) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(this@MenuCreadorActivity, "Empresa no encontrada", Toast.LENGTH_SHORT).show()
-                        }
-                        return@launch
-                    }
-
-                    val empresa = empresaDoc.toObject(Empresa::class.java)
-                    empresa?.nombre = empresaDoc.id
-                    empresa?.let { sesion.empresa = it }
-
-                    val pisosSnapshot = firestore.collection("empresas")
-                        .document(empresaId)
-                        .collection("pisos")
-                        .get()
-                        .await()
-
-                    val pisos = pisosSnapshot.documents.mapNotNull { doc ->
-                        doc.toObject(Piso::class.java)?.apply { id = doc.id }
-                    }
-
-                    if (pisos.isNotEmpty()) {
-                        sesion.pisos = listOf(pisos.last())
-                        withContext(Dispatchers.Main) {
-                            startActivity(Intent(this@MenuCreadorActivity, EmpleadosActivity::class.java))
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(this@MenuCreadorActivity, "No se ha creado ningún piso", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MenuCreadorActivity, "Error al cargar pisos: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
-                    e.printStackTrace()
-                }
-            }
-        }
-
-        // Botón ver reservas
-        findViewById<Button>(R.id.btnVerReservas).setOnClickListener {
+        binding.btnVerReservas.setOnClickListener {
             mostrarDialogoReservas()
         }
 
-        // Botón logout
-        findViewById<Button>(R.id.btnLogout)?.setOnClickListener {
-            FirebaseAuth.getInstance().signOut()
-            Sesion.cerrarSesion()
+        binding.btnLogout.setOnClickListener {
+            menuViewModel.logout()
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
     }
+
+    private fun handleNuevaReserva() {
+        lifecycleScope.launch {
+            try {
+                val sesion = Sesion.datos ?: return@launch
+                val empresaId = sesion.empresa.nombre
+                
+                if (empresaId.isEmpty()) {
+                    Toast.makeText(this@MenuCreadorActivity, getString(R.string.err_empresa_no_definida), Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val empresaActualizada = firestoreRepo.getEmpresaByNombre(empresaId)
+                if (empresaActualizada == null) {
+                    Toast.makeText(this@MenuCreadorActivity, getString(R.string.err_empresa_no_encontrada), Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                sesion.empresa = empresaActualizada
+
+                val pisos = firestoreRepo.getPisosByEmpresa(empresaId)
+                if (pisos.isNotEmpty()) {
+                    sesion.pisos = listOf(pisos.last())
+                    startActivity(Intent(this@MenuCreadorActivity, EmpleadosActivity::class.java))
+                } else {
+                    Toast.makeText(this@MenuCreadorActivity, getString(R.string.msg_no_piso_creado), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@MenuCreadorActivity, getString(R.string.err_cargar_pisos), Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
+            }
+        }
+    }
 }
+

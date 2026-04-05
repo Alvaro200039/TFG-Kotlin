@@ -32,7 +32,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Reseteo de Contraseña"
+        supportActionBar?.title = getString(R.string.title_reseteo_contrasena)
         supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
 
         configurarPaso1()
@@ -50,7 +50,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
             // Validación etCorreo está vacío y formato del correo
             if (correo.isEmpty() || !correo.contains("@") || !correo.contains(".")) {
-                etCorreo.error = "Introduce un correo válido"
+                etCorreo.error = getString(R.string.err_introduce_correo_valido)
                 return@setOnClickListener
             }
 
@@ -58,12 +58,12 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
             FirebaseAuth.getInstance().sendPasswordResetEmail(correo)
                 .addOnSuccessListener {
                     // En caso de que exista el correo
-                    Toast.makeText(this, "Correo de recuperación enviado a $correo", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, getString(R.string.msg_correo_recuperacion_enviado, correo), Toast.LENGTH_LONG).show()
                     finish()
                 }
                 .addOnFailureListener {
                     // En caso de que el corero no esté registrado
-                    Toast.makeText(this, "No se pudo enviar el correo. Verifica que esté registrado.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.err_no_pudo_enviar_correo), Toast.LENGTH_SHORT).show()
 
                 }
         }

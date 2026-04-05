@@ -28,7 +28,14 @@
     <string name="btn_eliminar_pisos">Eliminar pisos</string>
     <string name="btn_anadir_sala">Añadir sala</string>
 
-    <!-- Diálogos -->
+    <!-- Diálogos Genéricos -->
+    <string name="btn_guardar">Guardar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="btn_cerrar">Cerrar</string>
+    <string name="btn_si">Sí</string>
+    <string name="btn_no">No</string>
+    <string name="btn_aplicar">Aplicar</string>
+    <string name="btn_eliminar">Eliminar</string>
     <string name="switch_activar_notificaciones">Activar notificaciones</string>
     <string name="label_minutos_antes_reserva">Minutos antes de la reserva:</string>
     <string name="btn_anadir_franja">Añadir franja</string>
@@ -37,4 +44,169 @@
     <string name="label_extras">Extras:</string>
     <string name="label_fecha">Fecha:</string>
     <string name="label_hora">Hora:</string>
+    <string name="label_ninguno">Ninguno</string>
+
+    <!-- Login Activity Strings -->
+    <string name="title_inicio_sesion">Inicio Sesión</string>
+    <string name="err_completar_campos">Completa todos los campos</string>
+    <string name="err_correo_invalido">Correo inválido</string>
+    <string name="err_credenciales_incorrectas">Credenciales incorrectas o error de red</string>
+    <string name="err_usuario_no_encontrado">No se encontraron datos del usuario</string>
+    <string name="err_obtener_datos_usuario">Error al obtener datos del usuario</string>
+    <string name="err_localizar_empresa">Error al localizar la empresa del usuario</string>
+    <string name="err_obtener_empresa">Error al obtener empresa</string>
+    <string name="msg_bienvenida_jefe">Bienvenido %1$s: Iniciada sesión como Jefe</string>
+    <string name="msg_bienvenida_empleado">Bienvenido %1$s: Iniciada sesión como Empleado</string>
+    <string name="err_cargar_franjas">Error al cargar franjas horarias</string>
+    <string name="err_cargar_pisos">Error al cargar pisos</string>
+    <string name="err_buscar_usuario">Error al buscar usuario</string>
+
+    <!-- BaseMenuActivity Strings -->
+    <string name="err_permisos_notificaciones">No se podrán mostrar notificaciones de reservas.</string>
+    <string name="title_notificaciones">Notificaciones</string>
+    <string name="msg_preferencias_guardadas">Preferencias guardadas</string>
+    <string name="err_usuario_empresa_no_identificado">Usuario o empresa no identificado</string>
+    <string name="msg_no_reservas_activas">No tienes reservas activas.</string>
+    <string name="title_cancelar_reserva">¿Cancelar reserva?</string>
+    <string name="msg_confirmar_cancelar_reserva">¿Deseas cancelar la reserva de \'%1$s\' el %2$s?</string>
+    <string name="err_eliminar_reserva">Error al eliminar la reserva</string>
+    <string name="title_tus_reservas">Tus reservas activas</string>
+    <string name="err_cargando_reservas">Error cargando reservas</string>
+    <string name="err_sesion_invalida">No hay usuario o empresa válidos</string>
+    <string name="msg_no_hay_reservas_proximas">No hay reservas próximas</string>
+    <string name="msg_siguiente_reserva">Siguiente reserva: %1$s \n%2$s el %3$s</string>
+
+    <!-- CreacionActivity Strings -->
+    <string name="err_usuario_no_autenticado">Usuario no autenticado</string>
+    <string name="err_cif_no_disponible">CIF no disponible en sesión</string>
+    <string name="title_piso_n">Piso nº</string>
+    <string name="label_sin_nombre">Sin nombre</string>
+    <string name="msg_no_pisos_creados">No hay pisos creados</string>
+    <string name="err_guardando_general">Error guardando: %1$s</string>
+    <string name="title_anadir_franjas">Añadir franjas horarias</string>
+    <string name="err_cif_no_definido">Error: CIF de empresa no definido</string>
+    <string name="err_empresa_no_encontrada">Empresa no encontrada</string>
+    <string name="err_numeros_validos">Introduce solo números válidos</string>
+    <string name="err_rango_hora">La hora debe estar entre 0 y 23</string>
+    <string name="err_rango_minutos">Los minutos deben estar entre 0 y 59</string>
+    <string name="err_hora_inicio_fin">La hora de inicio debe ser menor que la de fin</string>
+    <string name="err_guardar_franja">Error al guardar franja: %1$s</string>
+    <string name="err_cargar_franjas_msg">Error cargando franjas: %1$s</string>
+    <string name="err_eliminar_franja">Error al eliminar: %1$s</string>
+    <string name="label_sala_defecto">Sala</string>
+    <string name="title_crear_nuevo_piso">Crear nuevo piso</string>
+    <string name="title_editar_nombre_piso">Editar nombre del piso</string>
+    <string name="err_piso_nombre_vacio">Por favor, cambie el nombre del piso antes de guardar</string>
+    <string name="msg_piso_modificado">Nombre del piso modificado (pendiente de guardar)</string>
+    <string name="opt_editar">Editar</string>
+    <string name="opt_eliminar">Eliminar</string>
+    <string name="opt_cambiar_tamanio">Cambiar tamaño</string>
+    <string name="title_opciones_sala">Opciones de la sala</string>
+    <string name="err_modificar_sala_primero">Modifica primero la sala</string>
+    <string name="label_ancho_px">Ancho: %1$dpx</string>
+    <string name="label_alto_px">Alto: %1$dpx</string>
+    <string name="title_cambiar_tamanio">Cambiar tamaño de %1$s</string>
+    <string name="err_actualizar_tamanio_sala">Error al actualizar tamaño de sala: %1$s</string>
+    <string name="err_sala_asociada_no_encontrada">No se encontró la sala asociada al botón</string>
+    <string name="err_asignar_nombre_piso_antes">Primero asigna un nombre al piso antes de editar salas</string>
+    <string name="err_piso_asociado_no_encontrado">No se encontró el piso asociado</string>
+    <string name="hint_nuevo_nombre">Nuevo nombre</string>
+    <string name="tamanio_pequeno">Pequeño</string>
+    <string name="tamanio_grande">Grande</string>
+    <string name="extra_wifi">WiFi</string>
+    <string name="extra_proyector">Proyector</string>
+    <string name="extra_pizarra">Pizarra</string>
+    <string name="title_editar_sala">Editar sala</string>
+    <string name="err_nombre_vacio">El nombre no puede estar vacío</string>
+    <string name="err_nombre_en_uso">Ese nombre ya está en uso</string>
+    <string name="msg_sala_actualizada_memoria">Sala actualizada en memoria</string>
+    <string name="err_actualizar_sala_memoria">Error al actualizar sala en memoria</string>
+    <string name="err_colocar_sala_nombre_piso">Debes colocar una sala y asignar nombre al piso</string>
+    <string name="err_empresa_no_definida">Empresa en sesión no definida</string>
+    <string name="msg_distribucion_guardada">Distribución guardada correctamente</string>
+    <string name="err_subiendo_imagen">Error subiendo imagen: %1$s</string>
+    <string name="msg_piso_eliminado">Piso eliminado correctamente</string>
+    <string name="err_eliminando_piso">Error eliminando el piso</string>
+    <string name="msg_no_hay_pisos_guardados">No hay pisos guardados.</string>
+    <string name="title_eliminar_piso">Eliminar piso</string>
+    <string name="title_confirmar_eliminar_piso">¿Eliminar \'%1$s\'?</string>
+    <string name="msg_confirmar_eliminar_piso">Esta acción eliminará el piso y todas sus salas.</string>
+    <string name="err_obteniendo_pisos">Error obteniendo pisos</string>
+
+    <!-- EmpleadosActivity Strings -->
+    <string name="err_sesion_no_iniciada">Sesión no iniciada</string>
+    <string name="err_usuario_no_identificado">Usuario no identificado</string>
+    <string name="msg_selecciona_fecha_primero">Primero selecciona una fecha</string>
+    <string name="btn_seleccionar_fecha">Seleccionar fecha</string>
+    <string name="label_fecha_con_valor">Fecha: %1$s</string>
+    <string name="label_hora_con_valor">Hora: %1$s</string>
+    <string name="err_no_salas_definidas">No hay salas definidas para este piso</string>
+    <string name="err_cargar_salas_msg">Error al cargar salas: %1$s</string>
+    <string name="err_no_carga_imagen">no se carga la imagen</string>
+    <string name="err_no_imagen_fondo">No hay imagen de fondo para este piso</string>
+    <string name="err_verificar_disponibilidad">Error al verificar disponibilidad: %1$s</string>
+    <string name="title_detalles_sala">Detalles de %1$s</string>
+    <string name="btn_cancelar_reserva">Cancelar reserva</string>
+    <string name="msg_reserva_cancelada">Reserva cancelada</string>
+    <string name="err_cancelar_reserva_msg">Error al cancelar: %1$s</string>
+    <string name="btn_ya_tienes_reserva">Ya tienes una reserva</string>
+    <string name="btn_reservar">Reservar</string>
+    <string name="btn_reservada">Reservada</string>
+    <string name="msg_sala_reservada_por">Sala reservada por %1$s</string>
+    <string name="err_cargar_detalles">Error al cargar detalles: %1$s</string>
+    <string name="err_info_incompleta">Información de usuario o empresa incompleta</string>
+    <string name="err_ya_tienes_reserva_mismo_horario">Ya tienes una reserva a esta hora en: %1$s %2$s</string>
+    <string name="msg_reserva_confirmada">Reserva confirmada</string>
+    <string name="err_reservar_msg">Error al reservar: %1$s</string>
+    <string name="msg_no_franjas_disponibles">No hay franjas horarias disponibles. Crea algunas primero.</string>
+    <string name="msg_no_franjas_dia_seleccionado">No hay franjas horarias disponibles para el día seleccionado.</string>
+    <string name="title_selecciona_franja_para">Selecciona una franja horaria para el %1$s</string>
+    <string name="title_eliminar_franja">Eliminar franja</string>
+    <string name="msg_confirmar_eliminar_franja">¿Deseas eliminar la franja %1$s?</string>
+    <string name="err_formato_hora_invalido">Formato de hora inválido</string>
+    <string name="title_franjas_horarias">Franjas Horarias</string>
+    <string name="title_selecciona_piso_eliminar">Selecciona el piso a eliminar</string>
+    <string name="title_confirmar_eliminacion">Confirmar eliminación</string>
+    <string name="title_editar_detalles_sala">Editar detalles de la sala</string>
+    <string name="title_cambiar_tamanio_sala">Cambiar tamaño de la sala</string>
+    <string name="msg_operacion_exito">Operación realizada con éxito</string>
+    <string name="label_libre">LIBRE</string>
+    <string name="label_ocupada_por">OCUPADA por %1$s</string>
+    <string name="btn_reservar_mayus">RESERVAR</string>
+    <string name="btn_cancelar_mi_reserva">CANCELAR MI RESERVA</string>
+
+    <!-- Menu Activities -->
+    <string name="err_no_usuario_logueado">No hay usuario logueado</string>
+    <string name="err_faltan_datos_usuario">Faltan datos de usuario</string>
+    <string name="err_cargar_usuario">Error cargando usuario: %1$s</string>
+    <string name="msg_no_piso_creado">No se ha creado ningún piso</string>
+
+    <!-- RecuperarContrasenaActivity Strings -->
+    <string name="title_reseteo_contrasena">Reseteo de Contraseña</string>
+    <string name="err_introduce_correo_valido">Introduce un correo válido</string>
+    <string name="msg_correo_recuperacion_enviado">Correo de recuperación enviado a %1$s</string>
+    <string name="err_no_pudo_enviar_correo">No se pudo enviar el correo. Verifica que esté registrado.</string>
+
+    <!-- RegistroEmpleadoActivity Strings -->
+    <string name="title_registro_empleados">Registro de Empleados</string>
+    <string name="err_contrasenas_no_coinciden">Las contraseñas no coinciden</string>
+    <string name="err_dominio_incorrecto">El dominio introducido no existe o es incorrecto</string>
+    <string name="err_cif_dominio_no_coincide">El CIF no coincide con el dominio. Corrígelo para continuar.</string>
+    <string name="msg_empleado_registrado_jefe">Empleado registrado como Jefe</string>
+    <string name="msg_empleado_registrado">Empleado registrado</string>
+    <string name="err_guardar_datos_usuario">Error guardando datos de usuario</string>
+    <string name="err_registrar_usuario_msg">Error registrando usuario: %1$s</string>
+    <string name="err_buscar_empresa">Error buscando empresa</string>
+
+    <!-- RegistroEmpresaActivity Strings -->
+    <string name="title_registro_empresas">Registro de Empresas</string>
+    <string name="err_dominio_invalido_ej">Dominio inválido (ej: \n@empresa.com)</string>
+    <string name="err_nombre_empresa_registrado">Nombre de empresa ya registrado</string>
+    <string name="err_dominio_existente">Dominio existente</string>
+    <string name="err_cif_existente">CIF existente</string>
+    <string name="msg_empresa_registrada">Empresa registrada</string>
+    <string name="err_registrar_empresa">Error al registrar empresa</string>
+    <string name="err_validando_cif">Error validando CIF</string>
+    <string name="err_validando_dominio">Error validando dominio</string>
+    <string name="err_validando_nombre_empresa">Error validando nombre de empresa</string>
 </resources>

@@ -1,6 +1,6 @@
-package com.example.tfg_kotlin.BBDD_Global.Entities
+package com.example.tfg_kotlin.data.model
 
-data class UsuarioSesion(
+data class UserSession(
     var empresa: Empresa,
     val usuario: Usuario,
     var pisos: List<Piso> = listOf(),

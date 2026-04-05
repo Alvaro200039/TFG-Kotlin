@@ -1,7 +1,6 @@
-package com.example.tfg_kotlin.BBDD_Global.Entities
+package com.example.tfg_kotlin.data.model
 
-
-data class Salas(
+data class Sala(
     val id: String? = null,
     var nombre: String = "",
     var tamaño: String = "",
