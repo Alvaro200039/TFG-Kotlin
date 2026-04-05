@@ -8,7 +8,7 @@
     <string name="btn_iniciar_sesion">Iniciar Sesión</string>
     <string name="cb_recordar_sesion">Recordar sesión</string>
     <string name="btn_registrarse">Registrarse</string>
-    
+
     <!-- Registro & Recuperacion -->
     <string name="btn_crear_cuenta">Crear Cuenta</string>
     <string name="btn_enviar_codigo">Enviar código</string>
@@ -75,6 +75,7 @@
     <string name="err_sesion_invalida">No hay usuario o empresa válidos</string>
     <string name="msg_no_hay_reservas_proximas">No hay reservas próximas</string>
     <string name="msg_siguiente_reserva">Siguiente reserva: %1$s \n%2$s el %3$s</string>
+    <string name="reserva_item_format">- %1$s  %2$s</string>
 
     <!-- CreacionActivity Strings -->
     <string name="err_usuario_no_autenticado">Usuario no autenticado</string>
@@ -100,19 +101,20 @@
     <string name="msg_piso_modificado">Nombre del piso modificado (pendiente de guardar)</string>
     <string name="opt_editar">Editar</string>
     <string name="opt_eliminar">Eliminar</string>
-    <string name="opt_cambiar_tamanio">Cambiar tamaño</string>
+    <string name="opt_cambiar_tamano">Cambiar tamaño</string>
     <string name="title_opciones_sala">Opciones de la sala</string>
     <string name="err_modificar_sala_primero">Modifica primero la sala</string>
     <string name="label_ancho_px">Ancho: %1$dpx</string>
     <string name="label_alto_px">Alto: %1$dpx</string>
-    <string name="title_cambiar_tamanio">Cambiar tamaño de %1$s</string>
-    <string name="err_actualizar_tamanio_sala">Error al actualizar tamaño de sala: %1$s</string>
+    <string name="title_cambiar_tamano">Cambiar tamaño de %1$s</string>
+    <string name="err_actualizar_tamano_sala">Error al actualizar tamaño de sala: %1$s</string>
     <string name="err_sala_asociada_no_encontrada">No se encontró la sala asociada al botón</string>
-    <string name="err_asignar_nombre_piso_antes">Primero asigna un nombre al piso antes de editar salas</string>
+    <string name="err_asignar_nombre_piso_antes">Primero asigna un nombre al piso antes de editar
+        salas</string>
     <string name="err_piso_asociado_no_encontrado">No se encontró el piso asociado</string>
     <string name="hint_nuevo_nombre">Nuevo nombre</string>
-    <string name="tamanio_pequeno">Pequeño</string>
-    <string name="tamanio_grande">Grande</string>
+    <string name="tamano_pequeno">Pequeño</string>
+    <string name="tamano_grande">Grande</string>
     <string name="extra_wifi">WiFi</string>
     <string name="extra_proyector">Proyector</string>
     <string name="extra_pizarra">Pizarra</string>
@@ -130,8 +132,31 @@
     <string name="msg_no_hay_pisos_guardados">No hay pisos guardados.</string>
     <string name="title_eliminar_piso">Eliminar piso</string>
     <string name="title_confirmar_eliminar_piso">¿Eliminar \'%1$s\'?</string>
-    <string name="msg_confirmar_eliminar_piso">Esta acción eliminará el piso y todas sus salas.</string>
+    <string name="msg_confirmar_eliminar_piso">Esta acción eliminará el piso \'%1$s\' y todas sus
+        salas.</string>
     <string name="err_obteniendo_pisos">Error obteniendo pisos</string>
+
+    <string name="label_correo">Introduzca su correo</string>
+    <string name="label_contrasena">Introduzca su contraseña</string>
+    <string name="label_correo_recuperacion">Introduce tu correo de recuperación</string>
+    <string name="label_cif_opcional">Introduzca CIF de su empresa (opcional)</string>
+    <string name="label_nombre">Nombre</string>
+    <string name="label_apellidos">Apellidos</string>
+    <string name="label_contrasena_simple">Contraseña</string>
+    <string name="label_repetir_contrasena">Repetir Contraseña</string>
+    <string name="label_nombre_empresa">Nombre de la empresa</string>
+    <string name="label_dominio_ejemplo">Dominio (ej: @empresa.com)</string>
+    <string name="label_cif_ejemplo">CIF (ej: A12345678)</string>
+    <string name="label_hh">HH</string>
+    <string name="label_mm">MM</string>
+    <string name="label_separador_hora"> : </string>
+    <string name="label_separador_rango"> - </string>
+    <string name="desc_icono_horas">Icono horas</string>
+    <string name="desc_icono_plano">Icono plano</string>
+    <string name="desc_icono_pisos">Icono pisos</string>
+    <string name="desc_icono_sala">Icono sala</string>
+    <string name="desc_icono_reservas">Icono reservas</string>
+    <string name="desc_icono_franja">Icono franja</string>
 
     <!-- EmpleadosActivity Strings -->
     <string name="err_sesion_no_iniciada">Sesión no iniciada</string>
@@ -155,11 +180,14 @@
     <string name="msg_sala_reservada_por">Sala reservada por %1$s</string>
     <string name="err_cargar_detalles">Error al cargar detalles: %1$s</string>
     <string name="err_info_incompleta">Información de usuario o empresa incompleta</string>
-    <string name="err_ya_tienes_reserva_mismo_horario">Ya tienes una reserva a esta hora en: %1$s %2$s</string>
+    <string name="err_ya_tienes_reserva_mismo_horario">Ya tienes una reserva a esta hora en: %1$s
+        %2$s</string>
     <string name="msg_reserva_confirmada">Reserva confirmada</string>
     <string name="err_reservar_msg">Error al reservar: %1$s</string>
-    <string name="msg_no_franjas_disponibles">No hay franjas horarias disponibles. Crea algunas primero.</string>
-    <string name="msg_no_franjas_dia_seleccionado">No hay franjas horarias disponibles para el día seleccionado.</string>
+    <string name="msg_no_franjas_disponibles">No hay franjas horarias disponibles. Crea algunas
+        primero.</string>
+    <string name="msg_no_franjas_dia_seleccionado">No hay franjas horarias disponibles para el día
+        seleccionado.</string>
     <string name="title_selecciona_franja_para">Selecciona una franja horaria para el %1$s</string>
     <string name="title_eliminar_franja">Eliminar franja</string>
     <string name="msg_confirmar_eliminar_franja">¿Deseas eliminar la franja %1$s?</string>
@@ -168,7 +196,7 @@
     <string name="title_selecciona_piso_eliminar">Selecciona el piso a eliminar</string>
     <string name="title_confirmar_eliminacion">Confirmar eliminación</string>
     <string name="title_editar_detalles_sala">Editar detalles de la sala</string>
-    <string name="title_cambiar_tamanio_sala">Cambiar tamaño de la sala</string>
+    <string name="title_cambiar_tamano_sala">Cambiar tamaño de la sala</string>
     <string name="msg_operacion_exito">Operación realizada con éxito</string>
     <string name="label_libre">LIBRE</string>
     <string name="label_ocupada_por">OCUPADA por %1$s</string>
@@ -189,13 +217,15 @@
     <string name="title_reseteo_contrasena">Reseteo de Contraseña</string>
     <string name="err_introduce_correo_valido">Introduce un correo válido</string>
     <string name="msg_correo_recuperacion_enviado">Correo de recuperación enviado a %1$s</string>
-    <string name="err_no_pudo_enviar_correo">No se pudo enviar el correo. Verifica que esté registrado.</string>
+    <string name="err_no_pudo_enviar_correo">No se pudo enviar el correo. Verifica que esté
+        registrado.</string>
 
     <!-- RegistroEmpleadoActivity Strings -->
     <string name="title_registro_empleados">Registro de Empleados</string>
     <string name="err_contrasenas_no_coinciden">Las contraseñas no coinciden</string>
     <string name="err_dominio_incorrecto">El dominio introducido no existe o es incorrecto</string>
-    <string name="err_cif_dominio_no_coincide">El CIF no coincide con el dominio. Corrígelo para continuar.</string>
+    <string name="err_cif_dominio_no_coincide">El CIF no coincide con el dominio. Corrígelo para
+        continuar.</string>
     <string name="msg_empleado_registrado_jefe">Empleado registrado como Jefe</string>
     <string name="msg_empleado_registrado">Empleado registrado</string>
     <string name="err_guardar_datos_usuario">Error guardando datos de usuario</string>
@@ -213,4 +243,13 @@
     <string name="err_validando_cif">Error validando CIF</string>
     <string name="err_validando_dominio">Error validando dominio</string>
     <string name="err_validando_nombre_empresa">Error validando nombre de empresa</string>
+
+    <!-- Maintenance fixes -->
+    <string name="title_notificaciones_menu">Notificaciones</string>
+    <string name="title_recordatorio_reserva">Recordatorio de reserva</string>
+    <string name="msg_recordatorio_reserva">Tu reserva en %1$s es a las %2$s.</string>
+    <string name="title_recordatorios_reserva_channel">Recordatorios de Reserva</string>
+    <string name="desc_canal_reservas">Notificaciones para recordar reservas de sala</string>
+    <string name="desc_icono_save">Icono guardar</string>
+    <string name="desc_icono_notificaciones">Icono notificaciones</string>
 </resources>

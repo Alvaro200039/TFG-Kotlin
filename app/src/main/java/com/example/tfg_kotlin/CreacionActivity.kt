@@ -1,24 +1,12 @@
 package com.example.tfg_kotlin
 
-import android.content.res.ColorStateList
-import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.text.Editable
-import android.text.InputFilter
-import android.text.TextWatcher
-import android.util.Log
-import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
@@ -30,43 +18,18 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.graphics.toColorInt
 import com.bumptech.glide.Glide
-import androidx.core.view.children
-import androidx.lifecycle.lifecycleScope
-import com.example.tfg_kotlin.Utils.naturalOrderKey
-import com.example.tfg_kotlin.Utils.compareNaturalKeys
-import com.example.tfg_kotlin.data.model.Piso
 import com.example.tfg_kotlin.data.model.Sala
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import android.widget.ImageView
-import androidx.appcompat.app.AppCompatDelegate
-import com.example.tfg_kotlin.data.model.Sesion
-import com.example.tfg_kotlin.data.model.UserSession
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
-import com.google.firebase.storage.FirebaseStorage
-import com.example.tfg_kotlin.data.repository.FirestoreRepository
-import com.example.tfg_kotlin.data.repository.ReservationRepository
-
-
-import androidx.activity.viewModels
 import com.example.tfg_kotlin.databinding.ActivityCreacionBinding
 import com.example.tfg_kotlin.ui.viewmodel.CreacionViewModel
+import java.lang.Math.abs
 
 class CreacionActivity : AppCompatActivity() {
 
@@ -117,7 +80,7 @@ class CreacionActivity : AppCompatActivity() {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
-        viewModel.franjas.observe(this) { franjas ->
+        viewModel.franjas.observe(this) {
             // Si el diálogo de franjas está abierto, esto lo actualizaría si tuviéramos una referencia
         }
 
@@ -309,7 +272,7 @@ class CreacionActivity : AppCompatActivity() {
     }
 
     private fun showButtonOptions(button: Button) {
-        val options = arrayOf(getString(R.string.opt_editar), getString(R.string.opt_eliminar), getString(R.string.opt_cambiar_tamanio))
+        val options = arrayOf(getString(R.string.opt_editar), getString(R.string.opt_eliminar), getString(R.string.opt_cambiar_tamano))
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.title_opciones_sala))
             .setItems(options) { _, which ->
@@ -317,13 +280,13 @@ class CreacionActivity : AppCompatActivity() {
                 when (which) {
                     0 -> showEditButtonDialog(button)
                     1 -> viewModel.removeSala(sala)
-                    2 -> mostrarDialogoCambiarTamanio(button, sala)
+                    2 -> mostrarDialogoCambiarTamanio(sala)
                 }
             }
             .show()
     }
 
-    private fun mostrarDialogoCambiarTamanio(salaButton: Button, sala: Sala) {
+    private fun mostrarDialogoCambiarTamanio(sala: Sala) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_cambiar_tamanio, null)
         val seekBarAncho = dialogView.findViewById<SeekBar>(R.id.seekBarAncho)
         val seekBarAlto = dialogView.findViewById<SeekBar>(R.id.seekBarAlto)
@@ -348,7 +311,7 @@ class CreacionActivity : AppCompatActivity() {
         })
 
         AlertDialog.Builder(this)
-            .setTitle(getString(R.string.title_cambiar_tamanio_sala))
+            .setTitle(getString(R.string.title_cambiar_tamano_sala))
             .setView(dialogView)
             .setPositiveButton(getString(R.string.btn_guardar)) { _, _ ->
                 val newSala = sala.copy(ancho = seekBarAncho.progress.toFloat(), alto = seekBarAlto.progress.toFloat())
@@ -362,14 +325,14 @@ class CreacionActivity : AppCompatActivity() {
         val sala = button.tag as Sala
         val dialogView = layoutInflater.inflate(R.layout.dialog_editar_sala, null)
         val etNombre = dialogView.findViewById<EditText>(R.id.etNombreSala).apply { setText(sala.nombre) }
-        val spinnerTamanio = dialogView.findViewById<Spinner>(R.id.spinnerTamanoSala)
+        val spinnerTamano = dialogView.findViewById<Spinner>(R.id.spinnerTamanoSala)
         val cbWiFi = dialogView.findViewById<CheckBox>(R.id.cbWiFi).apply { isChecked = sala.extras.contains("WiFi") }
         val cbProyector = dialogView.findViewById<CheckBox>(R.id.cbProyector).apply { isChecked = sala.extras.contains("Proyector") }
         val cbPizarra = dialogView.findViewById<CheckBox>(R.id.cbPizarra).apply { isChecked = sala.extras.contains("Pizarra") }
 
-        val tamanios = arrayOf("Pequeña", "Mediana", "Grande")
-        spinnerTamanio.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tamanios)
-        spinnerTamanio.setSelection(tamanios.indexOf(sala.tamano).coerceAtLeast(0))
+        val tamanos = arrayOf("Pequeña", "Mediana", "Grande")
+        spinnerTamano.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tamanos)
+        spinnerTamano.setSelection(tamanos.indexOf(sala.tamano).coerceAtLeast(0))
 
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.title_editar_detalles_sala))
@@ -382,7 +345,7 @@ class CreacionActivity : AppCompatActivity() {
                 
                 val newSala = sala.copy(
                     nombre = etNombre.text.toString(),
-                    tamano = spinnerTamanio.selectedItem.toString(),
+                    tamano = spinnerTamano.selectedItem.toString(),
                     extras = extras
                 )
                 viewModel.updateSala(sala, newSala)
@@ -411,7 +374,7 @@ class CreacionActivity : AppCompatActivity() {
         private var dY = 0f
         private var startX = 0f
         private var startY = 0f
-        private val CLICK_THRESHOLD = 10
+        private val clickThreshold = 10
 
         override fun onTouch(view: View, event: MotionEvent): Boolean {
             when (event.action) {
@@ -425,10 +388,10 @@ class CreacionActivity : AppCompatActivity() {
                     view.animate().x(event.rawX + dX).y(event.rawY + dY).setDuration(0).start()
                 }
                 MotionEvent.ACTION_UP -> {
-                    val deltaX = Math.abs(event.rawX - startX)
-                    val deltaY = Math.abs(event.rawY - startY)
+                    val deltaX = abs(event.rawX - startX)
+                    val deltaY = abs(event.rawY - startY)
 
-                    if (deltaX < CLICK_THRESHOLD && deltaY < CLICK_THRESHOLD) {
+                    if (deltaX < clickThreshold && deltaY < clickThreshold) {
                         view.performClick()
                     } else {
                         val oldSala = view.tag as Sala
@@ -441,5 +404,3 @@ class CreacionActivity : AppCompatActivity() {
         }
     }
 }
-
-

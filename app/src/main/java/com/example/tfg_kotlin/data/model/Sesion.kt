@@ -6,6 +6,4 @@ object Sesion {
     fun cerrarSesion() {
         datos = null
     }
-
-    fun estaIniciada(): Boolean = datos != null
 }

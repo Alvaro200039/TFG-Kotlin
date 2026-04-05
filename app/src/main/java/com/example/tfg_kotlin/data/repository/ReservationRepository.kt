@@ -20,16 +20,6 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
         return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
     }
 
-    suspend fun getAllReservationsByCompany(empresaId: String): List<Reserva> {
-        val snapshot = db.collection("empresas")
-            .document(empresaId)
-            .collection("reservas")
-            .get()
-            .await()
-        
-        return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
-    }
-
     suspend fun getReservationsByDateTime(empresaId: String, fechaHora: String): List<Reserva> {
         val snapshot = db.collection("empresas")
             .document(empresaId)
@@ -49,7 +39,7 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
                 .add(reserva)
                 .await()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -63,7 +53,7 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
                 .delete()
                 .await()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -83,7 +73,7 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
             try {
                 val reservaDate = format.parse(it.fechaHora)
                 reservaDate != null && reservaDate.before(now)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }.forEach { reserva ->

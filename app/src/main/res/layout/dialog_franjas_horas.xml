@@ -19,14 +19,15 @@
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:hint="HH"
+            android:hint="@string/label_hh"
+            android:autofillHints="none"
             android:maxLength="2"
             android:ems="2" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" : "
+            android:text="@string/label_separador_hora"
             android:textSize="18sp"
             android:padding="4dp" />
 
@@ -35,14 +36,15 @@
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:hint="MM"
+            android:hint="@string/label_mm"
+            android:autofillHints="none"
             android:maxLength="2"
             android:ems="2" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" - "
+            android:text="@string/label_separador_rango"
             android:textSize="18sp"
             android:padding="4dp" />
 
@@ -51,14 +53,15 @@
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:hint="HH"
+            android:hint="@string/label_hh"
+            android:autofillHints="none"
             android:maxLength="2"
             android:ems="2" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" : "
+            android:text="@string/label_separador_hora"
             android:textSize="18sp"
             android:padding="4dp" />
 
@@ -67,7 +70,8 @@
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:hint="MM"
+            android:hint="@string/label_mm"
+            android:autofillHints="none"
             android:maxLength="2"
             android:ems="2" />
     </LinearLayout>

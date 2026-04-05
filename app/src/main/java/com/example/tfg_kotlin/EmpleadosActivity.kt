@@ -6,21 +6,17 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.ImageButton
-import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -33,8 +29,7 @@ import com.example.tfg_kotlin.data.model.Sesion
 import com.example.tfg_kotlin.databinding.ActivityEmpleadosBinding
 import com.example.tfg_kotlin.ui.viewmodel.EmpleadosViewModel
 import com.google.android.material.snackbar.Snackbar
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
 
 class EmpleadosActivity : AppCompatActivity() {
 
@@ -66,87 +61,80 @@ class EmpleadosActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
-            title = ""
             setHomeAsUpIndicator(R.drawable.ic_adagora)
         }
-        
-        setupToolbarDynamicUI()
-    }
-
-    private fun setupToolbarDynamicUI() {
-        val spinner = Spinner(this).apply {
-            setPopupBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.spinner_dropdown_background))
-            layoutParams = Toolbar.LayoutParams(Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT).apply {
-                gravity = Gravity.START
-            }
-        }
-        binding.toolbar.addView(spinner)
-
-        viewModel.pisos.observe(this) { pisos ->
-            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, pisos.map { it.nombre })
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinner.adapter = adapter
-            
-            spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                    val piso = pisos[position]
-                    viewModel.loadSalas(piso.id ?: piso.nombre)
-                    piso.imagenUrl?.let { cargarImagenFondo(it) }
-                }
-                override fun onNothingSelected(parent: AdapterView<*>) {}
-            }
-        }
-
-        val btnFecha = ImageButton(this).apply {
-            setImageResource(R.drawable.ic_calendar)
-            setBackgroundColor(Color.TRANSPARENT)
-            setOnClickListener { mostrarDialogoFecha() }
-            layoutParams = Toolbar.LayoutParams(Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT).apply {
-                gravity = Gravity.END
-                marginEnd = 20
-            }
-        }
-        binding.toolbar.addView(btnFecha)
     }
 
     private fun setupObservers() {
+        viewModel.pisos.observe(this) { pisos ->
+            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, pisos.map { it.nombre })
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.spinnerPisos.adapter = adapter
+        }
+
         viewModel.salas.observe(this) { salas ->
             actualizarVistaSalas(salas)
         }
 
-        viewModel.reservas.observe(this) { 
+        viewModel.reservas.observe(this) {
             actualizarColoresSalas()
+        }
+
+        viewModel.fechaSeleccionada.observe(this) { fecha ->
+            binding.btnFecha.text = if (fecha.isEmpty()) getString(R.string.btn_seleccionar_fecha) else getString(R.string.label_fecha_con_valor, fecha)
+        }
+
+        viewModel.horaSeleccionada.observe(this) { hora ->
+            binding.btnHora.text = if (hora.isEmpty()) getString(R.string.btn_cambiar_hora) else getString(R.string.label_hora_con_valor, hora)
         }
 
         viewModel.error.observe(this) { msg ->
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
+
+        viewModel.loading.observe(this) { loading ->
+            binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+        }
     }
 
     private fun setupListeners() {
-        // En esta versión simplificada no hay botón de reservas directo, se accede por diálogo
-        binding.btnFranja.setOnClickListener { 
-            if (viewModel.fechaSeleccionada.value.isNullOrEmpty()) {
-                mostrarSnackbarFecha()
-            } else {
-                mostrarDialogoHoras()
+        binding.spinnerPisos.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                val piso = viewModel.pisos.value?.get(pos)
+                piso?.let {
+                    viewModel.loadSalas(it.id ?: "")
+                    val url = it.imagenUrl
+                    if (!url.isNullOrEmpty()) {
+                        cargarImagenFondo(url)
+                    } else {
+                        binding.contentLayout.background = null
+                    }
+                }
             }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
         }
+
+        binding.btnFecha.setOnClickListener { mostrarDialogoFecha() }
+        binding.btnHora.setOnClickListener { mostrarDialogoHoras() }
     }
 
     private fun actualizarVistaSalas(salas: List<Sala>) {
         binding.contentLayout.removeAllViews()
         salas.forEach { sala ->
-            binding.contentLayout.addView(crearBotonSala(sala))
+            val button = crearBotonSala(sala)
+            binding.contentLayout.addView(button)
         }
+        actualizarColoresSalas()
     }
 
     private fun crearBotonSala(sala: Sala): Button {
         return Button(this).apply {
             text = formatearTextoSala(sala)
             tag = sala
+            
             background = GradientDrawable().apply {
-                setColor(Color.GRAY)
+                setColor(Color.WHITE)
+                setStroke(2, Color.GRAY)
                 cornerRadius = 50f
             }
             
@@ -178,9 +166,9 @@ class EmpleadosActivity : AppCompatActivity() {
                 val reserva = reservas.find { it.idSala == sala.id }
                 
                 val colorId = when {
-                    reserva == null -> R.color.green
-                    reserva.idusuario == uid -> R.color.orange
-                    else -> R.color.red
+                    reserva == null -> android.R.color.holo_green_light
+                    reserva.idusuario == uid -> android.R.color.holo_orange_light
+                    else -> android.R.color.holo_red_light
                 }
                 view.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, colorId))
             }
@@ -204,7 +192,6 @@ class EmpleadosActivity : AppCompatActivity() {
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)
         ).apply {
             datePicker.minDate = cal.timeInMillis
-            window?.setBackgroundDrawableResource(R.drawable.datepicker_background)
             show()
         }
     }
@@ -299,4 +286,3 @@ class EmpleadosActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 }
-

@@ -5,8 +5,7 @@
     android:id="@+id/principalLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Principal"
-    android:background="@drawable/wallpaper">
+    tools:context=".Principal">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -29,7 +28,8 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:baselineAligned="false">
 
         <ImageView
             android:layout_width="match_parent"
@@ -38,8 +38,7 @@
             android:layout_gravity="center"
             android:scaleType="centerCrop"
             android:adjustViewBounds="true"
-            />
-
+            android:contentDescription="@string/app_name" />
 
         <!-- Botón Registrar Empresa -->
         <com.google.android.material.button.MaterialButton

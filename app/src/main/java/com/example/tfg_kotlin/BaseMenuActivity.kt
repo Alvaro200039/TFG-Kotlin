@@ -1,19 +1,13 @@
 package com.example.tfg_kotlin
 
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -21,10 +15,8 @@ import androidx.work.WorkManager
 import com.example.tfg_kotlin.data.model.Reserva
 import com.example.tfg_kotlin.data.model.Sesion
 import com.example.tfg_kotlin.data.repository.FirestoreRepository
-import com.example.tfg_kotlin.data.repository.ReservationRepository
 import com.example.tfg_kotlin.ui.viewmodel.MenuViewModel
 import com.google.android.material.materialswitch.MaterialSwitch
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -34,7 +26,6 @@ abstract class BaseMenuActivity : AppCompatActivity() {
 
     protected val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     protected val firestoreRepo: FirestoreRepository by lazy { FirestoreRepository(firestore) }
-    protected val reservationRepo: ReservationRepository by lazy { ReservationRepository(firestore) }
 
     abstract val menuViewModel: MenuViewModel
 
@@ -103,7 +94,7 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                     )
                 }
             }
-        } catch (e: Exception) {}
+        } catch (_: Exception) {}
     }
 
     protected fun mostrarDialogoNotificaciones() {
@@ -140,20 +131,20 @@ abstract class BaseMenuActivity : AppCompatActivity() {
             }
 
             val view = layoutInflater.inflate(R.layout.dialog_reservas, null)
-            val container = view.findViewById<LinearLayout>(R.id.contenedor_reservas)
+            val container = view.findViewById<android.widget.LinearLayout>(R.id.contenedor_reservas)
             
             reservas.groupBy { it.piso }.forEach { (piso, list) ->
                 container.addView(TextView(this).apply {
                     text = piso
                     textSize = 18f
-                    setTypeface(null, Typeface.BOLD)
+                    setTypeface(null, android.graphics.Typeface.BOLD)
                     setPadding(0, 16, 0, 8)
-                    setTextColor(Color.BLACK)
+                    setTextColor(android.graphics.Color.BLACK)
                 })
 
                 list.forEach { res ->
                     container.addView(TextView(this).apply {
-                        text = "- ${res.nombreSala}  ${res.fechaHora}"
+                        text = getString(R.string.reserva_item_format, res.nombreSala, res.fechaHora)
                         setPadding(16, 4, 0, 4)
                         setOnClickListener {
                             AlertDialog.Builder(this@BaseMenuActivity)
@@ -175,4 +166,3 @@ abstract class BaseMenuActivity : AppCompatActivity() {
         }
     }
 }
-

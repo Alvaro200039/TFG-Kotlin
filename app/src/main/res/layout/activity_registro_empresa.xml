@@ -5,8 +5,7 @@
     android:id="@+id/registroempresaLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RegistroEmpresa"
-    android:background="@drawable/wallpaper">
+    tools:context=".RegistroEmpresaActivity">
 
     <!-- Toolbar transparente -->
     <androidx.appcompat.widget.Toolbar
@@ -56,7 +55,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Nombre de la empresa"
+                android:hint="@string/label_nombre_empresa"
                 android:inputType="textPersonName"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
@@ -83,7 +82,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Dominio (ej: @empresa.com)"
+                android:hint="@string/label_dominio_ejemplo"
                 android:inputType="textEmailAddress"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
@@ -112,7 +111,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="CIF (ej: A12345678)"
+                android:hint="@string/label_cif_ejemplo"
                 android:inputType="text"
                 android:paddingTop="16dp"
                 android:maxLength="9"

@@ -5,8 +5,7 @@
     android:id="@+id/loginLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoginActivity"
-    android:background="@drawable/wallpaper">
+    tools:context=".LoginActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -52,7 +51,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Introduzca su correo"
+                android:hint="@string/label_correo"
+                android:autofillHints="emailAddress"
                 android:textColorHint="@color/black"
                 android:textColor="@color/black"
                 android:inputType="textEmailAddress"
@@ -84,7 +84,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Introduzca su contraseña"
+                android:hint="@string/label_contrasena"
+                android:autofillHints="password"
                 android:inputType="textPassword"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />

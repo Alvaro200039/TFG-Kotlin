@@ -5,8 +5,7 @@
     android:id="@+id/registroempleadoLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/wallpaper"
-    tools:context=".RegistroEmpleado">
+    tools:context=".RegistroEmpleadoActivity">
 
     <!-- Toolbar transparente -->
     <androidx.appcompat.widget.Toolbar
@@ -52,7 +51,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Introduzca su correo"
+                android:hint="@string/label_correo"
+                android:autofillHints="emailAddress"
                 android:inputType="textEmailAddress"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
@@ -80,7 +80,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Introduzca CIF de su empresa (opcional)"
+                android:hint="@string/label_cif_opcional"
                 android:inputType="text"
                 android:paddingTop="16dp"
                 android:maxLength="9"
@@ -107,7 +107,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Nombre"
+                android:hint="@string/label_nombre"
+                android:autofillHints="name"
                 android:inputType="textPersonName"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
@@ -133,7 +134,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Apellidos"
+                android:hint="@string/label_apellidos"
+                android:autofillHints="personFamilyName"
                 android:inputType="textPersonName"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
@@ -159,7 +161,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Contraseña"
+                android:hint="@string/label_contrasena_simple"
+                android:autofillHints="password"
                 android:inputType="textPassword"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
@@ -185,7 +188,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:hint="Repetir Contraseña"
+                android:hint="@string/label_repetir_contrasena"
+                android:autofillHints="password"
                 android:inputType="textPassword"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />

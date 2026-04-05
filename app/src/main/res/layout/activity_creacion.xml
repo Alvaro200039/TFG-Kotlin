@@ -5,8 +5,7 @@
     android:id="@+id/creacion"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".CreacionActivity"
-    android:background="@drawable/wallpaper">
+    tools:context=".CreacionActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/my_toolbar"
@@ -34,7 +33,6 @@
         app:layout_constraintTop_toBottomOf="@id/my_toolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintBottom_toTopOf="@id/barra_botones">
 
         <ImageView
@@ -42,6 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
+            android:contentDescription="@string/tab_plano"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -55,6 +54,7 @@
         android:orientation="horizontal"
         android:padding="8dp"
         android:gravity="center"
+        android:baselineAligned="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -77,7 +77,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_horario"
-                android:contentDescription="Icono horas" />
+                android:contentDescription="@string/desc_icono_horas" />
 
             <TextView
                 android:id="@+id/texto_btn_horas"
@@ -106,7 +106,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_plano"
-                android:contentDescription="Icono plano" />
+                android:contentDescription="@string/desc_icono_plano" />
 
             <TextView
                 android:id="@+id/texto_btn_plano"
@@ -134,7 +134,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_eliminar"
-                android:contentDescription="Icono pisos" />
+                android:contentDescription="@string/desc_icono_pisos" />
 
             <TextView
                 android:id="@+id/texto_btn_pisos"
@@ -163,7 +163,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_add"
-                android:contentDescription="Icono sala" />
+                android:contentDescription="@string/desc_icono_sala" />
 
             <TextView
                 android:id="@+id/texto_btn_sala"
