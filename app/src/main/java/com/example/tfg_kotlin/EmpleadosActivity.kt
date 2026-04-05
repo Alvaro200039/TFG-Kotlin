@@ -96,11 +96,11 @@ class EmpleadosActivity : AppCompatActivity() {
         // Extracción de datos necesarios de BD Firabase -> coleccion -> dato
         val cifUsuario = sesion.empresa.cif
         val correoUsuario = sesion.usuario.email
-        val idUsuario = sesion.usuario.id
+        val uidUsuario = sesion.usuario.uid
 
 
-        // En caso de no existir nungún dato saldrá el siguiente mensaje
-        if (idUsuario === null || correoUsuario.isEmpty() || cifUsuario.isEmpty()) {
+        // En caso de no existir ningún dato saldrá el siguiente mensaje
+        if (uidUsuario.isEmpty() || correoUsuario.isEmpty() || cifUsuario.isEmpty()) {
             Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
             finish()
             return

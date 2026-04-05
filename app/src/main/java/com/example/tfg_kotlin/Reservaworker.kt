@@ -49,8 +49,10 @@ class ReservaWorker(context: Context, params: WorkerParameters) : Worker(context
             manager.createNotificationChannel(channel)
         }
 
-        // 👉 Crear intent que abre la Activity deseada
-        val intent = Intent(applicationContext, MenuCreadorActivity::class.java).apply {
+        // Crear intent que abre la Activity correcta según el rol del usuario
+        val esJefe = inputData.getBoolean("es_jefe", false)
+        val targetClass = if (esJefe) MenuCreadorActivity::class.java else MenuEmpleadoActivity::class.java
+        val intent = Intent(applicationContext, targetClass).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("lanzada_desde_notificacion", true) // si necesitas pasar algo
         }

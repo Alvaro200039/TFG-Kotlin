@@ -35,7 +35,7 @@
             android:exported="false" />
         <activity
             android:name=".CreacionActivity"
-            android:exported="true" />
+            android:exported="false" />
         <activity
             android:name=".EmpleadosActivity"
             android:exported="false" />

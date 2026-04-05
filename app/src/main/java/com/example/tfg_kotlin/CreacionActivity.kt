@@ -771,18 +771,18 @@ class CreacionActivity : AppCompatActivity() {
 
     // Función que actualiza el tamaño de las salas en firestore
     private fun actualizarTamanioSalaGuardada(nombreSala: String, nuevoAncho: Int, nuevoAlto: Int) {
-            // Optene el cif y el id del piso actuales
-            val empresaCif = pisoActual?.empresaCif ?: return
-            val pisoId = pisoActual?.id ?: return
+            // Obtiene el nombre de la empresa y el nombre del piso actuales
+            val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+            val pisoNombre = pisoActual?.nombre ?: return
 
-    // En una corrutina reliza las siguientes acciones
+    // En una corrutina realiza las siguientes acciones
         lifecycleScope.launch {
             try {
                 // Accede a la colección de salas
                 val salasRef = firestore.collection("empresas")
-                    .document(empresaCif)
+                    .document(nombreEmpresa)
                     .collection("pisos")
-                    .document(pisoId)
+                    .document(pisoNombre)
                     .collection("salas")
 
                 // Buscar sala por nombre
