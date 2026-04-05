@@ -6,4 +6,5 @@
     <color name="green">@android:color/holo_green_light</color>
     <color name="blue">@android:color/holo_blue_light</color>
     <color name="enlace">#1E88E5</color>
+    <color name="ic_launcher_background">#3DDC84</color>
 </resources>

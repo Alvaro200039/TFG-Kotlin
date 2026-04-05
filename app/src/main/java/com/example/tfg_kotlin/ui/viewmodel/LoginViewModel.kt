@@ -10,7 +10,6 @@ import com.example.tfg_kotlin.data.model.Usuario
 import com.example.tfg_kotlin.data.repository.FirestoreRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class LoginViewModel(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),

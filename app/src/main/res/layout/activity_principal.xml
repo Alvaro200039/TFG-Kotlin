@@ -34,7 +34,7 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="300dp"
-            android:background="@drawable/adagora"
+            android:background="@drawable/ic_adagora"
             android:layout_gravity="center"
             android:scaleType="centerCrop"
             android:adjustViewBounds="true"

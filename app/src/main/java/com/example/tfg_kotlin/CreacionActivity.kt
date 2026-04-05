@@ -29,7 +29,7 @@ import com.bumptech.glide.Glide
 import com.example.tfg_kotlin.data.model.Sala
 import com.example.tfg_kotlin.databinding.ActivityCreacionBinding
 import com.example.tfg_kotlin.ui.viewmodel.CreacionViewModel
-import java.lang.Math.abs
+import kotlin.math.abs
 
 class CreacionActivity : AppCompatActivity() {
 
@@ -280,13 +280,13 @@ class CreacionActivity : AppCompatActivity() {
                 when (which) {
                     0 -> showEditButtonDialog(button)
                     1 -> viewModel.removeSala(sala)
-                    2 -> mostrarDialogoCambiarTamanio(sala)
+                    2 -> mostrarDialogoCambiarTamano(sala)
                 }
             }
             .show()
     }
 
-    private fun mostrarDialogoCambiarTamanio(sala: Sala) {
+    private fun mostrarDialogoCambiarTamano(sala: Sala) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_cambiar_tamanio, null)
         val seekBarAncho = dialogView.findViewById<SeekBar>(R.id.seekBarAncho)
         val seekBarAlto = dialogView.findViewById<SeekBar>(R.id.seekBarAlto)
@@ -355,18 +355,19 @@ class CreacionActivity : AppCompatActivity() {
     }
 
     private fun actualizarBotonConSala(button: Button, sala: Sala) {
-        val builder = StringBuilder(sala.nombre)
-        if (sala.extras.isNotEmpty()) {
-            builder.append("\n")
-            sala.extras.forEach { extra ->
-                when (extra) {
-                    "WiFi" -> builder.append("📶 ")
-                    "Proyector" -> builder.append("📽️ ")
-                    "Pizarra" -> builder.append("🖍️ ")
+        button.text = buildString {
+            append(sala.nombre)
+            if (sala.extras.isNotEmpty()) {
+                append("\n")
+                sala.extras.forEach { extra ->
+                    when (extra) {
+                        "WiFi" -> append("📶 ")
+                        "Proyector" -> append("📽️ ")
+                        "Pizarra" -> append("🖍️ ")
+                    }
                 }
             }
         }
-        button.text = builder.toString()
     }
 
     inner class MovableTouchListener : View.OnTouchListener {

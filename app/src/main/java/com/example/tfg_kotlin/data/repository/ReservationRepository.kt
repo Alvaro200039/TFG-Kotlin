@@ -13,7 +13,7 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
         val snapshot = db.collection("empresas")
             .document(empresaId)
             .collection("reservas")
-            .whereEqualTo("idusuario", userId)
+            .whereEqualTo("idUsuario", userId)
             .get()
             .await()
         

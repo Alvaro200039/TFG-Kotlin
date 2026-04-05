@@ -167,7 +167,7 @@ class EmpleadosActivity : AppCompatActivity() {
                 
                 val colorId = when {
                     reserva == null -> android.R.color.holo_green_light
-                    reserva.idusuario == uid -> android.R.color.holo_orange_light
+                    reserva.idUsuario == uid -> android.R.color.holo_orange_light
                     else -> android.R.color.holo_red_light
                 }
                 view.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, colorId))
@@ -247,14 +247,14 @@ class EmpleadosActivity : AppCompatActivity() {
         if (reservaActual == null) {
             tvEstado.text = getString(R.string.label_libre)
             tvEstado.setTextColor(Color.GREEN)
-            btnAccion.text = getString(R.string.btn_reservar_mayus)
+            btnAccion.text = getString(R.string.btn_reservar_mayuscula)
             btnAccion.setOnClickListener {
                 viewModel.reservarSala(sala, viewModel.pisos.value?.find { p -> p.id == sala.idPiso }?.nombre ?: "")
             }
         } else {
             tvEstado.text = getString(R.string.label_ocupada_por, reservaActual.nombreUsuario)
             tvEstado.setTextColor(Color.RED)
-            if (reservaActual.idusuario == uid) {
+            if (reservaActual.idUsuario == uid) {
                 btnAccion.text = getString(R.string.btn_cancelar_mi_reserva)
                 btnAccion.setOnClickListener {
                     viewModel.cancelReserva(reservaActual.id ?: "")

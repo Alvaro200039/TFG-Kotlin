@@ -22,7 +22,7 @@ class RegistroEmpresaActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         enableEdgeToEdge()
-        ViewCompat.setOnApplyWindowInsetsListener(binding.registroempresaLayout) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.registroEmpresaLayout) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets

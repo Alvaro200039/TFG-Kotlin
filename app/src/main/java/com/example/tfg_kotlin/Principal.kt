@@ -13,7 +13,7 @@ class Principal : AppCompatActivity() {
     private lateinit var btnEmpleado: Button
     private lateinit var btnLogin: Button
 
-    //Actividad principal, redirige con los botonea a las distintas activides
+    // Actividad principal, redirige con los botones a las distintas actividades
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)

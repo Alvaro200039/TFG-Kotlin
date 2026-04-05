@@ -24,7 +24,7 @@ class MenuCreadorActivity : BaseMenuActivity() {
         setContentView(binding.root)
 
         enableEdgeToEdge()
-        ViewCompat.setOnApplyWindowInsetsListener(binding.menucreacion) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.menuCreacionLayout) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets

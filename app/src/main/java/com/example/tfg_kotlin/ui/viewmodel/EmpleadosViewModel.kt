@@ -112,7 +112,7 @@ class EmpleadosViewModel : ViewModel() {
             try {
                 // Re-check overlap
                 val existing = reservationRepo.getReservationsByDateTime(empresaId, fechaHora)
-                if (existing.any { it.idusuario == usuario.uid }) {
+                if (existing.any { it.idUsuario == usuario.uid }) {
                     _error.value = "Ya tienes una reserva en este horario"
                     return@launch
                 }
@@ -122,7 +122,7 @@ class EmpleadosViewModel : ViewModel() {
                     idSala = sala.id ?: "",
                     fechaHora = fechaHora,
                     nombreUsuario = usuario.nombre,
-                    idusuario = usuario.uid,
+                    idUsuario = usuario.uid,
                     piso = pisoNombre
                 )
 

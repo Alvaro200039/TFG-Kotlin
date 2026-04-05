@@ -23,7 +23,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_recuperar_contrasena)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.recuperarcontrasena)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.recuperarContrasenaLayout)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -40,7 +40,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
 
 
     private fun configurarPaso1() {
-        // Cración variables locales para los editText y botones
+        // Creación variables locales para los editText y botones
         layoutPaso1 = findViewById(R.id.layoutPaso1)
         etCorreo = findViewById(R.id.etCorreoRec)
         btnEnviarCodigo = findViewById(R.id.btnEnviarCodigo)
@@ -54,7 +54,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Instanciación para el accedo a firabase y coprobación del correo existente en la BD
+            // Acceso a Firebase y comprobación del correo existente en la BD
             FirebaseAuth.getInstance().sendPasswordResetEmail(correo)
                 .addOnSuccessListener {
                     // En caso de que exista el correo
@@ -62,7 +62,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
                     finish()
                 }
                 .addOnFailureListener {
-                    // En caso de que el corero no esté registrado
+                    // En caso de que el correo no esté registrado
                     Toast.makeText(this, getString(R.string.err_no_pudo_enviar_correo), Toast.LENGTH_SHORT).show()
 
                 }
