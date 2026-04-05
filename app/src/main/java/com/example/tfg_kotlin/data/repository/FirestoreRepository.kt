@@ -62,7 +62,10 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
             .await()
         
         return snapshot.documents.mapNotNull { doc ->
-            doc.toObject(Sala::class.java)?.apply { id = doc.id }
+            doc.toObject(Sala::class.java)?.apply { 
+                id = doc.id 
+                idPiso = pisoId
+            }
         }
     }
 
@@ -80,7 +83,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(mapOf("activo" to true))
                 .await()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -94,7 +97,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .delete()
                 .await()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -122,7 +125,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                     .await()
                 ref.id
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -136,7 +139,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .delete()
                 .await()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -153,7 +156,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(sala)
                 .await()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -187,7 +190,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(empresa)
                 .await()
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -201,23 +204,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(usuario)
                 .await()
             true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    suspend fun deleteSala(empresaId: String, pisoId: String, salaId: String): Boolean {
-        return try {
-            db.collection("empresas")
-                .document(empresaId)
-                .collection("pisos")
-                .document(pisoId)
-                .collection("salas")
-                .document(salaId)
-                .delete()
-                .await()
-            true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

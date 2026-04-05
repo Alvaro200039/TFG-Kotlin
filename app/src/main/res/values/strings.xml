@@ -174,6 +174,10 @@
     <string name="label_ocupada_por">OCUPADA por %1$s</string>
     <string name="btn_reservar_mayus">RESERVAR</string>
     <string name="btn_cancelar_mi_reserva">CANCELAR MI RESERVA</string>
+    <string name="label_ancho_sala">Ancho de la sala</string>
+    <string name="label_alto_sala">Alto de la sala</string>
+    <string name="label_valor_defecto_ancho">300</string>
+    <string name="label_valor_defecto_alto">200</string>
 
     <!-- Menu Activities -->
     <string name="err_no_usuario_logueado">No hay usuario logueado</string>

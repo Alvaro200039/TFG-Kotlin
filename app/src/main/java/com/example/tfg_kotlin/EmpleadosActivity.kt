@@ -1,6 +1,40 @@
+package com.example.tfg_kotlin
+
+import android.app.DatePickerDialog
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.os.Bundle
+import android.view.Gravity
+import android.view.MenuItem
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
+import com.example.tfg_kotlin.data.model.Sala
+import com.example.tfg_kotlin.data.model.Sesion
 import com.example.tfg_kotlin.databinding.ActivityEmpleadosBinding
 import com.example.tfg_kotlin.ui.viewmodel.EmpleadosViewModel
+import com.google.android.material.snackbar.Snackbar
+import java.util.Calendar
+import java.util.Locale
 
 class EmpleadosActivity : AppCompatActivity() {
 
@@ -36,7 +70,6 @@ class EmpleadosActivity : AppCompatActivity() {
             setHomeAsUpIndicator(R.drawable.ic_adagora)
         }
         
-        // Add dynamic UI components to toolbar
         setupToolbarDynamicUI()
     }
 
@@ -58,9 +91,7 @@ class EmpleadosActivity : AppCompatActivity() {
                 override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                     val piso = pisos[position]
                     viewModel.loadSalas(piso.id ?: piso.nombre)
-                    if (piso.imagenUrl != null) {
-                        cargarImagenFondo(piso.imagenUrl!!)
-                    }
+                    piso.imagenUrl?.let { cargarImagenFondo(it) }
                 }
                 override fun onNothingSelected(parent: AdapterView<*>) {}
             }
@@ -84,12 +115,7 @@ class EmpleadosActivity : AppCompatActivity() {
         }
 
         viewModel.reservas.observe(this) { 
-            // Trigger UI update for button colors when reservations change
             actualizarColoresSalas()
-        }
-
-        viewModel.fechaSeleccionada.observe(this) { fecha ->
-            // Update UI label
         }
 
         viewModel.error.observe(this) { msg ->
@@ -98,7 +124,7 @@ class EmpleadosActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        binding.btnReservas.setOnClickListener { mostrarDialogoReservas() }
+        // En esta versión simplificada no hay botón de reservas directo, se accede por diálogo
         binding.btnFranja.setOnClickListener { 
             if (viewModel.fechaSeleccionada.value.isNullOrEmpty()) {
                 mostrarSnackbarFecha()
@@ -111,8 +137,7 @@ class EmpleadosActivity : AppCompatActivity() {
     private fun actualizarVistaSalas(salas: List<Sala>) {
         binding.contentLayout.removeAllViews()
         salas.forEach { sala ->
-            val button = crearBotonSala(sala)
-            binding.contentLayout.addView(button)
+            binding.contentLayout.addView(crearBotonSala(sala))
         }
     }
 
@@ -125,13 +150,12 @@ class EmpleadosActivity : AppCompatActivity() {
                 cornerRadius = 50f
             }
             
-            val lp = ConstraintLayout.LayoutParams(sala.ancho.toInt(), sala.alto.toInt()).apply {
+            layoutParams = ConstraintLayout.LayoutParams(sala.ancho.toInt(), sala.alto.toInt()).apply {
                 topToTop = ConstraintLayout.LayoutParams.PARENT_ID
                 startToStart = ConstraintLayout.LayoutParams.PARENT_ID
                 topMargin = sala.y.toInt()
                 leftMargin = sala.x.toInt()
             }
-            layoutParams = lp
             
             setOnClickListener {
                 if (viewModel.fechaSeleccionada.value.isNullOrEmpty() || viewModel.horaSeleccionada.value.isNullOrEmpty()) {
@@ -153,12 +177,12 @@ class EmpleadosActivity : AppCompatActivity() {
                 val sala = view.tag as Sala
                 val reserva = reservas.find { it.idSala == sala.id }
                 
-                val color = when {
+                val colorId = when {
                     reserva == null -> R.color.green
                     reserva.idusuario == uid -> R.color.orange
                     else -> R.color.red
                 }
-                view.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, color))
+                view.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, colorId))
             }
         }
     }
@@ -174,7 +198,7 @@ class EmpleadosActivity : AppCompatActivity() {
         val cal = Calendar.getInstance()
         DatePickerDialog(this, android.R.style.Theme_Material_Dialog_MinWidth, 
             { _, y, m, d ->
-                val f = String.format("%02d/%02d/%d", d, m + 1, y)
+                val f = String.format(Locale.getDefault(), "%02d/%02d/%d", d, m + 1, y)
                 viewModel.updateFecha(f)
                 mostrarDialogoHoras()
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)
@@ -202,10 +226,10 @@ class EmpleadosActivity : AppCompatActivity() {
 
     private fun cargarImagenFondo(url: String) {
         Glide.with(this).load(url).centerCrop().into(object : CustomTarget<Drawable>() {
-            override fun onResourceReady(r: Drawable, t: Transition<in Drawable>?) {
-                binding.contentLayout.background = r
+            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                binding.contentLayout.background = resource
             }
-            override fun onLoadCleared(p: Drawable?) {}
+            override fun onLoadCleared(placeholder: Drawable?) {}
         })
     }
 
@@ -267,10 +291,6 @@ class EmpleadosActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun mostrarDialogoReservas() {
-        // ... (This can be shared or moved to VM but it involves complex UI building)
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             onBackPressedDispatcher.onBackPressed()
@@ -278,4 +298,5 @@ class EmpleadosActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
-}
+}
+

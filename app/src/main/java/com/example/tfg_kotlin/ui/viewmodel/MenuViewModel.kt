@@ -45,13 +45,12 @@ class MenuViewModel : ViewModel() {
     private fun loadUserData() {
         val sesion = Sesion.datos ?: return
         val email = sesion.usuario.email
-        val empresaId = sesion.empresa.nombre
 
         if (sesion.usuario.nombre.isEmpty()) {
             viewModelScope.launch {
                 _loading.value = true
                 try {
-                    val user = firestoreRepo.getUsuarioByEmail(empresaId, email)
+                    val user = firestoreRepo.getUsuarioByEmail(email)
                     if (user != null) {
                         _usuario.value = user
                         Sesion.datos = sesion.copy(usuario = user)
@@ -91,14 +90,14 @@ class MenuViewModel : ViewModel() {
                     try {
                         val date = sdf.parse(it.fechaHora)
                         date?.after(now) == true
-                    } catch (e: Exception) { false }
+                    } catch (_: Exception) { false }
                 }.minByOrNull {
                     sdf.parse(it.fechaHora)?.time ?: Long.MAX_VALUE
                 }
                 
                 _nextReserva.value = next
                 _userReservas.value = status
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Silently handle error or post to _error
             }
         }
@@ -114,8 +113,8 @@ class MenuViewModel : ViewModel() {
                 } else {
                     _error.value = "No se pudo cancelar la reserva"
                 }
-            } catch (e: Exception) {
-                _error.value = "Error al cancelar: ${e.message}"
+            } catch (_: Exception) {
+                _error.value = "Error al cancelar la reserva"
             }
         }
     }

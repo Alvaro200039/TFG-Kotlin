@@ -369,7 +369,7 @@ class CreacionActivity : AppCompatActivity() {
 
         val tamanios = arrayOf("Pequeña", "Mediana", "Grande")
         spinnerTamanio.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tamanios)
-        spinnerTamanio.setSelection(tamanios.indexOf(sala.tamaño).coerceAtLeast(0))
+        spinnerTamanio.setSelection(tamanios.indexOf(sala.tamano).coerceAtLeast(0))
 
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.title_editar_detalles_sala))
@@ -382,7 +382,7 @@ class CreacionActivity : AppCompatActivity() {
                 
                 val newSala = sala.copy(
                     nombre = etNombre.text.toString(),
-                    tamaño = spinnerTamanio.selectedItem.toString(),
+                    tamano = spinnerTamanio.selectedItem.toString(),
                     extras = extras
                 )
                 viewModel.updateSala(sala, newSala)

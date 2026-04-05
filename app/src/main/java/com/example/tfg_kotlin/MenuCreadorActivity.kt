@@ -1,6 +1,17 @@
+package com.example.tfg_kotlin
+
+import android.content.Intent
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.tfg_kotlin.data.model.Sesion
 import com.example.tfg_kotlin.databinding.ActivityMenuCreadorBinding
 import com.example.tfg_kotlin.ui.viewmodel.MenuViewModel
+import kotlinx.coroutines.launch
 
 class MenuCreadorActivity : BaseMenuActivity() {
 
@@ -36,7 +47,7 @@ class MenuCreadorActivity : BaseMenuActivity() {
     }
 
     private fun setupObservers() {
-        menuViewModel.usuario.observe(this) { usuario ->
+        menuViewModel.usuario.observe(this) {
             // Update UI if needed based on user data
         }
 
@@ -97,4 +108,3 @@ class MenuCreadorActivity : BaseMenuActivity() {
         }
     }
 }
-

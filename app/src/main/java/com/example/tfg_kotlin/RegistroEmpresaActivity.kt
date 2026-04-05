@@ -1,16 +1,13 @@
 package com.example.tfg_kotlin
 
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import androidx.core.view.ViewCompat
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.tfg_kotlin.databinding.ActivityRegistroEmpresaBinding
 import com.example.tfg_kotlin.ui.viewmodel.RegistroEmpresaViewModel
 
@@ -114,19 +111,6 @@ class RegistroEmpresaActivity : AppCompatActivity() {
         return when (item.itemId) {
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-}
-
-
-    // Funcionalidad de la toolbar para ir a la pantalla anterior
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
                 true
             }
             else -> super.onOptionsItemSelected(item)
