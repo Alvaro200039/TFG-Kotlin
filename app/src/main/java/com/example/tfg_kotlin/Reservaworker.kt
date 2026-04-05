@@ -30,7 +30,7 @@ class ReservaWorker(context: Context, params: WorkerParameters) : Worker(context
         return Result.success()
     }
 
-    // Constructor de notificaciones
+    // Muestra notificaciones
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun mostrarNotificacion(titulo: String, mensaje: String) {
         val channelId = "canal_reservas"
