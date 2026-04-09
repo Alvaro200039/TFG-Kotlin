@@ -1,0 +1,30 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/GestionHorariosActivity.kt</file>
+  <line>160</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/GestionHorariosActivity.kt" />
+  <problem_class id="AndroidLintNotifyDataSetChanged" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Invalidating All RecyclerView Data</problem_class>
+  <hints />
+  <description>&lt;html&gt;It will always be more efficient to use more specific change events if you can. Rely on &lt;code&gt;notifyDataSetChanged&lt;/code&gt; as a last resort.&lt;/html&gt;</description>
+  <highlighted_element>calendarAdapter.notifyDataSetChanged()</highlighted_element>
+  <language>kotlin</language>
+  <offset>24</offset>
+  <length>38</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/GestionHorariosActivity.kt</file>
+  <line>350</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/GestionHorariosActivity.kt" />
+  <problem_class id="AndroidLintNotifyDataSetChanged" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Invalidating All RecyclerView Data</problem_class>
+  <hints />
+  <description>&lt;html&gt;It will always be more efficient to use more specific change events if you can. Rely on &lt;code&gt;notifyDataSetChanged&lt;/code&gt; as a last resort.&lt;/html&gt;</description>
+  <highlighted_element>calendarAdapter.notifyDataSetChanged()</highlighted_element>
+  <language>kotlin</language>
+  <offset>12</offset>
+  <length>38</length>
+</problem>
+</problems>

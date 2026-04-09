@@ -1,0 +1,15 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoEditorView.kt</file>
+  <line>782</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoEditorView void selectAt(float wx, float wy, float sx, float sy)" />
+  <problem_class id="LiftReturnOrAssignment" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Return or assignment can be lifted out</problem_class>
+  <description>'Assignment' can be lifted out of 'if'</description>
+  <highlighted_element>if</highlighted_element>
+  <language>kotlin</language>
+  <offset>8</offset>
+  <length>2</length>
+</problem>
+</problems>

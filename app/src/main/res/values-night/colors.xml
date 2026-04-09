@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores Semánticos Aura - MODO OSCURO -->
+    <color name="aura_primary">#5C7CFF</color>
+    <color name="aura_on_primary">#FFFFFF</color>
+    <color name="aura_primary_container">#3E61FE</color>
+    <color name="aura_on_primary_container">#FFFFFF</color>
+    
+    <color name="aura_secondary">#8E8E93</color>
+    <color name="aura_on_secondary">#FFFFFF</color>
+    
+    <color name="aura_surface">#0A0A0A</color>
+    <color name="aura_on_surface">#F2F2F7</color>
+    <color name="aura_surface_variant">#1C1C1E</color>
+    <color name="aura_on_surface_variant">#D1D1D6</color>
+    
+    <color name="aura_outline">#48484A</color>
+    <color name="aura_error">#F0705F</color>
+    <color name="aura_success">#6DB04A</color>
+</resources>

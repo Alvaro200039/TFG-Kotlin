@@ -1,0 +1,28 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoReservasView.kt</file>
+  <line>286</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoReservasView boolean isPointInPolygon(float x, float y, com.example.tfg_kotlin.data.model.Sala sala)" />
+  <problem_class id="ConvertTwoComparisonsToRangeCheck" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Two comparisons should be converted to a range check</problem_class>
+  <description>Two comparisons should be converted to a range check</description>
+  <highlighted_element>y1 &lt;= y &amp;&amp; y &lt; y2</highlighted_element>
+  <language>kotlin</language>
+  <offset>18</offset>
+  <length>17</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoReservasView.kt</file>
+  <line>286</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoReservasView boolean isPointInPolygon(float x, float y, com.example.tfg_kotlin.data.model.Sala sala)" />
+  <problem_class id="ConvertTwoComparisonsToRangeCheck" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Two comparisons should be converted to a range check</problem_class>
+  <description>Two comparisons should be converted to a range check</description>
+  <highlighted_element>y2 &lt;= y &amp;&amp; y &lt; y1</highlighted_element>
+  <language>kotlin</language>
+  <offset>41</offset>
+  <length>17</length>
+</problem>
+</problems>

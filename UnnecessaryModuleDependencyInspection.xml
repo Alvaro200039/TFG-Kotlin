@@ -1,0 +1,26 @@
+<problems>
+<problem>
+  <file>TFG-Kotlin.app.unitTest</file>
+  <module>TFG-Kotlin.app.unitTest</module>
+  <entry_point TYPE="module" FQNAME="TFG-Kotlin.app.unitTest" />
+  <problem_class id="UnnecessaryModuleDependencyInspection" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary module dependency</problem_class>
+  <hints>
+    <hint value="TFG-Kotlin.app.main" />
+  </hints>
+  <description>Module 'TFG-Kotlin.app.unitTest' sources do not depend on module 'TFG-Kotlin.app.main' sources</description>
+  <highlighted_element />
+  <language />
+</problem>
+<problem>
+  <file>TFG-Kotlin.app.androidTest</file>
+  <module>TFG-Kotlin.app.androidTest</module>
+  <entry_point TYPE="module" FQNAME="TFG-Kotlin.app.androidTest" />
+  <problem_class id="UnnecessaryModuleDependencyInspection" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary module dependency</problem_class>
+  <hints>
+    <hint value="TFG-Kotlin.app.main" />
+  </hints>
+  <description>Module 'TFG-Kotlin.app.androidTest' sources do not depend on module 'TFG-Kotlin.app.main' sources</description>
+  <highlighted_element />
+  <language />
+</problem>
+</problems>

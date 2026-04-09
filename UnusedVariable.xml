@@ -1,0 +1,15 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoEditorView.kt</file>
+  <line>508</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoEditorView void handleInteraction(android.view.MotionEvent event, float[] world)" />
+  <problem_class id="UnusedVariable" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused variable</problem_class>
+  <description>Unused variable</description>
+  <highlighted_element>hr</highlighted_element>
+  <language>kotlin</language>
+  <offset>12</offset>
+  <length>2</length>
+</problem>
+</problems>

@@ -1,0 +1,28 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoEditorView.kt</file>
+  <line>542</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoEditorView void handleInteraction(android.view.MotionEvent event, float[] world)" />
+  <problem_class id="AssignedValueIsNeverRead" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Assigned value is never read</problem_class>
+  <description>Assigned value is never read</description>
+  <highlighted_element>handled</highlighted_element>
+  <language>kotlin</language>
+  <offset>24</offset>
+  <length>7</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoEditorView.kt</file>
+  <line>746</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoEditorView void mergeCollinearMuros()" />
+  <problem_class id="AssignedValueIsNeverRead" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Assigned value is never read</problem_class>
+  <description>Assigned value is never read</description>
+  <highlighted_element>maxDist</highlighted_element>
+  <language>kotlin</language>
+  <offset>28</offset>
+  <length>7</length>
+</problem>
+</problems>

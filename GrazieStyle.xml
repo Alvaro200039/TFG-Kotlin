@@ -1,0 +1,14 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/res/drawable/aura_toggle_bg.xml</file>
+  <line>5</line>
+  <module>TFG-Kotlin.app.main</module>
+  <entry_point TYPE="file" FQNAME="file://$PROJECT_DIR$/app/src/main/res/drawable/aura_toggle_bg.xml" />
+  <problem_class id="GrazieStyle" severity="STYLE_SUGGESTION" attribute_key="TEXT_STYLE_SUGGESTION">Style</problem_class>
+  <description>American English uses 'gray'</description>
+  <highlighted_element>grey</highlighted_element>
+  <language>XML</language>
+  <offset>56</offset>
+  <length>4</length>
+</problem>
+</problems>

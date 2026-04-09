@@ -1,0 +1,41 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoEditorView.kt</file>
+  <line>143</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoEditorView void drawGrid(android.graphics.Canvas canvas)" />
+  <problem_class id="ReplaceJavaStaticMethodWithKotlinAnalog" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Java methods should be replaced with Kotlin analog</problem_class>
+  <description>Should be replaced with Kotlin function</description>
+  <highlighted_element>floor(left.toDouble() / step)</highlighted_element>
+  <language>kotlin</language>
+  <offset>22</offset>
+  <length>29</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoEditorView.kt</file>
+  <line>145</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoEditorView void drawGrid(android.graphics.Canvas canvas)" />
+  <problem_class id="ReplaceJavaStaticMethodWithKotlinAnalog" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Java methods should be replaced with Kotlin analog</problem_class>
+  <description>Should be replaced with Kotlin function</description>
+  <highlighted_element>floor(top.toDouble() / step)</highlighted_element>
+  <language>kotlin</language>
+  <offset>22</offset>
+  <length>28</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/ui/view/PlanoEditorView.kt</file>
+  <line>555</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin.ui.view</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.ui.view.PlanoEditorView void handleInteraction(android.view.MotionEvent event, float[] world)" />
+  <problem_class id="ReplaceJavaStaticMethodWithKotlinAnalog" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Java methods should be replaced with Kotlin analog</problem_class>
+  <description>Should be replaced with Kotlin function</description>
+  <highlighted_element>atan2((world[1] - (it.y + it.alto / 2)).toDouble(), (world[0] - (it.x + it.ancho / 2)).toDouble())</highlighted_element>
+  <language>kotlin</language>
+  <offset>41</offset>
+  <length>98</length>
+</problem>
+</problems>

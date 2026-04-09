@@ -1,0 +1,106 @@
+<problems>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/BaseMenuActivity.kt</file>
+  <line>162</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.BaseMenuActivity void setupBaseObservers(android.widget.TextView textSala, android.view.View cardSala, android.widget.TextView textPuesto, android.view.View cardPuesto)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.graphics</highlighted_element>
+  <language>kotlin</language>
+  <offset>68</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/BaseMenuActivity.kt</file>
+  <line>165</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.BaseMenuActivity void setupBaseObservers(android.widget.TextView textSala, android.view.View cardSala, android.widget.TextView textPuesto, android.view.View cardPuesto)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.graphics</highlighted_element>
+  <language>kotlin</language>
+  <offset>69</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/BaseMenuActivity.kt</file>
+  <line>182</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.BaseMenuActivity void setupBaseObservers(android.widget.TextView textSala, android.view.View cardSala, android.widget.TextView textPuesto, android.view.View cardPuesto)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.graphics</highlighted_element>
+  <language>kotlin</language>
+  <offset>72</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/BaseMenuActivity.kt</file>
+  <line>185</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.BaseMenuActivity void setupBaseObservers(android.widget.TextView textSala, android.view.View cardSala, android.widget.TextView textPuesto, android.view.View cardPuesto)" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.graphics</highlighted_element>
+  <language>kotlin</language>
+  <offset>73</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/BaseMenuActivity.kt</file>
+  <line>214</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.BaseMenuActivity void mostrarDialogoReservas()" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.view</highlighted_element>
+  <language>kotlin</language>
+  <offset>30</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/BaseMenuActivity.kt</file>
+  <line>250</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.BaseMenuActivity void mostrarDialogoReservas()" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.graphics</highlighted_element>
+  <language>kotlin</language>
+  <offset>63</offset>
+  <length>16</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/BaseMenuActivity.kt</file>
+  <line>256</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.BaseMenuActivity void mostrarDialogoReservas()" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.util</highlighted_element>
+  <language>kotlin</language>
+  <offset>47</offset>
+  <length>12</length>
+</problem>
+<problem>
+  <file>file://$PROJECT_DIR$/app/src/main/java/com/example/tfg_kotlin/GestionHorariosActivity.kt</file>
+  <line>93</line>
+  <module>TFG-Kotlin.app.main</module>
+  <package>com.example.tfg_kotlin</package>
+  <entry_point TYPE="method" FQNAME="com.example.tfg_kotlin.GestionHorariosActivity void setupObservers()" />
+  <problem_class id="RemoveRedundantQualifierName" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant qualifier name</problem_class>
+  <description>Remove redundant qualifier name</description>
+  <highlighted_element>android.view</highlighted_element>
+  <language>kotlin</language>
+  <offset>29</offset>
+  <length>12</length>
+</problem>
+</problems>
