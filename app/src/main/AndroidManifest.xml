@@ -40,6 +40,12 @@
             android:name=".EmpleadosActivity"
             android:exported="false" />
         <activity
+            android:name=".GestionHorariosActivity"
+            android:exported="false" />
+        <activity
+            android:name=".GestionExtrasActivity"
+            android:exported="false" />
+        <activity
             android:name=".Principal"
             android:exported="true" >
             <intent-filter>

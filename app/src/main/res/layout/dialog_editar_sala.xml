@@ -37,22 +37,11 @@
         android:text="@string/label_extras"
         android:textColor="@android:color/black" />
 
-    <CheckBox
-        android:id="@+id/cbWiFi"
+    <LinearLayout
+        android:id="@+id/containerExtras"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/extra_wifi" />
-
-    <CheckBox
-        android:id="@+id/cbProyector"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/extra_proyector" />
-
-    <CheckBox
-        android:id="@+id/cbPizarra"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/extra_pizarra" />
+        android:orientation="vertical"
+        android:layout_marginTop="8dp" />
 
 </LinearLayout>

@@ -5,8 +5,14 @@
     tools:ignore="AppCompatResource">
 
     <item
-        android:id="@+id/action_options"
-        android:icon="@drawable/ic_notifications"
-        app:showAsAction="always"
+        android:id="@+id/action_notifications"
+        android:icon="@drawable/ic_aura_notifications"
+        app:showAsAction="ifRoom"
         android:title="@string/title_notificaciones" />
+
+    <item
+        android:id="@+id/action_theme"
+        android:icon="@drawable/ic_aura_theme"
+        app:showAsAction="ifRoom"
+        android:title="@string/title_tema" />
 </menu>

@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
-    alias(libs.plugins.google.firebase.crashlytics)
 }
 
 android {
@@ -39,8 +38,6 @@ android {
 
 dependencies {
     implementation(libs.glide)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage)
     implementation(libs.androidx.core.ktx)
@@ -58,4 +55,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(platform(libs.firebase.bom))
 }

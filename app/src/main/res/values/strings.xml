@@ -11,7 +11,11 @@
 
     <!-- Registro & Recuperacion -->
     <string name="btn_crear_cuenta">Crear Cuenta</string>
-    <string name="btn_enviar_codigo">Enviar código</string>
+    <string name="btn_recuperar_contrasena">Recuperar contraseña</string>
+    <string name="title_reseteo_contrasena">Recuperar Contraseña</string>
+    <string name="err_introduce_correo_valido">Introduce un correo válido</string>
+    <string name="msg_correo_recuperacion_enviado">Se ha enviado un correo de recuperación a %1$s</string>
+    <string name="err_no_pudo_enviar_correo">No se pudo enviar el correo de recuperación</string>
 
     <!-- Menús Principal -->
     <string name="title_reservas_espacios">Reservas de Espacios</string>
@@ -19,13 +23,13 @@
     <string name="btn_ver_reservas">Ver mis reservas</string>
     <string name="btn_cerrar_sesion">Cerrar sesión</string>
     <string name="btn_crear_editar_estancias">Crear o editar estancias</string>
+    <string name="btn_editar_horarios">Editar Horarios de Oficina</string>
 
     <!-- Activity Empleados / Creación -->
     <string name="btn_cambiar_hora">Cambiar hora</string>
-    <string name="tab_franja_horaria">Franja horaria</string>
-    <string name="tab_plano">Plano</string>
-    <string name="btn_eliminar_pisos">Eliminar pisos</string>
-    <string name="btn_anadir_sala">Añadir sala</string>
+    <string name="btn_seleccionar">Seleccionar</string>
+    <string name="btn_undo">Deshacer</string>
+    <string name="opt_nuevo_piso">(Nuevo Piso)</string>
 
     <!-- Diálogos Genéricos -->
     <string name="btn_guardar">Guardar</string>
@@ -33,9 +37,7 @@
     <string name="btn_cerrar">Cerrar</string>
     <string name="btn_si">Sí</string>
     <string name="btn_no">No</string>
-    <string name="switch_activar_notificaciones">Activar notificaciones</string>
-    <string name="label_minutos_antes_reserva">Minutos antes de la reserva:</string>
-    <string name="btn_anadir_franja">Añadir franja</string>
+    <string name="btn_aceptar">Aceptar</string>
     <string name="label_piso">Piso:</string>
     <string name="label_tamano">Tamaño:</string>
     <string name="label_extras">Extras:</string>
@@ -47,36 +49,26 @@
     <string name="title_inicio_sesion">Inicio Sesión</string>
     <string name="err_completar_campos">Completa todos los campos</string>
     <string name="err_correo_invalido">Correo inválido</string>
-    <string name="msg_bienvenida_jefe">Bienvenido %1$s: Iniciada sesión como Jefe</string>
-    <string name="msg_bienvenida_empleado">Bienvenido %1$s: Iniciada sesión como Empleado</string>
     <string name="err_cargar_pisos">Error al cargar pisos</string>
 
     <!-- BaseMenuActivity Strings -->
     <string name="title_notificaciones">Notificaciones</string>
+    <string name="title_tema">Cambiar Tema</string>
     <string name="msg_no_reservas_activas">No tienes reservas activas.</string>
     <string name="title_cancelar_reserva">¿Cancelar reserva?</string>
     <string name="msg_confirmar_cancelar_reserva">¿Deseas cancelar la reserva de \'%1$s\' el %2$s?</string>
     <string name="title_tus_reservas">Tus reservas activas</string>
-    <string name="msg_no_hay_reservas_proximas">No hay reservas próximas</string>
-    <string name="msg_siguiente_reserva">Siguiente reserva: %1$s \n%2$s el %3$s</string>
+    <string name="msg_proxima_sala">%1$s - %2$s</string>
+    <string name="msg_proximo_puesto">%1$s - %2$s</string>
     <string name="reserva_item_format">- %1$s  %2$s</string>
 
     <!-- CreacionActivity Strings -->
-    <string name="title_piso_n">Piso nº</string>
     <string name="err_empresa_no_encontrada">Empresa no encontrada</string>
-    <string name="label_sala_defecto">Sala</string>
-    <string name="title_crear_nuevo_piso">Crear nuevo piso</string>
-    <string name="title_editar_nombre_piso">Editar nombre del piso</string>
-    <string name="opt_editar">Editar</string>
     <string name="opt_eliminar">Eliminar</string>
-    <string name="opt_cambiar_tamano">Cambiar tamaño</string>
-    <string name="title_opciones_sala">Opciones de la sala</string>
     <string name="hint_nuevo_nombre">Nuevo nombre</string>
-    <string name="extra_wifi">WiFi</string>
-    <string name="extra_proyector">Proyector</string>
-    <string name="extra_pizarra">Pizarra</string>
     <string name="err_empresa_no_definida">Empresa en sesión no definida</string>
     <string name="msg_distribucion_guardada">Distribución guardada correctamente</string>
+    <string name="title_editar_detalles_sala">Detalles de la Sala</string>
 
     <string name="label_correo">Introduzca su correo</string>
     <string name="label_contrasena">Introduzca su contraseña</string>
@@ -87,73 +79,127 @@
     <string name="label_contrasena_simple">Contraseña</string>
     <string name="label_repetir_contrasena">Repetir Contraseña</string>
     <string name="label_nombre_empresa">Nombre de la empresa</string>
-    <string name="label_dominio_ejemplo">Dominio (ej: @empresa.com)</string>
-    <string name="label_cif_ejemplo">CIF (ej: A12345678)</string>
-    <string name="label_hh">HH</string>
-    <string name="label_mm">MM</string>
-    <string name="label_separador_hora"> : </string>
-    <string name="label_separador_rango"> - </string>
-    <string name="desc_icono_horas">Icono horas</string>
-    <string name="desc_icono_plano">Icono plano</string>
-    <string name="desc_icono_pisos">Icono pisos</string>
-    <string name="desc_icono_sala">Icono sala</string>
-    <string name="desc_icono_reservas">Icono reservas</string>
-    <string name="desc_icono_franja">Icono franja</string>
+    <string name="label_sala">Sala</string>
 
-    <!-- EmpleadosActivity Strings -->
+    <string name="label_libre">Libre</string>
+    <string name="label_sitio_inexistente">(Sitio inexistente)</string>
 
-    <string name="msg_selecciona_fecha_primero">Primero selecciona una fecha</string>
-    <string name="btn_seleccionar_fecha">Seleccionar fecha</string>
-    <string name="label_fecha_con_valor">Fecha: %1$s</string>
-    <string name="label_hora_con_valor">Hora: %1$s</string>
-    <string name="msg_no_franjas_disponibles">No hay franjas horarias disponibles. Crea algunas franjas primero.</string>
-    <string name="title_selecciona_franja_para">Selecciona una franja horaria para el %1$s</string>
-    <string name="title_eliminar_franja">Eliminar franja</string>
-    <string name="msg_confirmar_eliminar_franja">¿Deseas eliminar la franja %1$s?</string>
-    <string name="err_formato_hora_invalido">Formato de hora inválido</string>
-    <string name="title_franjas_horarias">Franjas Horarias</string>
-    <string name="title_selecciona_piso_eliminar">Selecciona el piso a eliminar</string>
-    <string name="title_confirmar_eliminacion">Confirmar eliminación</string>
-    <string name="msg_confirmar_eliminar_piso">¿Deseas eliminar el piso %1$s?</string>
-    <string name="title_editar_detalles_sala">Editar detalles de la sala</string>
-    <string name="title_cambiar_tamano_sala">Cambiar tamaño de la sala</string>
-    <string name="msg_operacion_exito">Operación realizada con éxito</string>
-    <string name="label_libre">LIBRE</string>
-    <string name="label_ocupada_por">OCUPADA por %1$s</string>
+    <string name="title_salas_abiertas">Salas Incompletas</string>
+    <string name="msg_salas_abiertas_aviso">Hay salas que no están cerradas por muros. Cierra los perímetros en rojo antes de guardar.</string>
+
     <string name="btn_reservar_mayuscula">RESERVAR</string>
     <string name="btn_cancelar_mi_reserva">CANCELAR MI RESERVA</string>
-    <string name="label_ancho_sala">Ancho de la sala</string>
-    <string name="label_alto_sala">Alto de la sala</string>
-    <string name="label_valor_defecto_ancho">300</string>
-    <string name="label_valor_defecto_alto">200</string>
+    <string name="label_ocupada_por">Ocupada por: %1$s</string>
+    <string name="msg_operacion_exito">Operación realizada con éxito</string>
+    <string name="msg_no_franjas_disponibles">No hay franjas horarias disponibles</string>
+    <string name="title_selecciona_franja_para">Selecciona franja para el %1$s</string>
+    <string name="msg_selecciona_fecha_primero">Selecciona una fecha primero</string>
+    <string name="btn_seleccionar_fecha">Seleccionar Fecha</string>
+    <string name="label_fecha_con_valor">Fecha: %1$s</string>
+    <string name="label_hora_con_valor">Hora: %1$s</string>
 
 
-    <string name="msg_no_piso_creado">No se ha creado ningún piso</string>
+    <string name="label_apertura">Apertura</string>
+    <string name="label_cierre">Cierre</string>
+    <string name="section_weekly_days">Días de Apertura (Semanal)</string>
+    <string name="section_time_slots">Franjas Horarias Disponibles</string>
+    <string name="btn_add">Añadir</string>
+    <string name="section_holidays">Días Festivos / Bloqueados</string>
 
-    <!-- RecuperarContrasenaActivity Strings -->
-    <string name="title_reseteo_contrasena">Reseteo de Contraseña</string>
-    <string name="err_introduce_correo_valido">Introduce un correo válido</string>
-    <string name="msg_correo_recuperacion_enviado">Correo de recuperación enviado a %1$s</string>
-    <string name="err_no_pudo_enviar_correo">No se pudo enviar el correo. Verifica que esté registrado.</string>
+    <!-- Gestion Horarios -->
+    <string name="title_gestion_horarios">Gestión de Horarios</string>
+    <string name="section_office_hours">Horario de Oficina</string>
+    <string name="title_franjas_horarias">Franjas Horarias</string>
 
-    <!-- RegistroEmpleadoActivity Strings -->
+    <!-- Otros mensajes -->
+    <string name="msg_no_piso_creado">No se ha creado ningún piso en esta empresa todavía.</string>
+    
+    <!-- Registro -->
     <string name="title_registro_empleados">Registro de Empleados</string>
+    <string name="msg_empleado_registrado_jefe">Empleado registrado correctamente como Jefe</string>
+    <string name="msg_empleado_registrado">Empleado registrado correctamente</string>
     <string name="err_contrasenas_no_coinciden">Las contraseñas no coinciden</string>
-
-    <string name="msg_empleado_registrado_jefe">Empleado registrado como Jefe</string>
-    <string name="msg_empleado_registrado">Empleado registrado</string>
-    <string name="msg_empresa_registrada">Empresa registrada correctamente</string>
-
-
-    <!-- RegistroEmpresaActivity Strings -->
     <string name="title_registro_empresas">Registro de Empresas</string>
-    <string name="err_dominio_invalido_ej">Dominio inválido (ej: \n@empresa.com)</string>
+    <string name="msg_empresa_registrada">Empresa registrada correctamente</string>
+    <string name="err_dominio_invalido_ej">El dominio es inválido (ej:miempresa.com)</string>
+    <string name="label_dominio_ejemplo">empresa.com</string>
+    <string name="label_cif_ejemplo">B12345678</string>
 
+    <!-- Notificaciones -->
 
+    <!-- Accessibility -->
+    <string name="desc_icono_reservas">Icono de reservas</string>
+    <string name="desc_icono_franja">Icono de franja horaria</string>
 
-    <string name="title_recordatorio_reserva">Recordatorio de reserva</string>
-    <string name="msg_recordatorio_reserva">Tu reserva en %1$s es a las %2$s.</string>
-    <string name="title_recordatorios_reserva_channel">Recordatorios de Reserva</string>
-    <string name="desc_canal_reservas">Notificaciones para recordar reservas de sala</string>
+    <string name="desc_btn_select">Herramienta de selección</string>
+    <string name="desc_btn_tools">Abrir menú de herramientas</string>
+    <string name="desc_btn_delete">Herramienta de borrado</string>
+    <string name="desc_btn_undo">Deshacer última acción</string>
+    <string name="desc_btn_save">Guardar cambios en el plano</string>
+    <string name="desc_tool_muros">Dibujar nuevos muros</string>
+    <string name="desc_tool_sala">Añadir una nueva sala</string>
+    <string name="desc_tool_puesto">Añadir un nuevo puesto</string>
+    <string name="desc_label_pisos">Selector de pisos</string>
 
+    <!-- Dialogs -->
+
+    <string name="hint_nombre_piso">Nombre del piso</string>
+    <string name="label_herramientas">Herramientas</string>
+    <string name="label_borrar">Borrar</string>
+    <string name="label_esquinas">Esquinas</string>
+    <string name="label_editar">Editar</string>
+    <string name="desc_reset_corners">Resetear a rectángulo</string>
+    <string name="btn_listo">Listo</string>
+    <!-- Gestionar Amenidades -->
+    <string name="title_gestionar_amenidades">Gestionar Amenidades</string>
+    <string name="label_amenidades_salas">Amenidades para SALAS</string>
+    <string name="hint_extra_sala_ej">Ej: WiFi, Pizarra…</string>
+    <string name="label_amenidades_puestos">Amenidades para PUESTOS</string>
+    <string name="hint_extra_puesto_ej">Ej: Monitor, Teclado…</string>
+    <string name="btn_guardar_amenidades">GUARDAR AMENIDADES</string>
+
+    <!-- Gestion Horarios & Calendar -->
+    <string name="label_separador_hora_NP">:</string>
+    <string name="label_separador_rango_NP"> - </string>
+    <string name="label_np_flecha">→</string>
+    <string name="label_dia_l">L</string>
+    <string name="label_dia_m">M</string>
+    <string name="label_dia_x">X</string>
+    <string name="label_dia_j">J</string>
+    <string name="label_dia_v">V</string>
+    <string name="label_dia_s">S</string>
+    <string name="label_dia_d">D</string>
+    <string name="label_no_laborable">No laborable</string>
+    <string name="label_festivo">Festivo</string>
+    <string name="label_dias_bloqueados">Días bloqueados:</string>
+    <string name="title_selecciona_fecha_dialog">Selecciona una fecha</string>
+    <string name="title_eliminar_franja">Eliminar franja</string>
+    <string name="msg_confirmar_eliminar_franja">¿Deseas eliminar la franja %1$s?</string>
+
+    <!-- Principal -->
+    <!-- Programmatic Strings (BaseMenuActivity) -->
+    <string name="msg_notif_actualizadas">Notificaciones actualizadas</string>
+    <string name="label_inexistente">(Inexistente)</string>
+    <string name="label_salas_reunion">Salas de Reunión</string>
+    <string name="label_puestos_trabajo">Puestos de Trabajo</string>
+    <string name="label_planta_formato">Planta: %1$s</string>
+    <string name="msg_reserva_lugar_eliminado_pregunta">Esta reserva era para un lugar que ya no existe. ¿Deseas eliminarla de tu historial?</string>
+    <string name="btn_limpiar_registro">Limpiar</string>
+    <string name="label_adagora_brand">AdAgora</string>
+    <string name="label_rol_admin">Administrador</string>
+    <string name="label_rol_empleado">Empleado</string>
+    <string name="label_proxima_sala_caps">SALA PRÓXIMA</string>
+    <string name="label_proximo_puesto_caps">PUESTO PRÓXIMO</string>
+    <string name="label_gestionar_extras_amenidades">Gestionar Extras/Amenidades</string>
+    <string name="label_notif_salas_title">Salas</string>
+    <string name="label_notif_puestos_title">Puestos</string>
+    <string name="label_user_name_format" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"><xliff:g id="nombre">%1$s</xliff:g> <xliff:g id="apellidos">%2$s</xliff:g></string>
+    <string name="menu_herramientas_titulo">Herramientas de Edición</string>
+    <string name="label_muros">Muros</string>
+    <string name="label_puesto">Puesto</string>
+    <string name="label_unit_h"> h </string>
+    <string name="label_unit_m"> m</string>
+    <string name="theme_system">Igual al sistema</string>
+    <string name="theme_light">Modo Claro</string>
+    <string name="theme_dark">Modo Oscuro</string>
 </resources>

@@ -14,9 +14,7 @@ activityKtx = "1.13.0"
 constraintlayout = "2.2.1"
 lifecycle = "2.10.0"
 workRuntimeKtx = "2.11.2"
-firebaseCrashlytics = "20.0.4"
 googleGmsGoogleServices = "4.4.4"
-googleFirebaseCrashlytics = "3.0.6"
 firebaseFirestore = "25.1.4"
 firebaseStorage = "22.0.1"
 firebaseBom = "34.11.0"
@@ -38,7 +36,6 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
-firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestore" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebaseStorage" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
@@ -46,4 +43,3 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
-google-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "googleFirebaseCrashlytics" }

@@ -2,9 +2,28 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="grey">@android:color/darker_gray</color>
-    <color name="green">@android:color/holo_green_light</color>
-    <color name="blue">@android:color/holo_blue_light</color>
-    <color name="enlace">#1E88E5</color>
+
+    <!-- Colores Semánticos Aura - MODO CLARO -->
+    <color name="aura_primary">#3E61FE</color>
+    <color name="aura_on_primary">@color/white</color>
+    <color name="aura_primary_container">#3E61FE</color>
+    <color name="aura_on_primary_container">@color/white</color>
+    
+    <color name="aura_secondary">#757575</color>
+    <color name="aura_on_secondary">@color/white</color>
+    
+    <color name="aura_surface">@color/white</color>
+    <color name="aura_on_surface">#000000</color>
+    <color name="aura_surface_variant">#F2F2F7</color>
+    <color name="aura_on_surface_variant">#000000</color>
+    
+    <color name="aura_outline">#D1D1D6</color>
+    <color name="aura_error">#F0705F</color>
+    <color name="aura_success">#6DB04A</color>
+
+    
     <color name="ic_launcher_background">#3DDC84</color>
+    
+    <!-- Ad Agora Legacy/Specific -->
+    <color name="enlace">#007AFF</color>
 </resources>

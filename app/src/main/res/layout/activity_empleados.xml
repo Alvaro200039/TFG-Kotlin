@@ -16,17 +16,53 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <Spinner
-            android:id="@+id/spinnerPisos"
+        <TextView
+            android:id="@+id/textEmpresa"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp" />
+            android:layout_gravity="start|center_vertical"
+            android:text="@string/label_nombre_empresa"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorPrimary"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1" />
+
+        <!-- Desplegable estilo Material 3 con bordes muy redondeados (Pisos) -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="16dp"
+            android:minWidth="120dp"
+            app:hintEnabled="false"
+            app:boxCornerRadiusTopStart="24dp"
+            app:boxCornerRadiusTopEnd="24dp"
+            app:boxCornerRadiusBottomStart="24dp"
+            app:boxCornerRadiusBottomEnd="24dp"
+            app:boxStrokeWidth="0.5dp"
+            app:boxStrokeColor="?attr/colorOutline">
+
+            <AutoCompleteTextView
+                android:id="@+id/spinnerPisos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:hint="@string/desc_label_pisos"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:popupBackground="@drawable/bg_rounded_dropdown" />
+        </com.google.android.material.textfield.TextInputLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/contentLayout"
+    <com.example.tfg_kotlin.ui.view.PlanoReservasView
+        android:id="@+id/planoReservasView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
@@ -73,15 +109,16 @@
                 android:id="@+id/icono_btn_reservas"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_reserva"
-                android:contentDescription="@string/desc_icono_reservas" />
+                android:src="@drawable/ic_calendar_aura"
+                android:contentDescription="@string/desc_icono_reservas"
+                app:tint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/btn_fecha"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/btn_seleccionar_fecha"
-                android:textColor="@android:color/black"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -101,15 +138,16 @@
                 android:id="@+id/icono_btn_franja"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_horario"
-                android:contentDescription="@string/desc_icono_franja" />
+                android:src="@drawable/ic_clock_aura"
+                android:contentDescription="@string/desc_icono_franja"
+                app:tint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/btn_hora"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/btn_cambiar_hora"
-                android:textColor="@android:color/black"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>

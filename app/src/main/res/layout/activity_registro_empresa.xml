@@ -16,7 +16,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:titleTextColor="@color/black"/>
+        app:titleTextColor="?attr/colorOnSurface"/>
 
     <!-- Campos de entrada -->
     <LinearLayout
@@ -40,15 +40,15 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:layout_marginTop="50dp"
-            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundColor="?attr/colorSurface"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
+            app:boxStrokeColor="?attr/colorOutline"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:cursorColor="?attr/colorPrimary"
+            app:hintTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editNombreEmpresa"
@@ -67,15 +67,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundColor="?attr/colorSurface"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
+            app:boxStrokeColor="?attr/colorOutline"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:cursorColor="?attr/colorPrimary"
+            app:hintTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editDominio"
@@ -94,17 +94,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundColor="?attr/colorSurface"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
+            app:boxStrokeColor="?attr/colorOutline"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
             app:counterEnabled="true"
             app:counterMaxLength="9"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:cursorColor="?attr/colorPrimary"
+            app:hintTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editCif"
@@ -126,11 +126,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:backgroundTint="@android:color/holo_blue_dark"
         android:text="@string/btn_registrar_empresa"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
-        app:cornerRadius="20dp"
+        android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"

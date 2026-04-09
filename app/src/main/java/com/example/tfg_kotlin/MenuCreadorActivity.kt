@@ -34,21 +34,24 @@ class MenuCreadorActivity : BaseMenuActivity() {
         setupObservers()
         setupListeners()
         
-        setupBaseObservers(binding.textProximaReserva)
+        setupBaseObservers(binding.textProximaSala, binding.cardProximaSala, binding.textProximaPuesto, binding.cardProximaPuesto)
     }
 
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
+            setDisplayHomeAsUpEnabled(false) // Redundant with Logout button
             title = ""
-            setHomeAsUpIndicator(R.drawable.ic_adagora)
         }
     }
 
     private fun setupObservers() {
-        menuViewModel.usuario.observe(this) {
-            // Update UI if needed based on user data
+        menuViewModel.usuario.observe(this) { user ->
+            user?.let {
+                binding.textEmpresa.text = Sesion.datos?.empresa?.nombre ?: ""
+                binding.textTitulo.text = getString(R.string.label_user_name_format, it.nombre, it.apellidos)
+                binding.textRol.text = if (it.esJefe) getString(R.string.label_rol_admin) else getString(R.string.label_rol_empleado)
+            }
         }
 
         menuViewModel.error.observe(this) { msg ->
@@ -58,7 +61,7 @@ class MenuCreadorActivity : BaseMenuActivity() {
 
     private fun setupListeners() {
         binding.btnEditarSalas.setOnClickListener {
-            startActivity(Intent(this, CreacionActivity::class.java))
+            handleEditarSalas()
         }
 
         binding.btnNuevaReserva.setOnClickListener {
@@ -67,6 +70,14 @@ class MenuCreadorActivity : BaseMenuActivity() {
 
         binding.btnVerReservas.setOnClickListener {
             mostrarDialogoReservas()
+        }
+
+        binding.btnFranjas.setOnClickListener {
+            cargarFranjas()
+        }
+
+        binding.btnExtras.setOnClickListener {
+            startActivity(Intent(this, GestionExtrasActivity::class.java))
         }
 
         binding.btnLogout.setOnClickListener {
@@ -106,5 +117,8 @@ class MenuCreadorActivity : BaseMenuActivity() {
                 e.printStackTrace()
             }
         }
+    }
+    private fun handleEditarSalas() {
+        startActivity(Intent(this, CreacionActivity::class.java))
     }
 }

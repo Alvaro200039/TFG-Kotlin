@@ -49,7 +49,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
             .get()
             .await()
         
-        return snapshot.mapNotNull { it.toObject(FranjaHoraria::class.java) }
+        return snapshot.mapNotNull { FranjaHoraria(hora = it.id) }
     }
 
     suspend fun getSalasByPiso(empresaId: String, pisoId: String): List<Sala> {
@@ -104,28 +104,26 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
 
     suspend fun savePiso(empresaId: String, piso: Piso): String? {
         return try {
-            val pisoData = hashMapOf(
-                "nombre" to piso.nombre,
-                "empresaCif" to piso.empresaCif,
-                "imagenUrl" to piso.imagenUrl
-            )
             if (piso.id != null) {
                 db.collection("empresas")
                     .document(empresaId)
                     .collection("pisos")
                     .document(piso.id!!)
-                    .set(pisoData)
+                    .set(piso)
                     .await()
                 piso.id
             } else {
                 val ref = db.collection("empresas")
                     .document(empresaId)
                     .collection("pisos")
-                    .add(pisoData)
-                    .await()
+                    .document()
+                
+                piso.id = ref.id
+                ref.set(piso).await()
                 ref.id
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            e.printStackTrace()
             null
         }
     }
@@ -154,6 +152,22 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .collection("salas")
                 .document(docId)
                 .set(sala)
+                .await()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    suspend fun deleteSala(empresaId: String, pisoId: String, salaId: String): Boolean {
+        return try {
+            db.collection("empresas")
+                .document(empresaId)
+                .collection("pisos")
+                .document(pisoId)
+                .collection("salas")
+                .document(salaId)
+                .delete()
                 .await()
             true
         } catch (_: Exception) {

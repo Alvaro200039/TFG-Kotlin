@@ -13,7 +13,7 @@
         android:gravity="center"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"
+        android:textColor="?attr/colorOnSurface"
         android:layout_marginBottom="16dp" />
 
     <!-- Fila para Piso -->
@@ -29,20 +29,21 @@
             android:layout_height="wrap_content"
             android:text="@string/label_piso"
             android:textStyle="bold"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/tvValorPiso"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="@android:color/darker_gray" />
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.7" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#CCCCCC" />
+        android:background="#555555" />
 
     <!-- Fila para Tamaño -->
     <LinearLayout
@@ -57,20 +58,21 @@
             android:layout_height="wrap_content"
             android:text="@string/label_tamano"
             android:textStyle="bold"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/tvValorTamano"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="@android:color/darker_gray" />
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.7" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#CCCCCC" />
+        android:background="#555555" />
 
     <!-- Fila para Extras -->
     <LinearLayout
@@ -85,20 +87,21 @@
             android:layout_height="wrap_content"
             android:text="@string/label_extras"
             android:textStyle="bold"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/tvEquipamientoDetalle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="@android:color/darker_gray" />
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.7" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#CCCCCC" />
+        android:background="#555555" />
 
     <!-- Fila para Fecha -->
     <LinearLayout
@@ -113,20 +116,21 @@
             android:layout_height="wrap_content"
             android:text="@string/label_fecha"
             android:textStyle="bold"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/tvValorFecha"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="@android:color/darker_gray" />
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.7" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#CCCCCC" />
+        android:background="#555555" />
 
     <!-- Fila para Hora -->
     <LinearLayout
@@ -141,20 +145,21 @@
             android:layout_height="wrap_content"
             android:text="@string/label_hora"
             android:textStyle="bold"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/tvValorHora"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:textColor="@android:color/darker_gray" />
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.7" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#CCCCCC" />
+        android:background="#555555" />
 
     <!-- Estado y Botón -->
     <TextView
@@ -166,12 +171,10 @@
         android:textStyle="bold"
         android:textSize="16sp" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAccionReserva"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/blue"
-        android:textColor="@android:color/white" />
+        android:layout_marginTop="16dp" />
 
 </LinearLayout>

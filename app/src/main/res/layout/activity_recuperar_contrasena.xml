@@ -41,15 +41,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
-            app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="2dp"
-            app:cursorColor="@color/blue"
             app:endIconMode="clear_text"
-            app:errorEnabled="true"
-            app:hintTextColor="@color/black">
+            app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCorreoRec"
@@ -68,14 +61,8 @@
             android:id="@+id/btnEnviarCodigo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="20dp"
-            android:backgroundTint="@color/blue"
-            android:text="@string/btn_enviar_codigo"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            app:cornerRadius="20dp" />
+            android:layout_marginTop="24dp"
+            android:text="@string/btn_recuperar_contrasena" />
 
     </LinearLayout>
 

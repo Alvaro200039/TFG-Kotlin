@@ -31,20 +31,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Campo correo -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
-            app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCorreo"
@@ -54,6 +46,7 @@
                 android:hint="@string/label_correo"
                 android:autofillHints="emailAddress"
                 android:inputType="textEmailAddress"
+                android:textColor="?attr/colorOnSurface"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -63,17 +56,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
-            app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
             app:counterEnabled="true"
-            app:counterMaxLength="9"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:counterMaxLength="9">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCif"
@@ -82,6 +68,7 @@
                 android:background="@android:color/transparent"
                 android:hint="@string/label_cif_opcional"
                 android:inputType="text"
+                android:textColor="?attr/colorOnSurface"
                 android:paddingTop="16dp"
                 android:maxLength="9"
                 android:paddingBottom="0dp" />
@@ -92,15 +79,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
-            app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
-            app:errorEnabled="true"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etNombre"
@@ -110,6 +90,7 @@
                 android:hint="@string/label_nombre"
                 android:autofillHints="name"
                 android:inputType="textPersonName"
+                android:textColor="?attr/colorOnSurface"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -119,15 +100,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundColor="?attr/colorSurface"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
+            app:boxStrokeColor="?attr/colorOnSurface"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="clear_text"
             app:errorEnabled="true"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:cursorColor="?attr/colorPrimary"
+            app:hintTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etApellidos"
@@ -137,6 +118,7 @@
                 android:hint="@string/label_apellidos"
                 android:autofillHints="personFamilyName"
                 android:inputType="textPersonName"
+                android:textColor="?attr/colorOnSurface"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -146,15 +128,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundColor="?attr/colorSurface"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
+            app:boxStrokeColor="?attr/colorOnSurface"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="password_toggle"
             app:errorEnabled="true"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:cursorColor="?attr/colorPrimary"
+            app:hintTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etContrasena"
@@ -164,6 +146,7 @@
                 android:hint="@string/label_contrasena_simple"
                 android:autofillHints="password"
                 android:inputType="textPassword"
+                android:textColor="?attr/colorOnSurface"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -173,15 +156,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
+            app:boxBackgroundColor="?attr/colorSurface"
             app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
+            app:boxStrokeColor="?attr/colorOnSurface"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="2dp"
             app:endIconMode="password_toggle"
             app:errorEnabled="true"
-            app:cursorColor="@color/blue"
-            app:hintTextColor="@color/black">
+            app:cursorColor="?attr/colorPrimary"
+            app:hintTextColor="?attr/colorOnSurfaceVariant">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etRepetirContrasena"
@@ -191,6 +174,7 @@
                 android:hint="@string/label_repetir_contrasena"
                 android:autofillHints="password"
                 android:inputType="textPassword"
+                android:textColor="?attr/colorOnSurface"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -205,10 +189,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="10dp"
         android:text="@string/btn_crear_cuenta"
-        android:textSize="20sp"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/blue"
-        app:cornerRadius="20dp"
+        android:textSize="18sp"
         app:layout_constraintTop_toBottomOf="@+id/linearCampos"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

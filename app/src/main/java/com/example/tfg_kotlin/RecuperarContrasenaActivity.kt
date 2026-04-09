@@ -33,7 +33,7 @@ class RecuperarContrasenaActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = getString(R.string.title_reseteo_contrasena)
-        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora)
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_adagora_nav)
 
         configurarPaso1()
     }

@@ -36,15 +36,9 @@
             android:id="@+id/tilCorreo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:boxBackgroundColor="@android:color/white"
-            app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="2dp"
-            app:cursorColor="@color/blue"
+            app:cursorColor="?attr/colorOnSurface"
             app:endIconMode="clear_text"
-            app:errorEnabled="true"
-            app:hintTextColor="@color/black">
+            app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etCorreo"
@@ -53,13 +47,9 @@
                 android:background="@android:color/transparent"
                 android:hint="@string/label_correo"
                 android:autofillHints="emailAddress"
-                android:textColorHint="@color/black"
-                android:textColor="@color/black"
                 android:inputType="textEmailAddress"
                 android:paddingTop="16dp"
                 android:paddingBottom="0dp" />
-
-
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -69,15 +59,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:boxBackgroundColor="@android:color/white"
-            app:boxBackgroundMode="filled"
-            app:boxStrokeColor="@color/black"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="2dp"
-            app:cursorColor="@color/blue"
+            app:cursorColor="?attr/colorOnSurface"
             app:endIconMode="clear_text"
-            app:errorEnabled="true"
-            app:hintTextColor="@color/black">
+            app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etContrasena"
@@ -97,6 +81,7 @@
                 android:layout_gravity="start"
                 android:text="@string/cb_recordar_sesion"
                 android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface"
                 app:buttonTint="@color/checkbox_selector" />
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -138,11 +123,8 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:backgroundTint="@android:color/holo_blue_dark"
             android:text="@string/btn_registrarse"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            app:cornerRadius="20dp" />
+            android:textSize="18sp" />
 
         <!-- Botón iniciar sesión -->
         <com.google.android.material.button.MaterialButton
@@ -151,11 +133,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/green"
             android:text="@string/btn_iniciar_sesion"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            app:cornerRadius="20dp" />
+            android:textSize="18sp" />
 
     </LinearLayout>
 

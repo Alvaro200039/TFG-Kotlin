@@ -20,6 +20,27 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
         return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
     }
 
+    suspend fun getReservationsByEmpresa(empresaId: String): List<Reserva> {
+        val snapshot = db.collection("empresas")
+            .document(empresaId)
+            .collection("reservas")
+            .get()
+            .await()
+        return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
+    }
+
+    suspend fun getReservationsByDay(empresaId: String, fecha: String): List<Reserva> {
+        val snapshot = db.collection("empresas")
+            .document(empresaId)
+            .collection("reservas")
+            .whereGreaterThanOrEqualTo("fechaHora", "$fecha ")
+            .whereLessThanOrEqualTo("fechaHora", "$fecha ~") // ~ es mayor que 23:59 lexicográficamente
+            .get()
+            .await()
+        
+        return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
+    }
+
     suspend fun getReservationsByDateTime(empresaId: String, fechaHora: String): List<Reserva> {
         val snapshot = db.collection("empresas")
             .document(empresaId)
@@ -27,7 +48,6 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
             .whereEqualTo("fechaHora", fechaHora)
             .get()
             .await()
-        
         return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
     }
 
@@ -86,5 +106,62 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
                     .await()
             }
         }
+    }
+
+    suspend fun cascadeUpdateSala(empresaId: String, idSala: String, nuevoNombreSala: String, nuevoNombrePiso: String) {
+        try {
+            val snapshot = db.collection("empresas")
+                .document(empresaId)
+                .collection("reservas")
+                .whereEqualTo("idSala", idSala)
+                .get()
+                .await()
+            for (doc in snapshot) {
+                doc.reference.update(
+                    mapOf(
+                        "nombreSala" to nuevoNombreSala,
+                        "piso" to nuevoNombrePiso
+                    )
+                ).await()
+            }
+        } catch (_: Exception) {}
+    }
+
+    suspend fun getReservationsByFloor(empresaId: String, pisoNombre: String): List<Reserva> {
+        val snapshot = db.collection("empresas")
+            .document(empresaId)
+            .collection("reservas")
+            .whereEqualTo("piso", pisoNombre)
+            .get()
+            .await()
+        return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
+    }
+
+    suspend fun markReservationsAsOrphanedByFloor(empresaId: String, pisoNombre: String) {
+        try {
+            val snapshot = db.collection("empresas")
+                .document(empresaId)
+                .collection("reservas")
+                .whereEqualTo("piso", pisoNombre)
+                .get()
+                .await()
+            for (doc in snapshot) {
+                doc.reference.update("lugarEliminado", true).await()
+            }
+        } catch (_: Exception) {}
+    }
+
+    suspend fun markReservationsAsOrphanedBySala(empresaId: String, idSala: String) {
+        try {
+            val snapshot = db.collection("empresas")
+                .document(empresaId)
+                .collection("reservas")
+                .whereEqualTo("idSala", idSala)
+                .get()
+                .await()
+            for (doc in snapshot) {
+                doc.reference.update("lugarEliminado", true).await()
+            }
+        } catch (_: Exception) {}
     }
 }

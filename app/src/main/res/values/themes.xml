@@ -1,12 +1,91 @@
-<resources>
-    <!-- Base application theme. -->
-    <style name="Base.Theme.TFGKotlin_day" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:windowBackground">@drawable/wallpaper</item>
-        <!-- Fuerza colores claros -->
-        <item name="colorOnBackground">@android:color/black</item>
-        <item name="android:textColorPrimary">@android:color/black</item>
-        <item name="android:textColorSecondary">@color/black</item>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. Unified Aura Theme -->
+    <style name="Theme.TFGKotlin" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Background and Status Bar -->
+        <item name="android:windowBackground">@drawable/aura_app_background</item>
+        <item name="android:statusBarColor">@color/aura_surface</item>
+        <item name="android:windowLightStatusBar">@bool/is_light_mode</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        
+        <!-- Google M3 Palette - Semantic Mapping -->
+        <item name="colorPrimary">@color/aura_primary</item>
+        <item name="colorOnPrimary">@color/aura_on_primary</item>
+        <item name="colorPrimaryContainer">@color/aura_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/aura_on_primary_container</item>
+        
+        <item name="colorSecondary">@color/aura_secondary</item>
+        <item name="colorOnSecondary">@color/aura_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/aura_surface_variant</item>
+        <item name="colorOnSecondaryContainer">@color/aura_on_surface</item>
+        
+        <item name="colorTertiary">@color/aura_primary</item>
+        <item name="colorOnTertiary">@color/aura_on_primary</item>
+        
+        <item name="colorSurface">@color/aura_surface</item>
+        <item name="colorOnSurface">@color/aura_on_surface</item>
+        <item name="colorSurfaceVariant">@color/aura_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/aura_on_surface_variant</item>
+        <item name="colorOutline">@color/aura_outline</item>
+        <item name="colorError">@color/aura_error</item>
+
+        <!-- Dynamic Components -->
+        <item name="materialButtonStyle">@style/Aura.Button</item>
+        <item name="textInputStyle">@style/Aura.TextInputLayout</item>
+        <item name="materialAlertDialogTheme">@style/CustomMaterialAlertDialog</item>
+        <item name="dialogCornerRadius">28dp</item>
     </style>
 
-    <style name="Theme.TFGKotlin" parent="Base.Theme.TFGKotlin_day" />
+    <!-- Diálogos Uniformes -->
+    <style name="CustomMaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/aura_surface</item>
+        <item name="colorOnSurface">@color/aura_on_surface</item>
+        <item name="shapeAppearanceLargeComponent">@style/Aura.Shape.Pill</item>
+    </style>
+
+    <!-- Botones Aura M3 -->
+    <style name="Aura.Button" parent="Widget.Material3.Button">
+        <item name="shapeAppearance">@style/Aura.Shape.Pill</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="Aura.Button.Secondary" parent="Widget.Material3.Button.TonalButton">
+        <item name="shapeAppearance">@style/Aura.Shape.Pill</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Aura.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="shapeAppearance">@style/Aura.Shape.Pill</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="strokeColor">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+
+    <!-- Campos de Texto Aura M3 -->
+    <style name="Aura.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="shapeAppearance">@style/Aura.Shape.Pill</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeColor">?attr/colorOutline</item>
+        <item name="boxBackgroundColor">?attr/colorSurface</item>
+        <item name="hintTextColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textColorHint">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!-- Formas Aura M3 -->
+    <style name="Aura.Shape.Pill" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <style name="Aura.Shape.TopRounded" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerSizeTopLeft">28dp</item>
+        <item name="cornerSizeTopRight">28dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
 </resources>

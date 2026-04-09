@@ -16,163 +16,343 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/toolbar_title"
-            android:layout_width="120dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
-            android:textSize="20sp"
-            android:layout_gravity="start"
-            />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <!-- Desplegable estilo Material 3 con bordes muy redondeados -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="130dp"
+                app:hintEnabled="false"
+                app:boxCornerRadiusTopStart="24dp"
+                app:boxCornerRadiusTopEnd="24dp"
+                app:boxCornerRadiusBottomStart="24dp"
+                app:boxCornerRadiusBottomEnd="24dp"
+                app:boxStrokeColor="?attr/colorOutline">
+
+                <AutoCompleteTextView
+                    android:id="@+id/spinner_pisos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:hint="@string/desc_label_pisos"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:textSize="13sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:popupBackground="@drawable/bg_rounded_dropdown" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <EditText
+                android:id="@+id/et_nombre_piso"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:hint="@string/hint_nombre_piso"
+                android:imeOptions="actionDone"
+                android:inputType="textCapSentences"
+                android:autofillHints="none"
+                android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface" />
+
+            <ImageButton
+                android:id="@+id/btn_eliminar_piso_actual"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_eliminar"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="?attr/colorError"
+                android:contentDescription="@string/opt_eliminar" />
+        </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/container"
+    <com.example.tfg_kotlin.ui.view.PlanoEditorView
+        android:id="@+id/plano_editor"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="?attr/colorSurface"
         app:layout_constraintTop_toBottomOf="@id/my_toolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/barra_botones">
+        app:layout_constraintBottom_toTopOf="@id/barra_botones" />
 
-        <ImageView
-            android:id="@+id/image_fondo"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="fitXY"
-            android:contentDescription="@string/tab_plano"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Panel de Herramientas (Integrado para efecto 'detrás') -->
+    <include
+        android:id="@+id/panel_herramientas"
+        layout="@layout/dropdown_herramientas"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/barra_botones"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:elevation="4dp" />
 
     <LinearLayout
         android:id="@+id/barra_botones"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:gravity="center"
+        android:paddingVertical="8dp"
+        android:gravity="bottom"
         android:baselineAligned="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:background="@android:color/transparent">
+        android:background="?attr/colorSurface"
+        android:elevation="12dp">
 
+        <!-- Seleccionar (Vertical) -->
         <LinearLayout
-            android:id="@+id/btn_horas"
+            android:id="@+id/ll_select"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
             android:clickable="true"
             android:focusable="true"
-            android:background="@android:color/transparent">
-
-            <ImageView
-                android:id="@+id/icono_btn_horas"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_horario"
-                android:contentDescription="@string/desc_icono_horas" />
-
-            <TextView
-                android:id="@+id/texto_btn_horas"
+            android:background="?attr/selectableItemBackgroundBorderless">
+            
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_select_toggle"
+                style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tab_franja_horaria"
-                android:textColor="@android:color/black"
-                android:textSize="12sp" />
+                app:icon="@drawable/ic_cursor"
+                android:checkable="true"
+                android:contentDescription="@string/desc_btn_select"
+                app:iconTint="?attr/colorOnSurface" />
+            <TextView
+                android:id="@+id/tv_select"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_seleccionar"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
-
+        <!-- Herramientas (Vertical) -->
         <LinearLayout
-            android:id="@+id/btn_plano"
+            android:id="@+id/ll_tools"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
             android:clickable="true"
             android:focusable="true"
-            android:background="@android:color/transparent">
-
-            <ImageView
-                android:id="@+id/icono_btn_plano"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_plano"
-                android:contentDescription="@string/desc_icono_plano" />
-
-            <TextView
-                android:id="@+id/texto_btn_plano"
+            android:background="?attr/selectableItemBackgroundBorderless">
+            
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_tools"
+                style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tab_plano"
-                android:textColor="@android:color/black"
-                android:textSize="12sp" />
+                app:icon="@drawable/ic_add"
+                android:checkable="true"
+                android:contentDescription="@string/desc_btn_tools"
+                app:iconTint="?attr/colorOnSurface" />
+            <TextView
+                android:id="@+id/tv_tools"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_herramientas"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
+        <!-- Borrar (Vertical) -->
         <LinearLayout
-            android:id="@+id/btn_pisos"
+            android:id="@+id/ll_borrar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
             android:clickable="true"
             android:focusable="true"
-            android:background="@android:color/transparent">
-
-            <ImageView
-                android:id="@+id/icono_btn_pisos"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_eliminar"
-                android:contentDescription="@string/desc_icono_pisos" />
-
-            <TextView
-                android:id="@+id/texto_btn_pisos"
+            android:background="?attr/selectableItemBackgroundBorderless">
+            
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_borrar_toggle"
+                style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_eliminar_pisos"
-                android:textColor="@android:color/black"
-                android:textSize="12sp" />
+                app:icon="@drawable/ic_erase_wall"
+                android:checkable="true"
+                android:contentDescription="@string/desc_btn_delete"
+                app:iconTint="?attr/colorOnSurface" />
+            <TextView
+                android:id="@+id/tv_borrar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_borrar"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
-
+        <!-- Deshacer (Vertical) -->
         <LinearLayout
-            android:id="@+id/btn_sala"
+            android:id="@+id/ll_undo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
             android:clickable="true"
             android:focusable="true"
-            android:background="@android:color/transparent">
-
-            <ImageView
-                android:id="@+id/icono_btn_sala"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_add"
-                android:contentDescription="@string/desc_icono_sala" />
-
-            <TextView
-                android:id="@+id/texto_btn_sala"
+            android:background="?attr/selectableItemBackgroundBorderless">
+            
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_undo_new"
+                style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_anadir_sala"
-                android:textColor="@android:color/black"
-                android:textSize="12sp" />
+                app:icon="@drawable/ic_undo"
+                android:contentDescription="@string/desc_btn_undo"
+                app:iconTint="?attr/colorOnSurface" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_undo"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
+
+        <!-- Guardar (Vertical) -->
+        <LinearLayout
+            android:id="@+id/ll_save"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_guardar_new"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/ic_save_aura"
+                android:contentDescription="@string/desc_btn_save"
+                app:iconTint="?attr/colorOnSurface" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_guardar"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurface" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Botón flotante para editar esquinas (Vértices) -->
+    <LinearLayout
+        android:id="@+id/fab_corner_options"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="@drawable/bg_rounded_corner_btn"
+        android:elevation="6dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_edit"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/label_esquinas" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_esquinas"
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Botón flotante para editar elemento seleccionado (Vertical) -->
+    <LinearLayout
+        android:id="@+id/fab_element_options"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="@drawable/bg_rounded_edit_btn"
+        android:elevation="6dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_edit"
+            app:tint="@android:color/white"
+            android:contentDescription="@string/label_editar" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_editar"
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Botones de Acción para Edición de Esquinas (Reset y Guardar) -->
+    <LinearLayout
+        android:id="@+id/ll_corner_actions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="4dp"
+        android:elevation="10dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_reset_corners"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:backgroundTint="?attr/colorError"
+            app:icon="@drawable/ic_eliminar"
+            app:iconTint="@android:color/white"
+            android:contentDescription="@string/desc_reset_corners" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_corners"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:text="@string/btn_listo"
+            app:icon="@drawable/ic_save"
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

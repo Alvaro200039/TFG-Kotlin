@@ -34,21 +34,23 @@ class MenuEmpleadoActivity : BaseMenuActivity() {
         setupObservers()
         setupListeners()
         
-        setupBaseObservers(binding.textProximaReserva)
+        setupBaseObservers(binding.textProximaSala, binding.cardProximaSala, binding.textProximaPuesto, binding.cardProximaPuesto)
     }
 
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
+            setDisplayHomeAsUpEnabled(false) // Redundant with logout button
             title = ""
-            setHomeAsUpIndicator(R.drawable.ic_adagora)
         }
     }
 
     private fun setupObservers() {
-        menuViewModel.usuario.observe(this) {
-            // Update UI if needed based on user data
+        menuViewModel.usuario.observe(this) { user ->
+            user?.let {
+                binding.textTitulo.text = getString(R.string.label_user_name_format, it.nombre, it.apellidos)
+                binding.textRol.text = if (it.esJefe) getString(R.string.label_rol_admin) else getString(R.string.label_rol_empleado)
+            }
         }
 
         menuViewModel.error.observe(this) { msg ->
@@ -63,6 +65,10 @@ class MenuEmpleadoActivity : BaseMenuActivity() {
 
         binding.btnVerReservas.setOnClickListener {
             mostrarDialogoReservas()
+        }
+        
+        binding.btnFranjas.setOnClickListener {
+            cargarFranjas()
         }
 
         binding.btnLogout.setOnClickListener {

@@ -15,6 +15,10 @@ class Principal : AppCompatActivity() {
 
     // Actividad principal, redirige con los botones a las distintas actividades
     override fun onCreate(savedInstanceState: Bundle?) {
+        val prefs = getSharedPreferences("ajustes_usuario", MODE_PRIVATE)
+        val savedTheme = prefs.getInt("tema_app", androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(savedTheme)
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_principal)
 

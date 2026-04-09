@@ -42,7 +42,7 @@ class LoginActivity : AppCompatActivity() {
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             title = getString(R.string.title_inicio_sesion)
-            setHomeAsUpIndicator(R.drawable.ic_adagora)
+            setHomeAsUpIndicator(R.drawable.ic_adagora_nav)
         }
     }
 
@@ -119,10 +119,8 @@ class LoginActivity : AppCompatActivity() {
 
     private fun handleLoginSuccess(usuario: Usuario) {
         val intent = if (usuario.esJefe) {
-            Toast.makeText(this, getString(R.string.msg_bienvenida_jefe, usuario.nombre), Toast.LENGTH_SHORT).show()
             Intent(this, MenuCreadorActivity::class.java)
         } else {
-            Toast.makeText(this, getString(R.string.msg_bienvenida_empleado, usuario.nombre), Toast.LENGTH_SHORT).show()
             Intent(this, MenuEmpleadoActivity::class.java)
         }
         startActivity(intent)

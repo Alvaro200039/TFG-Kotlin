@@ -38,7 +38,7 @@ class RegistroEmpleadoActivity : AppCompatActivity() {
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             title = getString(R.string.title_registro_empleados)
-            setHomeAsUpIndicator(R.drawable.ic_adagora)
+            setHomeAsUpIndicator(R.drawable.ic_adagora_nav)
         }
     }
 

@@ -14,6 +14,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 class EmpleadosViewModel : ViewModel() {
+    companion object {
+        const val SLOT_PUESTO = "Día completo"
+    }
 
     private val firestore = FirebaseFirestore.getInstance()
     private val firestoreRepo = FirestoreRepository(firestore)
@@ -46,13 +49,20 @@ class EmpleadosViewModel : ViewModel() {
     private val _reservaStatus = MutableLiveData<Boolean>()
     val reservaStatus: LiveData<Boolean> = _reservaStatus
 
+    private val _empresa = MutableLiveData<com.example.tfg_kotlin.data.model.Empresa?>()
+    val empresa: LiveData<com.example.tfg_kotlin.data.model.Empresa?> = _empresa
+
     fun loadPisos() {
         val empresaId = Sesion.datos?.empresa?.nombre ?: return
         viewModelScope.launch {
             _loading.value = true
             try {
                 _pisos.value = firestoreRepo.getPisosByEmpresa(empresaId)
-                _franjas.value = firestoreRepo.getFranjasByEmpresa(empresaId).map { it.hora }.sorted()
+                val emp = firestoreRepo.getEmpresaByNombre(empresaId)
+                _empresa.value = emp
+                
+                val franjas = firestoreRepo.getFranjasByEmpresa(empresaId).map { it.hora }.sorted()
+                _franjas.value = listOf(SLOT_PUESTO) + franjas
             } catch (_: Exception) {
                 _error.value = "Error al cargar datos"
             } finally {
@@ -75,6 +85,9 @@ class EmpleadosViewModel : ViewModel() {
 
     fun updateFecha(fecha: String) {
         _fechaSeleccionada.value = fecha
+        if (_horaSeleccionada.value.isNullOrEmpty()) {
+            _horaSeleccionada.value = SLOT_PUESTO
+        }
         checkAvailability()
     }
 
@@ -85,17 +98,16 @@ class EmpleadosViewModel : ViewModel() {
 
     fun checkAvailability() {
         val fecha = _fechaSeleccionada.value ?: ""
-        val hora = _horaSeleccionada.value ?: ""
-        if (fecha.isEmpty() || hora.isEmpty()) return
+        if (fecha.isEmpty()) return
 
         val empresaId = Sesion.datos?.empresa?.nombre ?: return
-        val fechaHora = "$fecha $hora"
-
+        
         viewModelScope.launch {
             try {
-                _reservas.value = reservationRepo.getReservationsByDateTime(empresaId, fechaHora)
+                // Obtenemos todas las del día para poder distinguir entre Puestos y Salas en la Activity
+                _reservas.value = reservationRepo.getReservationsByDay(empresaId, fecha)
             } catch (_: Exception) {
-                // Silently fail availability check to not annoy user
+                // Silently fail
             }
         }
     }
@@ -121,9 +133,10 @@ class EmpleadosViewModel : ViewModel() {
                     nombreSala = sala.nombre,
                     idSala = sala.id ?: "",
                     fechaHora = fechaHora,
-                    nombreUsuario = usuario.nombre,
+                    nombreUsuario = "${usuario.nombre} ${usuario.apellidos}",
                     idUsuario = usuario.uid,
-                    piso = pisoNombre
+                    piso = pisoNombre,
+                    tipo = sala.tipo
                 )
 
                 val success = reservationRepo.addReservation(empresaId, reserva)
@@ -147,6 +160,7 @@ class EmpleadosViewModel : ViewModel() {
             try {
                 val success = reservationRepo.cancelReservation(empresaId, reservaId)
                 if (success) {
+                    _reservaStatus.value = true
                     checkAvailability()
                 } else {
                     _error.value = "No se pudo cancelar la reserva"
@@ -155,5 +169,9 @@ class EmpleadosViewModel : ViewModel() {
                 _error.value = "Error al cancelar: ${e.message}"
             }
         }
+    }
+
+    fun clearReservaStatus() {
+        _reservaStatus.value = false
     }
 }

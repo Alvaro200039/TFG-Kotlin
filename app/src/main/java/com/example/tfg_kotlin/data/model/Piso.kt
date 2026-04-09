@@ -4,5 +4,6 @@ data class Piso(
     var id: String? = null,
     var nombre: String = "",
     var empresaCif: String = "",
-    var imagenUrl: String? = null
+    var imagenUrl: String? = null,
+    var muros: MutableList<Muro> = mutableListOf()
 )
