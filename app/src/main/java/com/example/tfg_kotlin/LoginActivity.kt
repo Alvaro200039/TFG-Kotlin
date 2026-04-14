@@ -118,6 +118,14 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun handleLoginSuccess(usuario: Usuario) {
+        // Guardar sesión para el widget
+        val empresaNombre = com.example.tfg_kotlin.data.model.Sesion.datos?.empresa?.nombre ?: ""
+        getSharedPreferences("widget_prefs", MODE_PRIVATE).edit {
+            putString("user_id", usuario.uid)
+            putString("empresa_id", empresaNombre)
+            putString("user_name", "${usuario.nombre} ${usuario.apellidos}")
+        }
+
         val intent = if (usuario.esJefe) {
             Intent(this, MenuCreadorActivity::class.java)
         } else {
