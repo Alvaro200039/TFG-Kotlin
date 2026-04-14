@@ -183,12 +183,14 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                 val suffix = getString(R.string.label_inexistente)
                 textSala?.text = if (reserva.lugarEliminado) "$originalText $suffix" else originalText
                 
-                if (reserva.lugarEliminado) {
-                    textSala?.paintFlags = textSala!!.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                    textSala?.setTextColor(Color.RED)
-                } else {
-                    textSala?.paintFlags = textSala!!.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                    textSala?.setTextColor(ContextCompat.getColor(this, R.color.aura_on_surface))
+                textSala?.apply {
+                    if (reserva.lugarEliminado) {
+                        paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                        setTextColor(Color.RED)
+                    } else {
+                        paintFlags = paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                        setTextColor(ContextCompat.getColor(this@BaseMenuActivity, R.color.aura_on_surface))
+                    }
                 }
 
                 cardSala?.setOnClickListener {
@@ -218,12 +220,14 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                 val suffix = getString(R.string.label_inexistente)
                 textPuesto?.text = if (reserva.lugarEliminado) "$originalText $suffix" else originalText
 
-                if (reserva.lugarEliminado) {
-                    textPuesto?.paintFlags = textPuesto!!.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                    textPuesto?.setTextColor(Color.RED)
-                } else {
-                    textPuesto?.paintFlags = textPuesto!!.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                    textPuesto?.setTextColor(ContextCompat.getColor(this, R.color.aura_on_surface))
+                textPuesto?.apply {
+                    if (reserva.lugarEliminado) {
+                        paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                        setTextColor(Color.RED)
+                    } else {
+                        paintFlags = paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                        setTextColor(ContextCompat.getColor(this@BaseMenuActivity, R.color.aura_on_surface))
+                    }
                 }
 
                 cardPuesto?.setOnClickListener {
@@ -265,7 +269,7 @@ abstract class BaseMenuActivity : AppCompatActivity() {
         val startStr = times[0].trim()
         val endStr = times[1].trim()
 
-        val intent = android.content.Intent(this, EmpleadosActivity::class.java).apply {
+        val intent = Intent(this, EmpleadosActivity::class.java).apply {
             putExtra(EXTRA_EDIT_RESERVA_ID, reserva.id)
             putExtra(EXTRA_EDIT_DATE, fecha)
             putExtra(EXTRA_EDIT_ROOM_ID, reserva.idSala)

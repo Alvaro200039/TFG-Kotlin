@@ -174,7 +174,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Parámetros de Reserva"
+                        android:text="@string/title_parametros_reserva"
                         android:textAppearance="?attr/textAppearanceTitleMedium"
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
@@ -183,7 +183,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Precisión del Selector (Saltos)"
+                        android:text="@string/label_precision_selector"
                         android:textAppearance="?attr/textAppearanceLabelLarge"
                         android:layout_marginBottom="8dp"/>
                     
@@ -209,7 +209,7 @@
                             android:textColor="@color/aura_toggle_text_selector"
                             android:checkable="true"
                             android:minHeight="48dp"
-                            android:text="15 min" />
+                            android:text="@string/label_15_min" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn30m"
@@ -225,7 +225,7 @@
                             android:textColor="@color/aura_toggle_text_selector"
                             android:checkable="true"
                             android:minHeight="48dp"
-                            android:text="30 min" />
+                            android:text="@string/label_30_min" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn60m"
@@ -241,14 +241,14 @@
                             android:textColor="@color/aura_toggle_text_selector"
                             android:checkable="true"
                             android:minHeight="48dp"
-                            android:text="1 hora" />
+                            android:text="@string/label_1_hora_np" />
                     </LinearLayout>
 
                     <!-- Tiempo Máximo de Reserva -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Duración Máxima por Reserva"
+                        android:text="@string/label_max_duration_params"
                         android:textAppearance="?attr/textAppearanceLabelLarge"
                         android:layout_marginBottom="8dp"/>
                     
@@ -271,7 +271,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:gravity="center"
-                            android:text="2 horas"
+                            android:text="@string/label_2_horas_np"
                             android:textAppearance="?attr/textAppearanceTitleMedium"
                             android:textStyle="bold" />
 

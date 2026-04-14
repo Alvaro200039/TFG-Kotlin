@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
@@ -19,7 +19,7 @@
     
     <color name="aura_outline">#D1D1D6</color>
     <color name="aura_error">#F0705F</color>
-    <color name="aura_success">#6DB04A</color>
+    <color name="aura_success" tools:ignore="UnusedResources">#6DB04A</color>
 
     
     <color name="ic_launcher_background">#3DDC84</color>

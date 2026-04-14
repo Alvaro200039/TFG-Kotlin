@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">Ad Agora</string>
     <string name="olvidaste_contra">¿Has olvidado tu contraseña?</string>
 
@@ -93,12 +93,16 @@
 
     <string name="btn_reservar_mayuscula">RESERVAR</string>
     <string name="btn_cancelar_mi_reserva">CANCELAR MI RESERVA</string>
-    <string name="label_ocupada_por">Ocupada por: %1$s</string>
+    <string name="label_ocupada_por" tools:keep="@string/label_ocupada_por">Ocupada por: %1$s</string>
     <string name="label_sala_ocupada">Sala ocupada</string>
     <string name="label_puesto_ocupado">Puesto ocupado</string>
     <string name="msg_operacion_exito">Operación realizada con éxito</string>
-    <string name="msg_no_franjas_disponibles">No hay franjas horarias disponibles</string>
-    <string name="title_selecciona_franja_para">Selecciona franja para el %1$s</string>
+    <string name="msg_puesto_ocupado_por">%1$s\n%2$s</string>
+    <string name="msg_sala_ocupada_por">%1$s\n%2$s</string>
+    <string name="msg_reunion_usuario_tiempo">%1$s (%2$s - %3$s)</string>
+    <string name="msg_solapamientos_lista">%1$s\n%2$s</string>
+    <string name="msg_no_franjas_disponibles" tools:keep="@string/msg_no_franjas_disponibles">No hay franjas horarias disponibles</string>
+    <string name="title_selecciona_franja_para" tools:keep="@string/title_selecciona_franja_para">Selecciona franja para el %1$s</string>
     <string name="msg_selecciona_fecha_primero">Selecciona una fecha primero</string>
     <string name="btn_seleccionar_fecha">Seleccionar Fecha</string>
     <string name="label_fecha_con_valor">Fecha: %1$s</string>
@@ -108,8 +112,7 @@
     <string name="label_apertura">Apertura</string>
     <string name="label_cierre">Cierre</string>
     <string name="section_weekly_days">Días de Apertura (Semanal)</string>
-    <string name="section_time_slots">Franjas Horarias Disponibles</string>
-    <string name="btn_add">Añadir</string>
+    <string name="section_time_slots" tools:keep="@string/section_time_slots">Franjas Horarias Disponibles</string>
     <string name="section_holidays">Días Festivos / Bloqueados</string>
 
     <!-- Gestion Horarios -->
@@ -179,13 +182,13 @@
     <string name="label_festivo">Festivo</string>
     <string name="label_dias_bloqueados">Días bloqueados:</string>
     <string name="title_selecciona_fecha_dialog">Selecciona una fecha</string>
-    <string name="title_eliminar_franja">Eliminar franja</string>
-    <string name="msg_confirmar_eliminar_franja">¿Deseas eliminar la franja %1$s?</string>
-    <string name="label_x_horas">%1$d horas</string>
+    <string name="title_eliminar_franja" tools:keep="@string/title_eliminar_franja">Eliminar franja</string>
+    <string name="msg_confirmar_eliminar_franja" tools:keep="@string/msg_confirmar_eliminar_franja">¿Deseas eliminar la franja %1$s?</string>
+    <string name="label_limite_formato" tools:keep="@string/label_limite_formato">Límite: %1$s</string>
 
     <!-- Principal -->
     <!-- Programmatic Strings (BaseMenuActivity) -->
-    <string name="msg_notif_actualizadas">Notificaciones actualizadas</string>
+    <string name="msg_notif_actualizadas" tools:keep="@string/msg_notif_actualizadas">Notificaciones actualizadas</string>
     <string name="label_inexistente">(Inexistente)</string>
     <string name="label_salas_reunion">Salas de Reunión</string>
     <string name="label_puestos_trabajo">Puestos de Trabajo</string>
@@ -209,17 +212,17 @@
     <string name="theme_system">Igual al sistema</string>
     <string name="theme_light">Modo Claro</string>
     <string name="theme_dark">Modo Oscuro</string>
-    <string name="label_hora_inicio">Inicio: %1$s</string>
-    <string name="label_hora_fin">Fin: %1$s</string>
-    <string name="title_rango_horario">Rango Horario</string>
+    <string name="label_hora_inicio" tools:keep="@string/label_hora_inicio">Inicio: %1$s</string>
+    <string name="label_hora_fin" tools:keep="@string/label_hora_fin">Fin: %1$s</string>
+    <string name="title_rango_horario" tools:keep="@string/title_rango_horario">Rango Horario</string>
     <string name="msg_solapamientos_detectados">Solapamientos detectados:</string>
 
     <!-- Optimización: Strings migrados desde código Kotlin -->
-    <string name="msg_limite_reserva_horas">Límite de reserva: %1$dh</string>
+    <string name="msg_limite_reserva_horas" tools:keep="@string/msg_limite_reserva_horas">Límite de reserva: %1$dh</string>
     <string name="msg_ya_tienes_sala_reservada">Ya tienes una sala reservada en este horario, cancela la otra reserva o elige otro horario</string>
     <string name="msg_cargando_horario">Cargando horario de oficina…</string>
     <string name="msg_horario_no_disponible">Horario no disponible</string>
-    <string name="msg_no_quedan_huecos">No quedan huecos disponibles para hoy.</string>
+    <string name="msg_no_quedan_huecos" tools:keep="@string/msg_no_quedan_huecos">No quedan huecos disponibles para hoy.</string>
     <string name="msg_selecciona_horario_ver">Selecciona un horario para ver disponibilidad</string>
     <string name="err_fuera_horario_oficina">Fuera del horario de oficina (%1$s - %2$s)</string>
     <string name="err_hora_inicio_pasada">La hora de inicio ya ha pasado</string>
@@ -233,7 +236,7 @@
     <string name="msg_limite_duracion_excedido">Límite de duración excedido</string>
     <string name="msg_configuracion_guardada">Configuración guardada</string>
     <string name="msg_amenidades_actualizadas">Amenidades actualizadas</string>
-    <string name="msg_distribucion_reseteada">Distribución reseteada</string>
+    <string name="msg_distribucion_reseteada" tools:keep="@string/msg_distribucion_reseteada">Distribución reseteada</string>
     <string name="msg_creacion_reseteada">Creación reseteada</string>
     <string name="label_borrar_piso">Borrar Piso</string>
     <string name="title_aviso_importante">¡Aviso Importante!</string>
@@ -243,21 +246,35 @@
     <string name="msg_eliminar_piso_reservas">El piso \'%1$s\' tiene reservas activas.\n\nSi lo eliminas, los usuarios que reservaron verán sus reservas como \'Sitio inexistente\' pero se mantendrá el registro de que tenían una reserva.\n\n¿Deseas eliminar el piso de todos modos?</string>
     <string name="btn_si_eliminar">Sí, eliminar</string>
     <string name="label_piso_numero">Piso nº %1$d</string>
-    <string name="err_sesion_no_valida">Sesión no válida</string>
-    <string name="err_conectar_servidor">Error al conectar con el servidor</string>
-    <string name="err_cargar_salas">Error al cargar salas</string>
-    <string name="err_no_pudo_reservar">No se pudo realizar la reserva</string>
-    <string name="err_error_reservar">Ha ocurrido un error al reservar. Inténtalo de nuevo.</string>
-    <string name="err_no_pudo_cancelar">No se pudo cancelar la reserva</string>
-    <string name="err_error_cancelar">Ha ocurrido un error al cancelar. Inténtalo de nuevo.</string>
-    <string name="err_error_generico">Ha ocurrido un error. Inténtalo de nuevo.</string>
-    <string name="err_usuario_no_encontrado">Usuario no encontrado</string>
-    <string name="err_error_cargar_usuario">Error al cargar datos de usuario</string>
-    <string name="err_eliminar_piso">Error al eliminar piso</string>
-    <string name="err_error_guardar">Error al guardar</string>
-    <string name="err_error_guardar_config">Error al guardar configuración</string>
-    <string name="msg_limite_tiempo_superado">El límite de tiempo para esta sala ha sido superado. Reduce el tiempo de la reunión o modifica la reserva actual.</string>
+    <string name="err_conectar_servidor" tools:keep="@string/err_conectar_servidor">Error al conectar con el servidor</string>
+    <string name="err_cargar_salas" tools:keep="@string/err_cargar_salas">Error al cargar salas</string>
+    <string name="err_no_pudo_reservar" tools:keep="@string/err_no_pudo_reservar">No se pudo realizar la reserva</string>
+    <string name="err_error_reservar" tools:keep="@string/err_error_reservar">Ha ocurrido un error al reservar. Inténtalo de nuevo.</string>
+    <string name="err_no_pudo_cancelar" tools:keep="@string/err_no_pudo_cancelar">No se pudo cancelar la reserva</string>
+    <string name="err_error_cancelar" tools:keep="@string/err_error_cancelar">Ha ocurrido un error al cancelar. Inténtalo de nuevo.</string>
+    <string name="err_error_generico" tools:keep="@string/err_error_generico">Ha ocurrido un error. Inténtalo de nuevo.</string>
+    <string name="err_usuario_no_encontrado" tools:keep="@string/err_usuario_no_encontrado">Usuario no encontrado</string>
+    <string name="err_error_cargar_usuario" tools:keep="@string/err_error_cargar_usuario">Error al cargar datos de usuario</string>
+    <string name="err_eliminar_piso" tools:keep="@string/err_eliminar_piso">Error al eliminar piso</string>
+    <string name="err_error_guardar" tools:keep="@string/err_error_guardar">Error al guardar</string>
+    <string name="err_error_guardar_config" tools:keep="@string/err_error_guardar_config">Error al guardar configuración</string>
     <string name="msg_pulsa_recinto_cerrado">Pulsa dentro de un recinto cerrado por muros</string>
     <string name="msg_no_sala_en_area_puestos">No se puede crear una sala en un área con puestos de trabajo</string>
     <string name="err_gestion_horarios">Error al abrir gestión de horarios</string>
+    <string name="title_parametros_reserva">Parámetros de Reserva</string>
+    <string name="label_15_min">15 min</string>
+    <plurals name="label_plural_horas">
+        <item quantity="one">%1$d hora</item>
+        <item quantity="other">%1$d horas</item>
+    </plurals>
+    <string name="title_configurar_horario">Configurar Horario</string>
+    <string name="err_excede_limite_gen">Excede el límite permitido</string>
+    <string name="label_30_min">30 min</string>
+    <string name="label_1_hora_np">1 hora</string>
+    <string name="label_2_horas_np">2 horas</string>
+    <string name="label_precision_selector">Precisión del Selector (Saltos)</string>
+    <string name="label_max_duration_params">Duración Máxima por Reserva</string>
+    <string name="hint_h_inicio">08</string>
+    <string name="hint_m_inicio">00</string>
+    <string name="hint_h_fin">10</string>
 </resources>

@@ -18,7 +18,7 @@
         app:layout_constraintBottom_toTopOf="@id/barra_botones" />
 
     <!-- Nueva Tarjeta Flotante de Hora Superior (Inicialmente oculta para animar) -->
-    <!-- Se coloca antes de la Toolbar para que ésta quede encima en el eje Z -->
+    <!-- Se coloca antes de la Toolbar para que esta quede encima en el eje Z -->
 
 
     <androidx.appcompat.widget.Toolbar
@@ -139,32 +139,29 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <ImageView
-                            android:layout_width="14dp"
-                            android:layout_height="14dp"
-                            android:src="@drawable/ic_clock_aura"
-                            app:tint="?attr/colorPrimary"
-                            android:layout_marginEnd="8dp" />
-
-                        <TextView
-                            android:id="@+id/tv_range_label"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="09:00 AM - 05:00 PM"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            android:textColor="?attr/colorOnSurface" />
+                    <TextView
+                        android:id="@+id/tv_range_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:drawablePadding="8dp"
+                        android:text="@string/msg_selecciona_horario_ver"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface"
+                        app:drawableStartCompat="@drawable/ic_clock_aura"
+                        app:drawableTint="?attr/colorPrimary" />
                     </LinearLayout>
 
                     <TextView
                         android:id="@+id/tv_limit_warning"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Límite: 2 horas"
-                        android:textSize="10sp"
+                        android:textSize="12sp"
                         android:textColor="@color/aura_error"
                         android:visibility="gone"
-                        android:layout_marginTop="1dp" />
+                        android:layout_marginTop="1dp"
+                        tools:text="Límite: 2 horas" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

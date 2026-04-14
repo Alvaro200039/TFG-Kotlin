@@ -21,6 +21,8 @@ import androidx.core.view.WindowInsetsCompat
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.view.isVisible
+import androidx.core.view.isGone
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -35,6 +37,10 @@ import com.example.tfg_kotlin.util.DateFormats
 import com.google.android.material.snackbar.Snackbar
 import androidx.activity.addCallback
 import java.util.*
+import androidx.core.graphics.toColorInt
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.roundToLong
 
 
 class EmpleadosActivity : AppCompatActivity() {
@@ -155,7 +161,7 @@ class EmpleadosActivity : AppCompatActivity() {
                 // Calcular próximo slot disponible basado en hora actual
                 val now = Calendar.getInstance()
                 val currentTime = now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE)/60f
-                val nextSlot = (Math.ceil(currentTime / currentStepSize.toDouble()) * currentStepSize).toFloat()
+                val nextSlot = (ceil(currentTime / currentStepSize.toDouble()) * currentStepSize).toFloat()
                 
                 // Evitar crash interno del RangeSlider al cambiar valores y límites:
                 // 1. Ampliar límites temporales al máximo.
@@ -188,10 +194,10 @@ class EmpleadosActivity : AppCompatActivity() {
                     val hoyStr = DateFormats.dayFormat.format(Date())
                     
                     val initialStart = if (dateToUse == hoyStr) maxOf(start, nextSlot) else start
-                    val initialEnd = minOf(initialStart + currentMaxDuration, end)
-                    
+                    val initialEnd = kotlin.math.min(initialStart + currentMaxDuration, end)
+                
                     if (initialStart >= end) {
-                        binding.rangeSliderHoras.values = listOf(start, minOf(start + currentMaxDuration, end))
+                        binding.rangeSliderHoras.values = listOf(start, kotlin.math.min(start + currentMaxDuration, end))
                     } else {
                         binding.rangeSliderHoras.values = listOf(initialStart, initialEnd)
                         viewModel.updateRange(initialStart, initialEnd)
@@ -242,7 +248,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     }
                     
                     // Mostrar slider si no se ve
-                    if (binding.cardSliderHorario.visibility == View.GONE) {
+                    if (binding.cardSliderHorario.isGone) {
                         toggleSliderHorario()
                     }
                 }
@@ -277,7 +283,7 @@ class EmpleadosActivity : AppCompatActivity() {
             if (fecha == hoyStr) {
                 val now = Calendar.getInstance()
                 val currentTime = now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE)/60f
-                val nextSlot = (Math.ceil(currentTime / empresa.stepSize.toDouble()) * empresa.stepSize).toFloat()
+                val nextSlot = (ceil(currentTime / empresa.stepSize.toDouble()) * empresa.stepSize).toFloat()
                 
                 if (currentVals[0] < nextSlot) {
                     val duration = currentVals[1] - currentVals[0]
@@ -298,7 +304,7 @@ class EmpleadosActivity : AppCompatActivity() {
             if (hora != EmpleadosViewModel.SLOT_PUESTO && hora.isNotEmpty()) {
                 val labels = hora.split(" - ")
                 if (labels.size == 2) {
-                    binding.tvRangeLabel.text = "${formatTo12h(labels[0])} - ${formatTo12h(labels[1])}"
+                    binding.tvRangeLabel.text = getString(R.string.msg_proxima_sala, formatTo12h(labels[0]), formatTo12h(labels[1]))
                 } else {
                     binding.tvRangeLabel.text = hora
                 }
@@ -311,7 +317,7 @@ class EmpleadosActivity : AppCompatActivity() {
         }
 
         viewModel.loading.observe(this) { loading ->
-            binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+            binding.progressBar.isVisible = loading
         }
 
         viewModel.reservaStatus.observe(this) { success ->
@@ -349,8 +355,8 @@ class EmpleadosActivity : AppCompatActivity() {
         binding.rangeSliderHoras.addOnSliderTouchListener(object : com.google.android.material.slider.RangeSlider.OnSliderTouchListener {
             override fun onStartTrackingTouch(slider: com.google.android.material.slider.RangeSlider) {
                 if (slider.stepSize == 0f) {
-                    var s = (Math.round(slider.values[0] / currentStepSize) * currentStepSize).toFloat()
-                    var e = (Math.round(slider.values[1] / currentStepSize) * currentStepSize).toFloat()
+                    var s = ((slider.values[0] / currentStepSize).roundToLong() * currentStepSize)
+                    var e = ((slider.values[1] / currentStepSize).roundToLong() * currentStepSize)
                     
                     if (e <= s) {
                         e = s + currentStepSize
@@ -380,7 +386,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     if (empresa != null) {
                         val now = Calendar.getInstance()
                         val currentTime = now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE)/60f
-                        val nextSlot = (Math.ceil(currentTime / empresa.stepSize.toDouble()) * empresa.stepSize).toFloat()
+                        val nextSlot = (ceil(currentTime / empresa.stepSize.toDouble()) * empresa.stepSize).toFloat()
                         
                         if (s < nextSlot) {
                             s = nextSlot
@@ -402,18 +408,18 @@ class EmpleadosActivity : AppCompatActivity() {
                 slider.thumbTintList = android.content.res.ColorStateList.valueOf(color)
                 slider.haloTintList = android.content.res.ColorStateList.valueOf(if (isInvalid) 0x1AEE0000 else 0x26888888)
                 
-                if (isInvalid) {
-                    binding.tvLimitWarning.text = getString(R.string.msg_limite_reserva_horas, currentMaxDuration.toInt())
-                    binding.tvLimitWarning.visibility = View.VISIBLE
-                    binding.tvRangeLabel.setTextColor(Color.RED)
-                } else {
+            if (isInvalid) {
+                binding.tvLimitWarning.text = resources.getQuantityString(R.plurals.label_plural_horas, currentMaxDuration.toInt(), currentMaxDuration.toInt())
+                binding.tvLimitWarning.visibility = View.VISIBLE
+                binding.tvRangeLabel.setTextColor(Color.RED)
+            } else {
                     binding.tvLimitWarning.visibility = View.GONE
                     binding.tvRangeLabel.setTextColor(ContextCompat.getColor(this, R.color.aura_on_surface))
                 }
 
                 val t1 = viewModel.formatTime(s)
                 val t2 = viewModel.formatTime(e)
-                binding.tvRangeLabel.text = "${formatTo12h(t1)} - ${formatTo12h(t2)}"
+                binding.tvRangeLabel.text = getString(R.string.msg_proxima_sala, formatTo12h(t1), formatTo12h(t2))
                 
                 viewModel.updateRange(s, e)
             }
@@ -544,7 +550,7 @@ class EmpleadosActivity : AppCompatActivity() {
         // Override positive button...
         dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             validateAndShow()
-            if (tvError.visibility == View.GONE) {
+            if (tvError.isGone) {
                 try {
                     val sH = etStartH.text.toString().let { if(it.length == 1) "0$it" else it }.ifEmpty { "00" }
                     val sM = etStartM.text.toString().let { if(it.length == 1) "0$it" else it }.ifEmpty { "00" }
@@ -571,7 +577,7 @@ class EmpleadosActivity : AppCompatActivity() {
             val panel = binding.cardSliderHorario
             val topCard = binding.cardHoraInfo
             
-            if (panel.visibility == View.GONE) {
+            if (panel.isGone) {
                 val currentVals = binding.rangeSliderHoras.values
                 if (currentVals.size < 2) return
                 
@@ -579,8 +585,8 @@ class EmpleadosActivity : AppCompatActivity() {
                     viewModel.updateRange(currentVals[0], currentVals[1])
                 }
                 
-                panel.visibility = View.VISIBLE
-                topCard.visibility = View.VISIBLE
+                panel.isVisible = true
+                topCard.isVisible = true
                 
                 panel.post {
                     panel.translationY = panel.height.toFloat() + 100f
@@ -606,7 +612,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     .translationY(panel.height.toFloat() + 100f)
                     .setDuration(300)
                     .setInterpolator(android.view.animation.AccelerateInterpolator())
-                    .withEndAction { panel.visibility = View.GONE }
+                    .withEndAction { panel.isGone = true }
                     .start()
                     
                 topCard.animate()
@@ -614,14 +620,14 @@ class EmpleadosActivity : AppCompatActivity() {
                     .scaleY(0f)
                     .alpha(0f)
                     .setDuration(300)
-                    .withEndAction { topCard.visibility = View.GONE }
+                    .withEndAction { topCard.isGone = true }
                     .start()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in toggleSliderHorario", e)
             // Si hay un error, al menos asegurar visibilidad para no bloquear al usuario
-            binding.cardSliderHorario.visibility = View.VISIBLE
-            binding.cardHoraInfo.visibility = View.VISIBLE
+            binding.cardSliderHorario.isVisible = true
+            binding.cardHoraInfo.isVisible = true
         }
     }
 
@@ -661,7 +667,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     
                     val hasOverlap = viewModel.reservas.value?.filter { it.idSala == sala.id && it.id != editReservaId }?.any { res ->
                         val (rs, re) = viewModel.parseReservaRange(res.fechaHora) ?: return@any false
-                        maxOf(uStart, rs) < minOf(uEnd, re)
+                        kotlin.math.max(uStart, rs) < kotlin.math.min(uEnd, re)
                     } ?: false
 
                     when {
@@ -693,32 +699,32 @@ class EmpleadosActivity : AppCompatActivity() {
                 mostrarSnackbarFecha()
             } else if (sala.tipo == TipoElemento.SALA.valor) {
                 val horaActual = viewModel.horaSeleccionada.value ?: ""
-                val noHayHoraValida = horaActual.isNullOrEmpty() || horaActual == EmpleadosViewModel.SLOT_PUESTO
+                val noHayHoraValida = horaActual.isEmpty() || horaActual == EmpleadosViewModel.SLOT_PUESTO
                 
                 if (noHayHoraValida) {
                     val currentVals = binding.rangeSliderHoras.values
                     if (currentVals.size >= 2) {
                         // Si estaba en gris (sin hora válida para sala), abrir slider pero no mostrar diálogo de reserva todavía
                         viewModel.updateRange(currentVals[0], currentVals[1])
-                        if (binding.cardSliderHorario.visibility == View.GONE) {
+                        if (binding.cardSliderHorario.isGone) {
                             toggleSliderHorario()
                         }
                     } else {
                         // Si no hay horario de empresa cargado todavía
                         Toast.makeText(this, getString(R.string.msg_cargando_horario), Toast.LENGTH_SHORT).show()
-                        if (binding.cardSliderHorario.visibility == View.GONE) {
+                        if (binding.cardSliderHorario.isGone) {
                             toggleSliderHorario()
                         }
                     }
                 } else {
                     // Si ya tiene una hora seleccionada (no está en gris), mostrar detalles
-                    if (binding.cardSliderHorario.visibility == View.GONE) {
+                    if (binding.cardSliderHorario.isGone) {
                         toggleSliderHorario()
                     }
                     mostrarDialogoDetallesSala(sala)
                 }
             } else if (sala.tipo == TipoElemento.PUESTO.valor) {
-                if (binding.cardSliderHorario.visibility == View.VISIBLE) {
+                if (binding.cardSliderHorario.isVisible) {
                     toggleSliderHorario()
                 }
                 if (viewModel.horaSeleccionada.value != EmpleadosViewModel.SLOT_PUESTO) {
@@ -763,7 +769,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     
                     when {
                         currentSelection == editOriginalTime -> ContextCompat.getColor(this, android.R.color.holo_orange_dark)
-                        hasOverlap -> Color.parseColor("#2196F3") // AZUL (User request)
+                        hasOverlap -> "#2196F3".toColorInt() // AZUL (User request)
                         else -> ContextCompat.getColor(this, android.R.color.holo_green_light)
                     }
                 }
@@ -836,7 +842,7 @@ class EmpleadosActivity : AppCompatActivity() {
 
             val firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK)
             val blanks = if (firstDayOfWeek == Calendar.SUNDAY) 6 else firstDayOfWeek - 2
-            for (i in 0 until blanks) dates.add(null)
+            repeat(blanks) { dates.add(null) }
 
             val maxDays = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH)
             for (i in 1..maxDays) {
@@ -865,7 +871,7 @@ class EmpleadosActivity : AppCompatActivity() {
 
                     if (date == null) {
                         tvDay.text = ""
-                        viewHighlight.visibility = View.GONE
+                        viewHighlight.isGone = true
                     } else {
                         val dayNum = date.get(Calendar.DAY_OF_MONTH)
                         tvDay.text = dayNum.toString()
@@ -890,14 +896,14 @@ class EmpleadosActivity : AppCompatActivity() {
                         // Mostrar puntos siempre para dar contexto (festivos/no laborables)
                         when {
                             isNonLaborable -> {
-                                viewHighlight.visibility = View.VISIBLE
+                                viewHighlight.isVisible = true
                                 viewHighlight.setBackgroundResource(R.drawable.aura_calendar_dot_blue)
                             }
                             isFestivo -> {
-                                viewHighlight.visibility = View.VISIBLE
+                                viewHighlight.isVisible = true
                                 viewHighlight.setBackgroundResource(R.drawable.aura_calendar_dot)
                             }
-                            else -> { viewHighlight.visibility = View.GONE }
+                            else -> { viewHighlight.isVisible = false }
                         }
 
                         when {
@@ -942,69 +948,6 @@ class EmpleadosActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun mostrarDialogoHoras() {
-        val franjas = viewModel.franjas.value ?: emptyList()
-        if (franjas.isEmpty()) {
-            Toast.makeText(this, getString(R.string.msg_no_franjas_disponibles), Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        val fechaSel = viewModel.fechaSeleccionada.value ?: ""
-        
-        val isHoy = try {
-            val partes = fechaSel.split("/")
-            if (partes.size == 3) {
-                val d = partes[0].replace(Regex("[^0-9]"), "").toInt()
-                val m = partes[1].replace(Regex("[^0-9]"), "").toInt()
-                val y = partes[2].replace(Regex("[^0-9]"), "").toInt()
-                val now = Calendar.getInstance()
-                d == now.get(Calendar.DAY_OF_MONTH) && m == (now.get(Calendar.MONTH) + 1) && y == now.get(Calendar.YEAR)
-            } else false
-        } catch (_: Exception) { false }
-        
-        val franjasFiltradas = if (isHoy) {
-            val now = Calendar.getInstance()
-            val horaActual = now.get(Calendar.HOUR_OF_DAY)
-            val minutoActual = now.get(Calendar.MINUTE)
-            franjas.filter { franja ->
-                try {
-                    val partes = franja.split("-")
-                    val inicio = partes[0].trim()
-                    val horasMinutos = inicio.split(":")
-                    if (horasMinutos.size >= 2) {
-                        val hInicio = horasMinutos[0].replace(Regex("[^0-9]"), "").toInt()
-                        val mInicio = horasMinutos[1].replace(Regex("[^0-9]"), "").toInt()
-                        hInicio > horaActual || (hInicio == horaActual && mInicio > minutoActual)
-                    } else {
-                        true
-                    }
-                } catch (e: Exception) {
-                    true
-                }
-            }
-        } else {
-            franjas
-        }
-
-        // Asegurar que "Día completo" esté siempre disponible para volver a puestos
-        val finalSlots = if (franjasFiltradas.contains(EmpleadosViewModel.SLOT_PUESTO)) {
-            franjasFiltradas
-        } else {
-            listOf(EmpleadosViewModel.SLOT_PUESTO) + franjasFiltradas
-        }
-
-        if (finalSlots.isEmpty()) {
-            Toast.makeText(this, getString(R.string.msg_no_quedan_huecos), Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.title_selecciona_franja_para, fechaSel))
-            .setItems(finalSlots.toTypedArray()) { _, which ->
-                viewModel.updateHora(finalSlots[which])
-            }
-            .show()
-    }
 
     private fun cargarImagenFondo(url: String) {
         Glide.with(this).load(url).centerCrop().into(object : CustomTarget<Drawable>() {
@@ -1034,11 +977,7 @@ class EmpleadosActivity : AppCompatActivity() {
         tvHora.text = viewModel.horaSeleccionada.value
         
         val tvTituloHora = dialogView.findViewById<TextView>(R.id.tvTituloHora)
-        if (viewModel.horaSeleccionada.value == EmpleadosViewModel.SLOT_PUESTO) {
-            tvTituloHora.visibility = View.GONE
-        } else {
-            tvTituloHora.visibility = View.VISIBLE
-        }
+        tvTituloHora.isVisible = viewModel.horaSeleccionada.value != EmpleadosViewModel.SLOT_PUESTO
         
         val isPuesto = sala.tipo == TipoElemento.PUESTO.valor
         val fecha = viewModel.fechaSeleccionada.value ?: ""
@@ -1084,34 +1023,34 @@ class EmpleadosActivity : AppCompatActivity() {
             if (isPuesto) {
                 if (miReserva != null) {
                     tvEstado.text = miReserva.nombreUsuario
-                    tvEstado.setTextColor(Color.parseColor("#FFA500")) // Naranja
+                    tvEstado.setTextColor("#FFA500".toColorInt()) // Naranja
                 } else {
                     // "Puesto ocupado" y debajo el nombre
-                    tvEstado.text = getString(R.string.label_puesto_ocupado) + "\n" + solapadas[0].nombreUsuario
+                    tvEstado.text = getString(R.string.msg_puesto_ocupado_por, getString(R.string.label_puesto_ocupado), solapadas[0].nombreUsuario)
                     tvEstado.setTextColor(Color.RED)
                 }
             } else {
                 val exactMatch = solapadas.find {
                     val rRange = viewModel.parseReservaRange(it.fechaHora)
-                    rRange != null && Math.abs(rRange.first - uStart) < 0.01f && Math.abs(rRange.second - uEnd) < 0.01f
+                    rRange != null && abs(rRange.first - uStart) < 0.01f && abs(rRange.second - uEnd) < 0.01f
                 }
 
                 if (exactMatch != null && solapadas.size == 1) {
                     if (exactMatch.idUsuario == uid) {
-                        tvEstado.text = exactMatch.nombreUsuario + " (${viewModel.formatTime(uStart)} - ${viewModel.formatTime(uEnd)})"
-                        tvEstado.setTextColor(Color.parseColor("#FFA500")) // Naranja
+                        tvEstado.text = getString(R.string.msg_reunion_usuario_tiempo, exactMatch.nombreUsuario, viewModel.formatTime(uStart), viewModel.formatTime(uEnd))
+                        tvEstado.setTextColor("#FFA500".toColorInt()) // Naranja
                     } else {
-                        tvEstado.text = getString(R.string.label_sala_ocupada) + "\n" + exactMatch.nombreUsuario
+                        tvEstado.text = getString(R.string.msg_sala_ocupada_por, getString(R.string.label_sala_ocupada), exactMatch.nombreUsuario)
                         tvEstado.setTextColor(Color.RED)
                     }
                 } else {
                     val nombres = solapadas.joinToString("\n") {
                         val rRange = viewModel.parseReservaRange(it.fechaHora)
-                        val horario = if (rRange != null) " (${viewModel.formatTime(rRange.first)} - ${viewModel.formatTime(rRange.second)})" else ""
-                        "${it.nombreUsuario}$horario"
+                        val horario = if (rRange != null) getString(R.string.msg_proxima_sala, viewModel.formatTime(rRange.first), viewModel.formatTime(rRange.second)) else ""
+                        if (horario.isNotEmpty()) getString(R.string.msg_solapamientos_lista, it.nombreUsuario, "($horario)") else it.nombreUsuario
                     }
-                    tvEstado.text = getString(R.string.msg_solapamientos_detectados) + "\n" + nombres
-                    tvEstado.setTextColor(Color.parseColor("#FFA500"))
+                    tvEstado.text = getString(R.string.msg_solapamientos_lista, getString(R.string.msg_solapamientos_detectados), nombres)
+                    tvEstado.setTextColor("#FFA500".toColorInt())
                 }
             }
 

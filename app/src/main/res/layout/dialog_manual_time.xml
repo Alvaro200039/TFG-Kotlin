@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Configurar Horario"
+        android:text="@string/title_configurar_horario"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="?attr/colorPrimary"
@@ -32,19 +32,20 @@
                 android:id="@+id/et_start_h"
                 android:layout_width="48dp"
                 android:layout_height="wrap_content"
-                android:hint="08"
+                android:hint="@string/hint_h_inicio"
                 android:inputType="number"
                 android:maxLength="2"
                 android:gravity="center"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_rounded_dropdown"
-                android:padding="10dp" />
+                android:padding="10dp"
+                android:autofillHints="unspecified" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=":"
+                android:text="@string/label_separador_hora_NP"
                 android:textSize="22sp"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp" />
@@ -53,20 +54,21 @@
                 android:id="@+id/et_start_m"
                 android:layout_width="48dp"
                 android:layout_height="wrap_content"
-                android:hint="00"
+                android:hint="@string/hint_m_inicio"
                 android:inputType="number"
                 android:maxLength="2"
                 android:gravity="center"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_rounded_dropdown"
-                android:padding="10dp" />
+                android:padding="10dp"
+                android:autofillHints="unspecified" />
         </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="—"
+            android:text="@string/label_separador_rango_NP"
             android:textSize="18sp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp" />
@@ -82,19 +84,20 @@
                 android:id="@+id/et_end_h"
                 android:layout_width="48dp"
                 android:layout_height="wrap_content"
-                android:hint="10"
+                android:hint="@string/hint_h_fin"
                 android:inputType="number"
                 android:maxLength="2"
                 android:gravity="center"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_rounded_dropdown"
-                android:padding="10dp" />
+                android:padding="10dp"
+                android:autofillHints="unspecified" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=":"
+                android:text="@string/label_separador_hora_NP"
                 android:textSize="22sp"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp" />
@@ -103,14 +106,15 @@
                 android:id="@+id/et_end_m"
                 android:layout_width="48dp"
                 android:layout_height="wrap_content"
-                android:hint="00"
+                android:hint="@string/hint_m_inicio"
                 android:inputType="number"
                 android:maxLength="2"
                 android:gravity="center"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_rounded_dropdown"
-                android:padding="10dp" />
+                android:padding="10dp"
+                android:autofillHints="unspecified" />
         </LinearLayout>
     </LinearLayout>
 
@@ -118,7 +122,7 @@
         android:id="@+id/tv_error_manual"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Excede el límite de 2h"
+        android:text="@string/err_excede_limite_gen"
         android:textColor="@color/aura_error"
         android:textSize="13sp"
         android:layout_marginTop="20dp"

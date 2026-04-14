@@ -185,9 +185,9 @@ class PlanoReservasView @JvmOverloads constructor(
             itemPaint.color = baseColor
             canvas.drawRect(bounds, itemPaint)
             
-            overlaps.forEach { (startPerc, endPerc, type) ->
-                val top = bounds.top + bounds.height() * Math.max(0f, startPerc)
-                val bottom = bounds.top + bounds.height() * Math.min(1f, endPerc)
+            overlaps.forEach { (startPercent, endPercent, type) ->
+                val top = bounds.top + bounds.height() * max(0f, startPercent)
+                val bottom = bounds.top + bounds.height() * min(1f, endPercent)
                 
                 if (bottom > top) {
                     overlapPaint.color = when (type) {
@@ -241,9 +241,9 @@ class PlanoReservasView @JvmOverloads constructor(
             itemPaint.color = baseColor
             canvas.drawPath(path, itemPaint)
             
-            overlaps.forEach { (startPerc, endPerc, type) ->
-                val top = bounds.top + bounds.height() * Math.max(0f, startPerc)
-                val bottom = bounds.top + bounds.height() * Math.min(1f, endPerc)
+            overlaps.forEach { (startPercent, endPercent, type) ->
+                val top = bounds.top + bounds.height() * max(0f, startPercent)
+                val bottom = bounds.top + bounds.height() * min(1f, endPercent)
                 
                 if (bottom > top) {
                     overlapPaint.color = when (type) {

@@ -63,7 +63,7 @@
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
             android:alpha="0.9"/>
-        <!-- Super-Tarjeta de Actividad Próxima -->
+        <!-- Tarjeta de Actividad Próxima -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardContenedorProximas"
             android:layout_width="match_parent"

@@ -45,8 +45,6 @@ class MenuViewModel : ViewModel() {
     private val _userReservas = MutableLiveData<List<Reserva>>()
     val userReservas: LiveData<List<Reserva>> = _userReservas
 
-    private val _franjas = MutableLiveData<List<String>>()
-    val franjas: LiveData<List<String>> = _franjas
 
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
@@ -164,44 +162,7 @@ class MenuViewModel : ViewModel() {
         }
     }
 
-    fun loadFranjas() {
-        val eId = empresaId ?: return
-        viewModelScope.launch {
-            try {
-                val franjas = firestoreRepo.getFranjasByEmpresa(eId)
-                _franjas.value = franjas.map { it.hora }.sorted()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading franjas", e)
-                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
-            }
-        }
-    }
 
-    fun addFranja(franja: String) {
-        val eId = empresaId ?: return
-        viewModelScope.launch {
-            try {
-                firestoreRepo.addFranja(eId, franja)
-                loadFranjas()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error adding franja", e)
-                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
-            }
-        }
-    }
-
-    fun removeFranja(franja: String) {
-        val eId = empresaId ?: return
-        viewModelScope.launch {
-            try {
-                firestoreRepo.deleteFranja(eId, franja)
-                loadFranjas()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error removing franja", e)
-                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
-            }
-        }
-    }
 
     fun loadEmpresaSettings() {
         val eId = empresaId ?: return

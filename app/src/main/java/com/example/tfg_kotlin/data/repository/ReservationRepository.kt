@@ -5,7 +5,6 @@ import com.example.tfg_kotlin.data.model.Reserva
 import com.example.tfg_kotlin.data.model.TipoElemento
 import com.example.tfg_kotlin.util.DateFormats
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.WriteBatch
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
@@ -46,15 +45,6 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
         return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
     }
 
-    suspend fun getReservationsByDateTime(empresaId: String, fechaHora: String): List<Reserva> {
-        val snapshot = db.collection("empresas")
-            .document(empresaId)
-            .collection("reservas")
-            .whereEqualTo("fechaHora", fechaHora)
-            .get()
-            .await()
-        return snapshot.documents.mapNotNull { it.toObject(Reserva::class.java)?.copy(id = it.id) }
-    }
 
     suspend fun addReservation(empresaId: String, reserva: Reserva): Boolean {
         return try {

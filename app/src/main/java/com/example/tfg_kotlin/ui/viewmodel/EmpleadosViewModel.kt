@@ -1,3 +1,5 @@
+@file:Suppress("KotlinConstantConditions")
+
 package com.example.tfg_kotlin.ui.viewmodel
 
 import android.util.Log
@@ -53,12 +55,9 @@ class EmpleadosViewModel : ViewModel() {
     private val _overlaps = MutableLiveData<Map<String, List<Triple<Float, Float, Int>>>>()
     val overlaps: LiveData<Map<String, List<Triple<Float, Float, Int>>>> = _overlaps
 
-    private val _franjas = MutableLiveData<List<String>>()
-    val franjas: LiveData<List<String>> = _franjas
 
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
-
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> = _loading
 
@@ -72,7 +71,6 @@ class EmpleadosViewModel : ViewModel() {
     val editingReservaId: LiveData<String?> = _editingReservaId
 
     private val _focusedSalaId = MutableLiveData<String?>(null)
-    val focusedSalaId: LiveData<String?> = _focusedSalaId
 
     private var tempBackupReserva: Reserva? = null
 
@@ -91,12 +89,6 @@ class EmpleadosViewModel : ViewModel() {
                 val emp = firestoreRepo.getEmpresaByNombre(eId)
                 _empresa.value = emp
                 
-                val franjasList = try {
-                    firestoreRepo.getFranjasByEmpresa(eId).map { it.hora }.sorted()
-                } catch (_: Exception) {
-                    emptyList<String>()
-                }
-                _franjas.value = listOf(SLOT_PUESTO) + franjasList
             } catch (e: Exception) {
                 // Solo mostrar error si realmente falla lo crítico (pisos o empresa)
                 if (_pisos.value.isNullOrEmpty() || _empresa.value == null) {
@@ -304,12 +296,12 @@ class EmpleadosViewModel : ViewModel() {
                         val rRange = parseReservaRange(res.fechaHora) ?: continue
                         
                         // Si se tocan o se solapan, los fusionamos virtualmente
-                        val isContiguous = Math.abs(rRange.second - finalStart) < 0.01f || Math.abs(finalEnd - rRange.first) < 0.01f
-                        val isOverlapping = maxOf(rRange.first, finalStart) < minOf(rRange.second, finalEnd)
+                        val isContiguous = kotlin.math.abs(rRange.second - finalStart) < 0.01f || kotlin.math.abs(finalEnd - rRange.first) < 0.01f
+                        val isOverlapping = kotlin.math.max(rRange.first, finalStart) < kotlin.math.min(rRange.second, finalEnd)
 
                         if (isContiguous || isOverlapping) {
-                            finalStart = minOf(finalStart, rRange.first)
-                            finalEnd = maxOf(finalEnd, rRange.second)
+                            finalStart = kotlin.math.min(finalStart, rRange.first)
+                            finalEnd = kotlin.math.max(finalEnd, rRange.second)
                             res.id?.let { idsToMergeAndDelete.add(it) }
                             changed = true
                         }
@@ -317,7 +309,8 @@ class EmpleadosViewModel : ViewModel() {
                 }
 
                 val totalDuration = finalEnd - finalStart
-                if (sala.tipo == TipoElemento.SALA.valor && totalDuration > (empresa.maxDuration ?: 24) + 0.01f) {
+                val isSala = sala.tipo.equals(TipoElemento.SALA.valor, ignoreCase = true)
+                if (isSala && totalDuration > empresa.maxDuration + 0.01f) {
                     _error.value = "El límite de tiempo para esta sala ha sido superado. Reduce el tiempo de la reunión o modifica la reserva actual."
                     return@launch
                 }

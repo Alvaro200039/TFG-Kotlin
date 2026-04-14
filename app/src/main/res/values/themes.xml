@@ -58,14 +58,6 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="Aura.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="shapeAppearance">@style/Aura.Shape.Pill</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="strokeColor">?attr/colorPrimary</item>
-        <item name="android:textColor">?attr/colorPrimary</item>
-    </style>
 
     <!-- Campos de Texto Aura M3 -->
     <style name="Aura.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">

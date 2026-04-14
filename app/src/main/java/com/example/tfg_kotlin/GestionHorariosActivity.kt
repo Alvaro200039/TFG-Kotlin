@@ -22,7 +22,6 @@ import com.example.tfg_kotlin.ui.viewmodel.MenuViewModel
 import com.example.tfg_kotlin.util.DateFormats
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Calendar
 import java.util.Locale
 
@@ -112,7 +111,7 @@ class GestionHorariosActivity : AppCompatActivity() {
                 b60.isChecked = it.stepSize == 1.0f
 
                 currentMaxDuration = it.maxDuration
-                findViewById<TextView>(R.id.tvMaxDuration).text = getString(R.string.label_x_horas, it.maxDuration)
+                findViewById<TextView>(R.id.tvMaxDuration).text = resources.getQuantityString(R.plurals.label_plural_horas, it.maxDuration, it.maxDuration)
             }
         }
 
@@ -218,14 +217,14 @@ class GestionHorariosActivity : AppCompatActivity() {
         btnMinus.setOnClickListener {
             if (currentMaxDuration > 1) {
                 currentMaxDuration--
-                tvMax.text = getString(R.string.label_x_horas, currentMaxDuration)
+                tvMax.text = resources.getQuantityString(R.plurals.label_plural_horas, currentMaxDuration, currentMaxDuration)
             }
         }
 
         btnPlus.setOnClickListener {
             if (currentMaxDuration < 12) {
                 currentMaxDuration++
-                tvMax.text = getString(R.string.label_x_horas, currentMaxDuration)
+                tvMax.text = resources.getQuantityString(R.plurals.label_plural_horas, currentMaxDuration, currentMaxDuration)
             }
         }
     }
@@ -303,7 +302,7 @@ class GestionHorariosActivity : AppCompatActivity() {
 
             val firstDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK)
             val blanks = if (firstDayOfWeek == Calendar.SUNDAY) 6 else firstDayOfWeek - 2
-            for (i in 0 until blanks) calendarDates.add(null)
+            repeat(blanks) { calendarDates.add(null) }
 
             val maxDays = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH)
             for (i in 1..maxDays) {

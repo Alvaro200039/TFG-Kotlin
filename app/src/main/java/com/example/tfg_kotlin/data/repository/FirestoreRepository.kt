@@ -45,8 +45,8 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 nombre = doc.id,
                 apertura = doc.getString("apertura") ?: "08:00",
                 cierre = doc.getString("cierre") ?: "20:00",
-                diasApertura = (doc.get("diasApertura") as? List<Number>)?.map { it.toInt() } ?: listOf(1, 2, 3, 4, 5),
-                diasBloqueados = (doc.get("diasBloqueados") as? List<String>) ?: emptyList(),
+                diasApertura = (doc.get("diasApertura") as? List<*>)?.filterIsInstance<Number>()?.map { it.toInt() } ?: listOf(1, 2, 3, 4, 5),
+                diasBloqueados = (doc.get("diasBloqueados") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
                 stepSize = doc.getDouble("stepSize")?.toFloat() ?: 0.5f,
                 maxDuration = doc.getLong("maxDuration")?.toInt() ?: 2
             )
@@ -104,43 +104,14 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 nombre = doc.id,
                 apertura = doc.getString("apertura") ?: "08:00",
                 cierre = doc.getString("cierre") ?: "20:00",
-                diasApertura = (doc.get("diasApertura") as? List<Number>)?.map { it.toInt() } ?: listOf(1, 2, 3, 4, 5),
-                diasBloqueados = (doc.get("diasBloqueados") as? List<String>) ?: emptyList(),
+                diasApertura = (doc.get("diasApertura") as? List<*>)?.filterIsInstance<Number>()?.map { it.toInt() } ?: listOf(1, 2, 3, 4, 5),
+                diasBloqueados = (doc.get("diasBloqueados") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
                 stepSize = doc.getDouble("stepSize")?.toFloat() ?: 0.5f,
                 maxDuration = doc.getLong("maxDuration")?.toInt() ?: 2
             )
         }
     }
 
-    suspend fun addFranja(empresaId: String, franjaId: String): Boolean {
-        return try {
-            db.collection("empresas")
-                .document(empresaId)
-                .collection("franjasHorarias")
-                .document(franjaId)
-                .set(mapOf("activo" to true))
-                .await()
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error adding franja $franjaId", e)
-            false
-        }
-    }
-
-    suspend fun deleteFranja(empresaId: String, franjaId: String): Boolean {
-        return try {
-            db.collection("empresas")
-                .document(empresaId)
-                .collection("franjasHorarias")
-                .document(franjaId)
-                .delete()
-                .await()
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error deleting franja $franjaId", e)
-            false
-        }
-    }
 
     suspend fun savePiso(empresaId: String, piso: Piso): String? {
         return try {
