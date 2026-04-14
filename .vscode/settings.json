@@ -1,3 +1,36 @@
 {
-    "commentTranslate.targetLanguage": "es"
+    "commentTranslate.targetLanguage": "es",
+    "cSpell.words": [
+        "Acción",
+        "androidx",
+        "appcompat",
+        "barra",
+        "Borderless",
+        "borrar",
+        "Botón",
+        "botones",
+        "compacto",
+        "constraintlayout",
+        "creacion",
+        "Deshacer",
+        "detrás",
+        "Edición",
+        "editar",
+        "efecto",
+        "elemento",
+        "eliminar",
+        "esquinas",
+        "flecha",
+        "flotante",
+        "focusable",
+        "guardar",
+        "herramientas",
+        "Integrado",
+        "listo",
+        "nombre",
+        "pisos",
+        "seleccionado",
+        "seleccionar",
+        "Vértices"
+    ]
 }

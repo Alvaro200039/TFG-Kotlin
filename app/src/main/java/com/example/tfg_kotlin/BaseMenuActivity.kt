@@ -21,6 +21,18 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.firestore.FirebaseFirestore
 
 abstract class BaseMenuActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_EDIT_RESERVA_ID = "edit_reserva_id"
+        const val EXTRA_EDIT_DATE = "edit_date"
+        const val EXTRA_EDIT_ROOM_ID = "edit_room_id"
+        const val EXTRA_EDIT_START_TIME = "edit_start_time"
+        const val EXTRA_EDIT_END_TIME = "edit_end_time"
+        const val EXTRA_EDIT_PISO_NAME = "edit_piso_name"
+        const val EXTRA_EDIT_SALA_NOMBRE = "edit_sala_nombre"
+        const val EXTRA_EDIT_USER_NOMBRE = "edit_user_nombre"
+        const val EXTRA_EDIT_USER_ID = "edit_user_id"
+        const val EXTRA_EDIT_TIPO = "edit_tipo"
+    }
 
     protected val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     protected val firestoreRepo: FirestoreRepository by lazy { FirestoreRepository(firestore) }
@@ -134,7 +146,6 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                 putInt("notif_puestos_horas", pkHPuestos.value)
                 putInt("notif_puestos_mins", pkMPuestos.value)
             }
-            Toast.makeText(this, getString(R.string.msg_notif_actualizadas), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -142,8 +153,21 @@ abstract class BaseMenuActivity : AppCompatActivity() {
         return fechaHora.replace(" (Puestos de trabajo)", "")
     }
 
-    protected fun setupBaseObservers(textSala: TextView?, cardSala: View?, textPuesto: TextView?, cardPuesto: View?) {
+    protected fun setupBaseObservers(
+        textSala: TextView?, 
+        cardSala: View?, 
+        textPuesto: TextView?, 
+        cardPuesto: View?,
+        cardContenedor: View? = null
+    ) {
         menuViewModel.nextSalaReserva.observe(this) { reserva ->
+            val hasSala = reserva != null
+            val hasPuesto = menuViewModel.nextPuestoReserva.value != null
+            
+            cardContenedor?.visibility = if (hasSala || hasPuesto) View.VISIBLE else View.GONE
+            val divider1 = cardContenedor?.findViewById<View>(R.id.dividerAlertas1)
+            divider1?.visibility = if (hasSala && hasPuesto) View.VISIBLE else View.GONE
+
             if (reserva != null) {
                 cardSala?.visibility = View.VISIBLE
                 val fhFormateada = formatearFechaHora(reserva.fechaHora)
@@ -158,12 +182,27 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                     textSala?.paintFlags = textSala!!.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     textSala?.setTextColor(ContextCompat.getColor(this, R.color.aura_on_surface))
                 }
+
+                cardSala?.setOnClickListener {
+                    if (reserva.lugarEliminado) {
+                        mostrarConfirmacionEliminarReservaEliminada(reserva)
+                    } else {
+                        mostrarMenuSala(reserva)
+                    }
+                }
             } else {
                 cardSala?.visibility = View.GONE
             }
         }
 
         menuViewModel.nextPuestoReserva.observe(this) { reserva ->
+            val hasPuesto = reserva != null
+            val hasSala = menuViewModel.nextSalaReserva.value != null
+
+            cardContenedor?.visibility = if (hasSala || hasPuesto) View.VISIBLE else View.GONE
+            val divider1 = cardContenedor?.findViewById<View>(R.id.dividerAlertas1)
+            divider1?.visibility = if (hasSala && hasPuesto) View.VISIBLE else View.GONE
+
             if (reserva != null) {
                 cardPuesto?.visibility = View.VISIBLE
                 val fhFormateada = formatearFechaHora(reserva.fechaHora)
@@ -178,10 +217,86 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                     textPuesto?.paintFlags = textPuesto!!.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                     textPuesto?.setTextColor(ContextCompat.getColor(this, R.color.aura_on_surface))
                 }
+
+                cardPuesto?.setOnClickListener {
+                    if (reserva.lugarEliminado) {
+                        mostrarConfirmacionEliminarReservaEliminada(reserva)
+                    } else {
+                        mostrarDialogoCancelarPuesto(reserva)
+                    }
+                }
             } else {
                 cardPuesto?.visibility = View.GONE
             }
         }
+    }
+
+    private fun mostrarMenuSala(reserva: Reserva) {
+        val options = arrayOf(getString(R.string.opt_editar), getString(R.string.opt_eliminar))
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.title_opciones_reserva)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> editarReservaSala(reserva)
+                    1 -> mostrarDialogoCancelarReservaSimple(reserva)
+                }
+            }
+            .show()
+    }
+
+    private fun editarReservaSala(reserva: Reserva) {
+        val text = reserva.fechaHora.trim()
+        val firstSpace = text.indexOf(' ')
+        if (firstSpace == -1) return
+        
+        val fecha = text.substring(0, firstSpace)
+        val rest = text.substring(firstSpace + 1)
+        val times = rest.split("-")
+        if (times.size != 2) return
+        
+        val startStr = times[0].trim()
+        val endStr = times[1].trim()
+
+        val intent = android.content.Intent(this, EmpleadosActivity::class.java).apply {
+            putExtra(EXTRA_EDIT_RESERVA_ID, reserva.id)
+            putExtra(EXTRA_EDIT_DATE, fecha)
+            putExtra(EXTRA_EDIT_ROOM_ID, reserva.idSala)
+            putExtra(EXTRA_EDIT_START_TIME, startStr)
+            putExtra(EXTRA_EDIT_END_TIME, endStr)
+            putExtra(EXTRA_EDIT_PISO_NAME, reserva.piso)
+            putExtra(EXTRA_EDIT_SALA_NOMBRE, reserva.nombreSala)
+            putExtra(EXTRA_EDIT_USER_NOMBRE, reserva.nombreUsuario)
+            putExtra(EXTRA_EDIT_USER_ID, reserva.idUsuario)
+            putExtra(EXTRA_EDIT_TIPO, reserva.tipo)
+        }
+        startActivity(intent)
+    }
+
+    private fun mostrarDialogoCancelarPuesto(reserva: Reserva) {
+        mostrarDialogoCancelarReservaSimple(reserva)
+    }
+
+    private fun mostrarDialogoCancelarReservaSimple(reserva: Reserva) {
+        val fhFormateada = formatearFechaHora(reserva.fechaHora)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.title_cancelar_reserva)
+            .setMessage(getString(R.string.msg_confirmar_cancelar_reserva, reserva.nombreSala, fhFormateada))
+            .setPositiveButton(R.string.btn_si) { _, _ ->
+                menuViewModel.cancelReserva(reserva.id ?: "")
+            }
+            .setNegativeButton(R.string.btn_no, null)
+            .show()
+    }
+
+    private fun mostrarConfirmacionEliminarReservaEliminada(reserva: Reserva) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.btn_limpiar_registro)
+            .setMessage(R.string.msg_reserva_lugar_eliminado_pregunta)
+            .setPositiveButton(R.string.opt_eliminar) { _, _ ->
+                menuViewModel.cancelReserva(reserva.id ?: "")
+            }
+            .setNegativeButton(R.string.btn_no, null)
+            .show()
     }
 
 
@@ -239,34 +354,27 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                                 val suffix = getString(R.string.label_sitio_inexistente)
                                 text = if (res.lugarEliminado) "$originalText $suffix" else originalText
                                 
-                                if (res.lugarEliminado) {
-                                    paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                                    setTextColor(Color.RED)
-                                }
-                                
-                                setPadding(32, 8, 16, 8)
-                                isClickable = true
+                                // Estilo de ítem clicable
+                                setPadding(32, 24, 32, 24)
                                 val outValue = TypedValue()
                                 context.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
                                 setBackgroundResource(outValue.resourceId)
-                                
+                                isClickable = true
+                                isFocusable = true
+
+                                if (res.lugarEliminado) {
+                                    paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                                    setTextColor(Color.RED)
+                                } else {
+                                    setTextColor(ContextCompat.getColor(context, R.color.aura_on_surface))
+                                }
+
                                 setOnClickListener {
-                                    val fhFormateada = formatearFechaHora(res.fechaHora)
-                                    val title = if (res.lugarEliminado) getString(R.string.btn_limpiar_registro) else getString(R.string.title_cancelar_reserva)
-                                    val msg = if (res.lugarEliminado) 
-                                        getString(R.string.msg_reserva_lugar_eliminado_pregunta) 
-                                        else getString(R.string.msg_confirmar_cancelar_reserva, res.nombreSala, fhFormateada)
-
-                                    val posBtn = if (res.lugarEliminado) getString(R.string.opt_eliminar) else getString(R.string.btn_si)
-
-                                    MaterialAlertDialogBuilder(context)
-                                        .setTitle(title)
-                                        .setMessage(msg)
-                                        .setPositiveButton(posBtn) { _, _ -> 
-                                            menuViewModel.cancelReserva(res.id ?: "")
-                                        }
-                                        .setNegativeButton(R.string.btn_no, null)
-                                        .show()
+                                    if (res.lugarEliminado) {
+                                        mostrarConfirmacionEliminarReservaEliminada(res)
+                                    } else {
+                                        mostrarMenuSala(res)
+                                    }
                                 }
                             })
                         }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="default_range_values">
+        <item>9.0</item>
+        <item>17.0</item>
+    </array>
+</resources>

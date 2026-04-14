@@ -49,6 +49,9 @@ class MenuViewModel : ViewModel() {
     private val _empresa = MutableLiveData<Empresa?>()
     val empresa: LiveData<Empresa?> = _empresa
 
+    private val _settingsSaveStatus = MutableLiveData<Boolean>()
+    val settingsSaveStatus: LiveData<Boolean> = _settingsSaveStatus
+
     init {
         loadUserData()
     }
@@ -98,21 +101,24 @@ class MenuViewModel : ViewModel() {
                 val fullSdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                 val daySdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                 
+                val cierreStr = sesion.empresa.cierre.ifEmpty { "23:59" }
                 val futureOnes = status.filter {
                     try {
-                        val date = if (it.tipo == "PUESTO") {
-                            // Extract date part: "dd/MM/yyyy"
-                            val dateStr = it.fechaHora.split(" ")[0]
-                            daySdf.parse(dateStr)
-                        } else {
-                            fullSdf.parse(it.fechaHora)
-                        }
-                        // For puestos, even if it's "today", we show it if the date is >= today's date (reset time)
                         if (it.tipo == "PUESTO") {
-                            val todayCal = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
-                            (date?.time ?: 0L) >= todayCal.timeInMillis
+                            val datePart = it.fechaHora.split(" ")[0]
+                            val rEnd = fullSdf.parse("$datePart $cierreStr")
+                            rEnd != null && rEnd.time >= now.time
                         } else {
-                            date?.after(now) == true
+                            val parts = it.fechaHora.split(" - ")
+                            if (parts.size == 2) {
+                                val datePart = parts[0].split(" ")[0]
+                                val endTimeStr = parts[1].trim()
+                                val rEnd = fullSdf.parse("$datePart $endTimeStr")
+                                rEnd != null && rEnd.time >= now.time
+                            } else {
+                                val rStart = fullSdf.parse(it.fechaHora)
+                                rStart != null && rStart.time >= now.time
+                            }
                         }
                     } catch (_: Exception) { false }
                 }
@@ -204,6 +210,8 @@ class MenuViewModel : ViewModel() {
         cierre: String, 
         diasApertura: List<Int>, 
         diasBloqueados: List<String>,
+        stepSize: Float = 0.5f,
+        maxDuration: Int = 2,
         extrasSalas: List<String>? = null,
         extrasPuestos: List<String>? = null
     ) {
@@ -213,6 +221,8 @@ class MenuViewModel : ViewModel() {
             cierre = cierre,
             diasApertura = diasApertura,
             diasBloqueados = diasBloqueados,
+            stepSize = stepSize,
+            maxDuration = maxDuration,
             extrasSalas = extrasSalas ?: empresaActual.extrasSalas,
             extrasPuestos = extrasPuestos ?: empresaActual.extrasPuestos
         )
@@ -224,6 +234,7 @@ class MenuViewModel : ViewModel() {
                 if (success) {
                     _empresa.value = updatedEmpresa
                     Sesion.datos = Sesion.datos?.copy(empresa = updatedEmpresa)
+                    _settingsSaveStatus.value = true
                 } else {
                     _error.value = "Error al guardar configuración"
                 }
@@ -233,5 +244,9 @@ class MenuViewModel : ViewModel() {
                 _loading.value = false
             }
         }
+    }
+
+    fun clearSettingsSaveStatus() {
+        _settingsSaveStatus.value = false
     }
 }

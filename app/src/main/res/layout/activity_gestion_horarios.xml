@@ -155,7 +155,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Time Slots Section (Franjas) -->
+            <!-- Reservation Parameters Section -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -170,55 +170,118 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="20dp">
+                    
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/section_time_slots"
+                        android:text="Parámetros de Reserva"
                         android:textAppearance="?attr/textAppearanceTitleMedium"
                         android:textStyle="bold"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="16dp" />
 
-                    <!-- Input for new slot -->
+                    <!-- Selector de Precisión -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Precisión del Selector (Saltos)"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:layout_marginBottom="8dp"/>
+                    
+                    <LinearLayout
+                        android:id="@+id/layout_precision"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="24dp"
+                        android:gravity="center">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn15m"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="4dp"
+                            app:backgroundTint="@color/aura_toggle_bg_selector"
+                            app:strokeColor="@color/aura_toggle_stroke_selector"
+                            app:strokeWidth="1dp"
+                            app:cornerRadius="24dp"
+                            android:textColor="@color/aura_toggle_text_selector"
+                            android:checkable="true"
+                            android:minHeight="48dp"
+                            android:text="15 min" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn30m"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="4dp"
+                            app:backgroundTint="@color/aura_toggle_bg_selector"
+                            app:strokeColor="@color/aura_toggle_stroke_selector"
+                            app:strokeWidth="1dp"
+                            app:cornerRadius="24dp"
+                            android:textColor="@color/aura_toggle_text_selector"
+                            android:checkable="true"
+                            android:minHeight="48dp"
+                            android:text="30 min" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn60m"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="4dp"
+                            app:backgroundTint="@color/aura_toggle_bg_selector"
+                            app:strokeColor="@color/aura_toggle_stroke_selector"
+                            app:strokeWidth="1dp"
+                            app:cornerRadius="24dp"
+                            android:textColor="@color/aura_toggle_text_selector"
+                            android:checkable="true"
+                            android:minHeight="48dp"
+                            android:text="1 hora" />
+                    </LinearLayout>
+
+                    <!-- Tiempo Máximo de Reserva -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Duración Máxima por Reserva"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:layout_marginBottom="8dp"/>
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:baselineAligned="false"
-                        android:layout_marginBottom="16dp">
-                        <NumberPicker android:id="@+id/npFranjaIniHora" android:layout_width="wrap_content" android:layout_height="80dp" />
-                        <NumberPicker android:id="@+id/npFranjaIniMin" android:layout_width="wrap_content" android:layout_height="80dp" />
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/label_separador_rango_NP" android:textStyle="bold" />
-                        <NumberPicker android:id="@+id/npFranjaFinHora" android:layout_width="wrap_content" android:layout_height="80dp" />
-                        <NumberPicker android:id="@+id/npFranjaFinMin" android:layout_width="wrap_content" android:layout_height="80dp" />
+                        android:gravity="center_vertical">
+
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnAddFranja"
+                            android:id="@+id/btnMinusDuration"
+                            style="@style/Widget.Material3.Button.IconButton"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            android:layout_marginStart="8dp"
-                            android:padding="0dp"
-                            app:icon="@drawable/ic_add"
-                            app:iconGravity="textStart"
-                            app:iconPadding="0dp"
-                            app:cornerRadius="24dp"
-                            style="@style/Widget.Material3.Button.TonalButton"/>
+                            app:icon="@drawable/ic_minus" />
+
+                        <TextView
+                            android:id="@+id/tvMaxDuration"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="2 horas"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPlusDuration"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            app:icon="@drawable/ic_add" />
                     </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/layoutFranjas"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnToggleFranjas"
-                        style="@style/Widget.Material3.Button.IconButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:visibility="gone"
-                        app:icon="@drawable/ic_back"
-                        android:rotation="-90" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -80,6 +80,11 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
 
     suspend fun deletePastReservations(empresaId: String) {
         val format = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        
+        // Obtener la hora de cierre de la empresa para los puestos flex
+        val empresaDoc = db.collection("empresas").document(empresaId).get().await()
+        val cierreStr = empresaDoc.getString("cierre") ?: "23:59"
+        
         val snapshot = db.collection("empresas")
             .document(empresaId)
             .collection("reservas")
@@ -91,8 +96,22 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
         
         reservations.filter {
             try {
-                val reservaDate = format.parse(it.fechaHora)
-                reservaDate != null && reservaDate.before(now)
+                if (it.tipo == "PUESTO") {
+                    val datePart = it.fechaHora.split(" ")[0]
+                    val reservaEnd = format.parse("$datePart $cierreStr")
+                    reservaEnd != null && reservaEnd.before(now)
+                } else {
+                    val parts = it.fechaHora.split(" - ")
+                    if (parts.size == 2) {
+                        val datePart = parts[0].split(" ")[0]
+                        val endTimeStr = parts[1].trim()
+                        val reservaEnd = format.parse("$datePart $endTimeStr")
+                        reservaEnd != null && reservaEnd.before(now)
+                    } else {
+                        val reservaStart = format.parse(it.fechaHora)
+                        reservaStart != null && reservaStart.before(now)
+                    }
+                }
             } catch (_: Exception) {
                 false
             }
@@ -151,16 +170,31 @@ class ReservationRepository(private val db: FirebaseFirestore = FirebaseFirestor
         } catch (_: Exception) {}
     }
 
-    suspend fun markReservationsAsOrphanedBySala(empresaId: String, idSala: String) {
+    suspend fun markReservationsAsOrphanedBySala(empresaId: String, idSala: String, nombreSala: String? = null, pisoNombre: String? = null) {
         try {
-            val snapshot = db.collection("empresas")
+            // Caso 1: Por ID exacto (Lo más fiable)
+            val snapshotById = db.collection("empresas")
                 .document(empresaId)
                 .collection("reservas")
                 .whereEqualTo("idSala", idSala)
                 .get()
                 .await()
-            for (doc in snapshot) {
+            for (doc in snapshotById) {
                 doc.reference.update("lugarEliminado", true).await()
+            }
+
+            // Caso 2: Fallback por Nombre y Piso (para casos donde el ID falló o cambió)
+            if (nombreSala != null && pisoNombre != null) {
+                val snapshotByName = db.collection("empresas")
+                    .document(empresaId)
+                    .collection("reservas")
+                    .whereEqualTo("nombreSala", nombreSala)
+                    .whereEqualTo("piso", pisoNombre)
+                    .get()
+                    .await()
+                for (doc in snapshotByName) {
+                    doc.reference.update("lugarEliminado", true).await()
+                }
             }
         } catch (_: Exception) {}
     }

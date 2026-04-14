@@ -43,7 +43,15 @@ class PlanoReservasView @JvmOverloads constructor(
 
     private var muros = listOf<Muro>()
     private var elementos = listOf<Sala>()
+    private var focusedSalaId: String? = null
     private val itemStatusColors = mutableMapOf<String, Int>()
+    private var itemOverlaps = mapOf<String, List<Triple<Float, Float, Int>>>()
+
+    private val overlapPaint = Paint().apply {
+        isAntiAlias = true
+        color = Color.RED
+        style = Paint.Style.FILL
+    }
 
     private var onElementClicked: ((Sala) -> Unit)? = null
 
@@ -75,6 +83,7 @@ class PlanoReservasView @JvmOverloads constructor(
         override fun onSingleTapUp(e: MotionEvent): Boolean {
             val world = screenToWorld(e.x, e.y)
             val clicked = elementos.reversed().find { 
+                if (focusedSalaId != null && it.id != focusedSalaId) return@find false
                 if (it.vertices.isNotEmpty()) {
                     isPointInPolygon(world[0], world[1], it)
                 } else {
@@ -90,6 +99,8 @@ class PlanoReservasView @JvmOverloads constructor(
     fun setMuros(l: List<Muro>) { muros = l; invalidate() }
     fun setElementos(l: List<Sala>) { elementos = l; invalidate() }
     fun setStatusColor(idSala: String, color: Int) { itemStatusColors[idSala] = color; invalidate() }
+    fun setOverlaps(overlaps: Map<String, List<Triple<Float, Float, Int>>>) { itemOverlaps = overlaps; invalidate() }
+    fun setFocusedSala(id: String?) { focusedSalaId = id; invalidate() }
     fun setOnElementClickedListener(l: (Sala) -> Unit) { onElementClicked = l }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -113,44 +124,85 @@ class PlanoReservasView @JvmOverloads constructor(
             muroPaint.color = ContextCompat.getColor(context, R.color.aura_on_surface)
             muros.forEach { m ->
                 muroPaint.strokeWidth = m.grosor
+                muroPaint.alpha = if (focusedSalaId != null) 30 else 255
                 canvas.drawLine(m.x1, m.y1, m.x2, m.y2, muroPaint)
             }
+            muroPaint.alpha = 255
 
             elementos.forEach { sala ->
-                val color = itemStatusColors[sala.id] ?: Color.WHITE
-                drawElement(canvas, sala, color)
+                val isFocused = focusedSalaId == null || focusedSalaId == sala.id
+                val color = if (isFocused) {
+                    itemStatusColors[sala.id] ?: Color.WHITE
+                } else {
+                    Color.LTGRAY
+                }
+                drawElement(canvas, sala, color, !isFocused)
             }
         }
     }
 
-    private fun drawElement(canvas: Canvas, sala: Sala, color: Int) {
+    private fun drawElement(canvas: Canvas, sala: Sala, color: Int, isGreyed: Boolean = false) {
         canvas.withSave {
             if (sala.tipo == "PUESTO") {
                 canvas.rotate(sala.rotacion, sala.x + sala.ancho / 2f, sala.y + sala.alto / 2f)
-                drawPuesto(canvas, sala, color)
+                drawPuesto(canvas, sala, color, isGreyed)
             } else if (sala.vertices.isNotEmpty()) {
-                drawPolygonSala(canvas, sala, color)
+                drawPolygonSala(canvas, sala, color, isGreyed)
             } else {
-                drawRectSala(canvas, sala, color)
+                drawRectSala(canvas, sala, color, isGreyed)
             }
         }
     }
 
-    private fun drawRectSala(canvas: Canvas, sala: Sala, color: Int) {
+    private fun drawRectSala(canvas: Canvas, sala: Sala, color: Int, isGreyed: Boolean) {
         reusableRect.set(sala.x, sala.y, sala.x + sala.ancho, sala.y + sala.alto)
-        itemPaint.style = Paint.Style.FILL
-        itemPaint.color = color
-        canvas.drawRect(reusableRect, itemPaint)
+        
+        val overlaps = itemOverlaps[sala.id]
+        if (sala.tipo == "SALA" && !overlaps.isNullOrEmpty()) {
+            val baseColor = if (isGreyed) color else ContextCompat.getColor(context, android.R.color.holo_green_light)
+            drawOverlapsInRect(canvas, reusableRect, overlaps, baseColor)
+        } else {
+            itemPaint.style = Paint.Style.FILL
+            itemPaint.color = color
+            canvas.drawRect(reusableRect, itemPaint)
+        }
 
         itemPaint.style = Paint.Style.STROKE
         itemPaint.color = ContextCompat.getColor(context, R.color.aura_on_surface)
         itemPaint.strokeWidth = 3f
-        canvas.drawRect(reusableRect, itemPaint)
+        canvas.drawRect(sala.x, sala.y, sala.x + sala.ancho, sala.y + sala.alto, itemPaint)
 
-        drawSalaText(canvas, sala)
+        drawSalaText(canvas, sala, isGreyed)
     }
 
-    private fun drawPolygonSala(canvas: Canvas, sala: Sala, color: Int) {
+    private fun drawOverlapsInRect(canvas: Canvas, bounds: RectF, overlaps: List<Triple<Float, Float, Int>>, baseColor: Int) {
+        canvas.withSave {
+            canvas.clipRect(bounds)
+            
+            // Fondo base de la sala
+            itemPaint.style = Paint.Style.FILL
+            itemPaint.color = baseColor
+            canvas.drawRect(bounds, itemPaint)
+            
+            overlaps.forEach { (startPerc, endPerc, type) ->
+                val top = bounds.top + bounds.height() * Math.max(0f, startPerc)
+                val bottom = bounds.top + bounds.height() * Math.min(1f, endPerc)
+                
+                if (bottom > top) {
+                    overlapPaint.color = when (type) {
+                        0 -> ContextCompat.getColor(context, android.R.color.holo_orange_dark)
+                        1 -> ContextCompat.getColor(context, android.R.color.holo_red_light)
+                        2 -> ContextCompat.getColor(context, android.R.color.holo_orange_light)
+                        3 -> ContextCompat.getColor(context, R.color.aura_primary) // Selección actual
+                        else -> Color.GRAY
+                    }
+                    canvas.drawRect(bounds.left, top, bounds.right, bottom, overlapPaint)
+                }
+            }
+        }
+    }
+
+    private fun drawPolygonSala(canvas: Canvas, sala: Sala, color: Int, isGreyed: Boolean) {
         reusablePath.reset()
         reusablePath.moveTo(sala.x + sala.vertices[0].x, sala.y + sala.vertices[0].y)
         for (i in 1 until sala.vertices.size) {
@@ -158,19 +210,55 @@ class PlanoReservasView @JvmOverloads constructor(
         }
         reusablePath.close()
 
-        itemPaint.style = Paint.Style.FILL
-        itemPaint.color = color
-        canvas.drawPath(reusablePath, itemPaint)
+        val overlaps = itemOverlaps[sala.id]
+        if (sala.tipo == "SALA" && !overlaps.isNullOrEmpty()) {
+            val baseColor = if (isGreyed) color else ContextCompat.getColor(context, android.R.color.holo_green_light)
+            drawOverlapsInPath(canvas, reusablePath, overlaps, baseColor)
+        } else {
+            itemPaint.style = Paint.Style.FILL
+            itemPaint.color = color
+            canvas.drawPath(reusablePath, itemPaint)
+        }
 
         itemPaint.style = Paint.Style.STROKE
         itemPaint.color = ContextCompat.getColor(context, R.color.aura_on_surface)
         itemPaint.strokeWidth = 3f
         canvas.drawPath(reusablePath, itemPaint)
 
-        drawSalaText(canvas, sala)
+        drawSalaText(canvas, sala, isGreyed)
     }
 
-    private fun drawPuesto(canvas: Canvas, sala: Sala, color: Int) {
+    private fun drawOverlapsInPath(canvas: Canvas, path: Path, overlaps: List<Triple<Float, Float, Int>>, baseColor: Int) {
+        canvas.withSave {
+            canvas.clipPath(path)
+            
+            val bounds = RectF()
+            path.computeBounds(bounds, true)
+            
+            // Fondo base de la sala
+            itemPaint.style = Paint.Style.FILL
+            itemPaint.color = baseColor
+            canvas.drawPath(path, itemPaint)
+            
+            overlaps.forEach { (startPerc, endPerc, type) ->
+                val top = bounds.top + bounds.height() * Math.max(0f, startPerc)
+                val bottom = bounds.top + bounds.height() * Math.min(1f, endPerc)
+                
+                if (bottom > top) {
+                    overlapPaint.color = when (type) {
+                        0 -> ContextCompat.getColor(context, android.R.color.holo_orange_dark)
+                        1 -> ContextCompat.getColor(context, android.R.color.holo_red_light)
+                        2 -> ContextCompat.getColor(context, android.R.color.holo_orange_light)
+                        3 -> ContextCompat.getColor(context, R.color.aura_primary)
+                        else -> Color.GRAY
+                    }
+                    canvas.drawRect(bounds.left, top, bounds.right, bottom, overlapPaint)
+                }
+            }
+        }
+    }
+
+    private fun drawPuesto(canvas: Canvas, sala: Sala, color: Int, isGreyed: Boolean) {
         val mesaH = sala.alto * 0.6f
         reusableRect.set(sala.x, sala.y, sala.x + sala.ancho, sala.y + mesaH)
 
@@ -204,14 +292,14 @@ class PlanoReservasView @JvmOverloads constructor(
             val tx = sala.x + sala.ancho / 2f
             val ty = sala.y + mesaH / 2f + 8f
             canvas.rotate(-sala.rotacion, tx, ty)
-            textPaint.color = Color.BLACK
+            textPaint.color = if (isGreyed) Color.GRAY else Color.BLACK
             textPaint.textSize = 20f
             canvas.drawText(sala.nombre.replace("Puesto ", ""), tx, ty, textPaint)
         }
     }
 
-    private fun drawSalaText(canvas: Canvas, sala: Sala) {
-        textPaint.color = Color.BLACK
+    private fun drawSalaText(canvas: Canvas, sala: Sala, isGreyed: Boolean) {
+        textPaint.color = if (isGreyed) Color.GRAY else Color.BLACK
         textPaint.textSize = 24f
         val tx = sala.x + sala.ancho/2f
         val ty = sala.y + sala.alto/2f

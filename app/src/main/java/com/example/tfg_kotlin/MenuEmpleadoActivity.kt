@@ -34,7 +34,7 @@ class MenuEmpleadoActivity : BaseMenuActivity() {
         setupObservers()
         setupListeners()
         
-        setupBaseObservers(binding.textProximaSala, binding.cardProximaSala, binding.textProximaPuesto, binding.cardProximaPuesto)
+        setupBaseObservers(binding.textProximaSala, binding.cardProximaSala, binding.textProximaPuesto, binding.cardProximaPuesto, binding.cardContenedorProximas)
     }
 
     private fun setupToolbar() {

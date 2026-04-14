@@ -136,9 +136,9 @@ class PlanoEditorView @JvmOverloads constructor(
         val s = gridValues[Matrix.MSCALE_X]; val tx = gridValues[Matrix.MTRANS_X]; val ty = gridValues[Matrix.MTRANS_Y]
         val left = -tx/s; val top = -ty/s; val right = (width-tx)/s; val bottom = (height-ty)/s
         val step = gridSize 
-        val alpha = if (s < 0.4f) (s / 0.4f * 255).toInt().coerceIn(0, 255) else 255
-        gridPaint.alpha = alpha
-        if (alpha <= 10) return
+        gridPaint.alpha = 255
+        gridPaint.strokeWidth = 1f / s // Mantener grosor constante en pantalla
+        
         var sx = floor(left.toDouble() / step).toFloat() * step
         while (sx <= right) { canvas.drawLine(sx, top, sx, bottom, gridPaint); sx += step }
         var sy = floor(top.toDouble() / step).toFloat() * step
@@ -565,12 +565,17 @@ class PlanoEditorView @JvmOverloads constructor(
                         }
                         it.rotacion = snapPoint
                     } else {
-                        val nx = (initialElementX + world[0] - initialTouchX).snapToGrid()
-                        val ny = (initialElementY + world[1] - initialTouchY).snapToGrid()
-                        val oldX = it.x; val oldY = it.y
-                        it.x = nx; it.y = ny
-                        if (elementos.any { other -> it != other && isOverlapping(it, other) }) {
-                            it.x = oldX; it.y = oldY
+                        // REGLA: Si la sala está cerrada por muros, no se puede MOVER, solo editar (FAB)
+                        if (it.tipo == "SALA" && isSalaEnclosed(it)) {
+                            // No hace nada para arrastrar si es una sala cerrada
+                        } else {
+                            val nx = (initialElementX + world[0] - initialTouchX).snapToGrid()
+                            val ny = (initialElementY + world[1] - initialTouchY).snapToGrid()
+                            val oldX = it.x; val oldY = it.y
+                            it.x = nx; it.y = ny
+                            if (elementos.any { other -> it != other && isOverlapping(it, other) }) {
+                                it.x = oldX; it.y = oldY
+                            }
                         }
                     }
                 }
@@ -620,6 +625,15 @@ class PlanoEditorView @JvmOverloads constructor(
                 val poly = findClosedSpace(world[0], world[1])
                 if (poly == null) {
                     Toast.makeText(context, "Pulsa dentro de un recinto cerrado por muros", Toast.LENGTH_SHORT).show()
+                    return
+                }
+
+                // REGLA: No se puede crear una SALA si ya hay PUESTOS en ese recinto
+                val hayPuestos = elementos.any { 
+                    it.tipo == "PUESTO" && isPointInPolygon(it.x + it.ancho/2f, it.y + it.alto/2f, poly) 
+                }
+                if (hayPuestos) {
+                    Toast.makeText(context, "No se puede crear una sala en un área con puestos de trabajo", Toast.LENGTH_SHORT).show()
                     return
                 }
                 val minX = poly.minOf { it.x }; val minY = poly.minOf { it.y }

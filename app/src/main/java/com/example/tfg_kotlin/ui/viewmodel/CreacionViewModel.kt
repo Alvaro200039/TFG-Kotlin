@@ -18,7 +18,7 @@ class CreacionViewModel(
     private val storageRepo: StorageRepository = StorageRepository()
 ) : ViewModel() {
 
-    private val salasBorradas = mutableListOf<String>()
+    private val salasBorradas = mutableListOf<Sala>()
 
     private val _pisos = MutableLiveData<List<Piso>>()
     val pisos: LiveData<List<Piso>> = _pisos
@@ -114,10 +114,16 @@ class CreacionViewModel(
     }
 
     fun syncSalas(nuevasSalas: List<Sala>) {
-        val prevIds = _salas.value?.mapNotNull { it.id } ?: emptyList()
-        val newIds = nuevasSalas.mapNotNull { it.id }
-        salasBorradas.addAll(prevIds - newIds.toSet())
-        salasBorradas.removeAll(newIds)
+        val prevSalas = _salas.value ?: emptyList()
+        val currentIds = nuevasSalas.mapNotNull { it.id }.toSet()
+        
+        // Añadir a borradas las que estaban antes pero no están ahora
+        val borradas = prevSalas.filter { it.id != null && it.id !in currentIds }
+        salasBorradas.addAll(borradas)
+        
+        // Quitar de borradas si se han vuelto a añadir (aunque tengan el mismo ID)
+        salasBorradas.removeAll { it.id in currentIds }
+        
         _salas.value = nuevasSalas.toList()
     }
 
@@ -145,8 +151,7 @@ class CreacionViewModel(
             try {
                 val reservas = reservationRepo.getReservationsByEmpresa(nombreEmpresa)
                 val activeIds = _salas.value?.mapNotNull { it.id } ?: emptyList()
-                val deletedIds = salasBorradas.toList()
-                val affectedRooms = activeIds + deletedIds
+                val affectedRooms = activeIds + salasBorradas.mapNotNull { it.id }
                 
                 val hasReservations = reservas.any { it.idSala in affectedRooms }
                 
@@ -202,9 +207,10 @@ class CreacionViewModel(
                     }
                     
                     // Borrar las salas que el usuario ha quitado, y marcar las reservas asociadas como huérfanas
-                    salasBorradas.toList().forEach { borradaId ->
+                    salasBorradas.toList().forEach { borrada ->
+                        val borradaId = borrada.id ?: return@forEach
                         repository.deleteSala(nombreEmpresa, pisoId, borradaId)
-                        reservationRepo.markReservationsAsOrphanedBySala(nombreEmpresa, borradaId)
+                        reservationRepo.markReservationsAsOrphanedBySala(nombreEmpresa, borradaId, borrada.nombre, piso.nombre)
                     }
                     salasBorradas.clear()
                     

@@ -32,6 +32,10 @@ class GestionHorariosActivity : AppCompatActivity() {
     private var currentCalendarView = Calendar.getInstance()
     private val calendarDates = mutableListOf<Calendar?>()
     private lateinit var calendarAdapter: RecyclerView.Adapter<*>
+    private var currentMaxDuration = 2
+    private var currentStepSize = 0.5f
+
+    private var isBlockedExpanded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,12 +47,11 @@ class GestionHorariosActivity : AppCompatActivity() {
             setupToolbar()
             setupPickers()
             setupWeeklyDays()
-            setupFranjas()
+            setupReservationParams()
             setupCalendar()
             setupSaveButton()
             setupObservers()
 
-            menuViewModel.loadFranjas()
             menuViewModel.loadEmpresaSettings()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -90,6 +93,19 @@ class GestionHorariosActivity : AppCompatActivity() {
                 findViewById<ViewGroup>(R.id.layoutBlockedDates)?.let { container ->
                     updateBlockedDatesList(container)
                 }
+
+                // Load Reservation Params
+                currentStepSize = it.stepSize
+                val b15 = findViewById<MaterialButton>(R.id.btn15m)
+                val b30 = findViewById<MaterialButton>(R.id.btn30m)
+                val b60 = findViewById<MaterialButton>(R.id.btn60m)
+                
+                b15.isChecked = it.stepSize == 0.25f
+                b30.isChecked = it.stepSize == 0.5f
+                b60.isChecked = it.stepSize == 1.0f
+
+                currentMaxDuration = it.maxDuration
+                findViewById<TextView>(R.id.tvMaxDuration).text = getString(R.string.label_x_horas, it.maxDuration)
             }
         }
 
@@ -99,6 +115,14 @@ class GestionHorariosActivity : AppCompatActivity() {
 
         menuViewModel.error.observe(this) { msg ->
             if (msg.isNotEmpty()) Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        menuViewModel.settingsSaveStatus.observe(this) { success ->
+            if (success) {
+                Toast.makeText(this, "Configuración guardada", Toast.LENGTH_SHORT).show()
+                menuViewModel.clearSettingsSaveStatus()
+                finish()
+            }
         }
     }
 
@@ -118,9 +142,7 @@ class GestionHorariosActivity : AppCompatActivity() {
         
         val pickers = listOf(
             R.id.npAperturaHora, R.id.npAperturaMin,
-            R.id.npCierreHora, R.id.npCierreMin,
-            R.id.npFranjaIniHora, R.id.npFranjaIniMin,
-            R.id.npFranjaFinHora, R.id.npFranjaFinMin
+            R.id.npCierreHora, R.id.npCierreMin
         )
 
         pickers.forEach { id ->
@@ -163,105 +185,41 @@ class GestionHorariosActivity : AppCompatActivity() {
         }
     }
 
-    private var isFranjasExpanded = false
-    private var isBlockedExpanded = false
+    private fun setupReservationParams() {
+        val b15 = findViewById<MaterialButton>(R.id.btn15m)
+        val b30 = findViewById<MaterialButton>(R.id.btn30m)
+        val b60 = findViewById<MaterialButton>(R.id.btn60m)
+        val tvMax = findViewById<TextView>(R.id.tvMaxDuration)
+        val btnMinus = findViewById<MaterialButton>(R.id.btnMinusDuration)
+        val btnPlus = findViewById<MaterialButton>(R.id.btnPlusDuration)
 
-    private fun setupFranjas() {
-        val layoutFranjas = findViewById<LinearLayout>(R.id.layoutFranjas)
-        val btnAdd = findViewById<MaterialButton>(R.id.btnAddFranja)
-        val btnToggle = findViewById<MaterialButton>(R.id.btnToggleFranjas)
-        
-        val pkIniHora = findViewById<NumberPicker>(R.id.npFranjaIniHora)
-        val pkIniMin = findViewById<NumberPicker>(R.id.npFranjaIniMin)
-        val pkFinHora = findViewById<NumberPicker>(R.id.npFranjaFinHora)
-        val pkFinMin = findViewById<NumberPicker>(R.id.npFranjaFinMin)
+        val precisionButtons = listOf(b15, b30, b60)
 
-        menuViewModel.franjas.observe(this) { franjas ->
-            layoutFranjas.removeAllViews()
-            
-            val displayList = if (isFranjasExpanded) franjas else franjas.take(2)
-            
-            displayList.forEach { franja ->
-                val tv = TextView(this).apply {
-                    text = franja
-                    textSize = 16f
-                    setPadding(16, 12, 16, 12)
-                    setOnClickListener {
-                        MaterialAlertDialogBuilder(this@GestionHorariosActivity)
-                            .setTitle(getString(R.string.title_eliminar_franja))
-                            .setMessage(getString(R.string.msg_confirmar_eliminar_franja, franja))
-                            .setPositiveButton(getString(R.string.btn_si)) { _, _ -> menuViewModel.removeFranja(franja) }
-                            .setNegativeButton(getString(R.string.btn_no), null)
-                            .show()
-                    }
+        precisionButtons.forEach { btn ->
+            btn.setOnClickListener {
+                precisionButtons.forEach { it.isChecked = false }
+                btn.isChecked = true
+                currentStepSize = when (btn.id) {
+                    R.id.btn15m -> 0.25f
+                    R.id.btn30m -> 0.5f
+                    R.id.btn60m -> 1.0f
+                    else -> 0.5f
                 }
-                layoutFranjas.addView(tv)
-            }
-
-            if (franjas.size > 2) {
-                btnToggle.visibility = View.VISIBLE
-                btnToggle.rotation = if (isFranjasExpanded) 90f else -90f
-            } else {
-                btnToggle.visibility = View.GONE
             }
         }
 
-        btnToggle.setOnClickListener {
-            isFranjasExpanded = !isFranjasExpanded
-            menuViewModel.franjas.value?.let { franjas ->
-                layoutFranjas.removeAllViews()
-                val displayList = if (isFranjasExpanded) franjas else franjas.take(2)
-                displayList.forEach { franja ->
-                    val tv = TextView(this).apply {
-                        text = franja
-                        textSize = 16f
-                        setPadding(16, 12, 16, 12)
-                        setOnClickListener {
-                            MaterialAlertDialogBuilder(this@GestionHorariosActivity)
-                                .setTitle(getString(R.string.title_eliminar_franja))
-                                .setMessage(getString(R.string.msg_confirmar_eliminar_franja, franja))
-                                .setPositiveButton(getString(R.string.btn_si)) { _, _ -> menuViewModel.removeFranja(franja) }
-                                .setNegativeButton(getString(R.string.btn_no), null)
-                                .show()
-                        }
-                    }
-                    layoutFranjas.addView(tv)
-                }
-                btnToggle.rotation = if (isFranjasExpanded) 90f else -90f
+        btnMinus.setOnClickListener {
+            if (currentMaxDuration > 1) {
+                currentMaxDuration--
+                tvMax.text = getString(R.string.label_x_horas, currentMaxDuration)
             }
         }
 
-        btnAdd.setOnClickListener {
-            val h1 = pkIniHora.value
-            val m1 = pkIniMin.value
-            val h2 = pkFinHora.value
-            val m2 = pkFinMin.value
-
-            val startTime = h1 * 60 + m1
-            val endTime = h2 * 60 + m2
-
-            val apH = findViewById<NumberPicker>(R.id.npAperturaHora).value
-            val apM = findViewById<NumberPicker>(R.id.npAperturaMin).value
-            val ciH = findViewById<NumberPicker>(R.id.npCierreHora).value
-            val ciM = findViewById<NumberPicker>(R.id.npCierreMin).value
-
-            val officeStart = apH * 60 + apM
-            val officeEnd = ciH * 60 + ciM
-
-            if (startTime < officeStart || endTime > officeEnd) {
-                val officeRange = String.format(Locale.getDefault(), "%02d:%02d-%02d:%02d", apH, apM, ciH, ciM)
-                Toast.makeText(this, "Fuera del horario de oficina: $officeRange", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
+        btnPlus.setOnClickListener {
+            if (currentMaxDuration < 12) {
+                currentMaxDuration++
+                tvMax.text = getString(R.string.label_x_horas, currentMaxDuration)
             }
-
-            if (startTime >= endTime) {
-                Toast.makeText(this, "Rango de franja inválido", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val t1 = String.format(Locale.getDefault(), "%02d:%02d", h1, m1)
-            val t2 = String.format(Locale.getDefault(), "%02d:%02d", h2, m2)
-            menuViewModel.addFranja("$t1-$t2")
         }
     }
 
@@ -419,10 +377,10 @@ class GestionHorariosActivity : AppCompatActivity() {
                 apertura = apertura,
                 cierre = cierre,
                 diasApertura = selectedWeeklyDays.toList().sorted(),
-                diasBloqueados = blockedDates.toList().sorted()
+                diasBloqueados = blockedDates.toList().sorted(),
+                stepSize = currentStepSize,
+                maxDuration = currentMaxDuration
             )
-            
-            Toast.makeText(this, "Configuración guardada", Toast.LENGTH_SHORT).show()
         }
     }
 }

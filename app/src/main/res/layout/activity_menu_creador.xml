@@ -63,148 +63,186 @@
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
             android:alpha="0.9"/>
-
-        <!-- Tarjetas de Próximas Reservas -->
+        <!-- Super-Tarjeta de Actividad Próxima -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardProximaSala"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="32dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorOutline"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_proxima_sala_caps"
-                    android:textSize="11sp"
-                    android:letterSpacing="0.1"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-                <TextView
-                    android:id="@+id/textProximaSala"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:text="Sala de Juntas - 12:00" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardProximaPuesto"
+            android:id="@+id/cardContenedorProximas"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
+            android:visibility="gone"
             app:cardCornerRadius="32dp"
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
             app:strokeColor="?attr/colorOutline"
             app:cardBackgroundColor="?attr/colorSurfaceVariant">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_proximo_puesto_caps"
-                    android:textSize="11sp"
-                    android:letterSpacing="0.1"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-                <TextView
-                    android:id="@+id/textProximaPuesto"
+                android:padding="8dp">
+
+                <!-- Sección: Sala -->
+                <LinearLayout
+                    android:id="@+id/cardProximaSala"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:visibility="gone"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_proxima_sala_caps"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                    <TextView
+                        android:id="@+id/textProximaSala"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Sala de Juntas - 12:00" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/dividerAlertas1"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="?attr/colorOutlineVariant"
+                    android:alpha="0.2"
+                    android:visibility="gone"/>
+
+                <!-- Sección: Puesto -->
+                <LinearLayout
+                    android:id="@+id/cardProximaPuesto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:visibility="gone"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_proximo_puesto_caps"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.1"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                    <TextView
+                        android:id="@+id/textProximaPuesto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Mesa 4 - 08:00" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/dividerAlertas2"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:background="?attr/colorOutlineVariant"
+                    android:alpha="0.3" />
+
+                <!-- Botón integrado: Ver reservas -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnVerReservas"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/btn_ver_reservas"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    tools:text="Mesa 4 - 08:00" />
+                    android:textColor="?attr/colorPrimary"
+                    app:icon="@drawable/ic_chevron_right"
+                    app:iconGravity="textEnd"
+                    app:iconPadding="8dp" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Matriz de Gestión (2x2) -->
         <LinearLayout
-            android:id="@+id/botones"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:baselineAligned="false"
+            android:orientation="vertical"
             android:layout_marginTop="16dp">
 
-            <!-- Botón: Nueva reserva -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnNuevaReserva"
-                android:layout_width="0dp"
-                android:layout_height="70dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="@string/btn_nueva_reserva"
-                android:textStyle="bold"
-                app:cornerRadius="16dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="false">
 
-            <!-- Botón: Crear/editar salas -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEditarSalas"
-                android:layout_width="0dp"
-                android:layout_height="70dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:text="@string/btn_crear_editar_estancias"
-                android:textStyle="bold"
-                app:cornerRadius="16dp" />
+                <!-- Botón: Nueva reserva -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNuevaReserva"
+                    android:layout_width="0dp"
+                    android:layout_height="70dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/btn_nueva_reserva"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp" />
+
+                <!-- Botón: Crear/editar salas -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEditarSalas"
+                    android:layout_width="0dp"
+                    android:layout_height="70dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_crear_editar_estancias"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:baselineAligned="false">
+
+                <!-- Botón: Editar horarios -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFranjas"
+                    android:layout_width="0dp"
+                    android:layout_height="70dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/btn_editar_horarios"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp" />
+
+                <!-- Botón: Gestionar extras -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnExtras"
+                    android:layout_width="0dp"
+                    android:layout_height="70dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/label_gestionar_extras_amenidades"
+                    android:textStyle="bold"
+                    app:cornerRadius="16dp" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Espaciador flexible para empujar botones centrales -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.3" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFranjas"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="@string/btn_editar_horarios"
-            android:textStyle="bold"
-            app:cornerRadius="16dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.8" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnExtras"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="@string/label_gestionar_extras_amenidades"
-            android:textStyle="bold"
-            app:cornerRadius="16dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.8" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnVerReservas"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="@string/btn_ver_reservas"
-            android:textStyle="bold"
-            app:cornerRadius="16dp" />
 
         <!-- Espaciador flexible para alejar el logout -->
         <View

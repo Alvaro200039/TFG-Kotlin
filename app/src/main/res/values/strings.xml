@@ -38,6 +38,8 @@
     <string name="btn_si">Sí</string>
     <string name="btn_no">No</string>
     <string name="btn_aceptar">Aceptar</string>
+    <string name="btn_aplicar">Aplicar</string>
+    <string name="btn_reset">Reset</string>
     <string name="label_piso">Piso:</string>
     <string name="label_tamano">Tamaño:</string>
     <string name="label_extras">Extras:</string>
@@ -65,6 +67,8 @@
     <!-- CreacionActivity Strings -->
     <string name="err_empresa_no_encontrada">Empresa no encontrada</string>
     <string name="opt_eliminar">Eliminar</string>
+    <string name="opt_editar">Editar</string>
+    <string name="title_opciones_reserva">Opciones de Reserva</string>
     <string name="hint_nuevo_nombre">Nuevo nombre</string>
     <string name="err_empresa_no_definida">Empresa en sesión no definida</string>
     <string name="msg_distribucion_guardada">Distribución guardada correctamente</string>
@@ -175,6 +179,7 @@
     <string name="title_selecciona_fecha_dialog">Selecciona una fecha</string>
     <string name="title_eliminar_franja">Eliminar franja</string>
     <string name="msg_confirmar_eliminar_franja">¿Deseas eliminar la franja %1$s?</string>
+    <string name="label_x_horas">%1$d horas</string>
 
     <!-- Principal -->
     <!-- Programmatic Strings (BaseMenuActivity) -->
@@ -202,4 +207,8 @@
     <string name="theme_system">Igual al sistema</string>
     <string name="theme_light">Modo Claro</string>
     <string name="theme_dark">Modo Oscuro</string>
+    <string name="label_hora_inicio">Inicio: %1$s</string>
+    <string name="label_hora_fin">Fin: %1$s</string>
+    <string name="title_rango_horario">Rango Horario</string>
+    <string name="msg_solapamientos_detectados">Solapamientos detectados:</string>
 </resources>

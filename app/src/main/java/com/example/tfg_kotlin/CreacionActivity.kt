@@ -72,17 +72,20 @@ class CreacionActivity : AppCompatActivity() {
             val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listaDisplay)
             binding.spinnerPisos.setAdapter(adapter)
             
-            // Si el piso actual ya existe, seleccionarlo en el desplegable
+            // Si el piso actual ya existe, seleccionarlo (manteniendo el trigger táctil sin texto)
             val current = viewModel.pisoActual.value
             if (current?.id != null) {
                 val index = pisos.indexOfFirst { it.id == current.id }
                 if (index != -1) {
-                    binding.spinnerPisos.setText(listaDisplay[index], false)
+                    binding.spinnerPisos.setText("", false) // Solo queremos ver la flecha
                 }
             } else {
-                // Seleccionar "Nuevo Piso" (último elemento)
-                binding.spinnerPisos.setText(listaDisplay.last(), false)
+                binding.spinnerPisos.setText("", false)
             }
+            
+            // Configurar el desplegable para que ocupe todo el ancho anclándose a la barra superior
+            binding.spinnerPisos.setDropDownAnchor(R.id.my_toolbar)
+            binding.spinnerPisos.dropDownWidth = android.view.ViewGroup.LayoutParams.MATCH_PARENT
         }
 
         viewModel.pisoActual.observe(this) { piso ->
@@ -90,8 +93,16 @@ class CreacionActivity : AppCompatActivity() {
             if (binding.etNombrePiso.text.toString() != (piso?.nombre ?: "")) {
                 binding.etNombrePiso.setText(piso?.nombre ?: "")
             }
+            
             piso?.let {
                 binding.planoEditor.setMuros(it.muros)
+                
+                // Actualizar etiqueta del botón de eliminación/reset
+                if (it.id != null) {
+                    binding.tvLabelEliminar.text = "Borrar Piso"
+                } else {
+                    binding.tvLabelEliminar.text = "Reset"
+                }
             }
         }
 
@@ -289,6 +300,26 @@ class CreacionActivity : AppCompatActivity() {
         
         if (esHerramienta) {
             activeTool = modo
+            // Actualizar Icono y Texto del botón de herramientas para reflejar la selección actual
+            when (modo) {
+                com.example.tfg_kotlin.ui.view.PlanoEditorView.EditorMode.DRAW_WALL -> {
+                    binding.btnTools.setIconResource(R.drawable.ic_wall)
+                    binding.tvTools.text = getString(R.string.label_muros)
+                }
+                com.example.tfg_kotlin.ui.view.PlanoEditorView.EditorMode.ADD_SALA -> {
+                    binding.btnTools.setIconResource(R.drawable.ic_meeting_room)
+                    binding.tvTools.text = getString(R.string.label_sala)
+                }
+                com.example.tfg_kotlin.ui.view.PlanoEditorView.EditorMode.ADD_PUESTO -> {
+                    binding.btnTools.setIconResource(R.drawable.ic_puesto)
+                    binding.tvTools.text = getString(R.string.label_puesto)
+                }
+                else -> {}
+            }
+        } else {
+            // Resetear al icono y texto original de "Herramientas"
+            binding.btnTools.setIconResource(R.drawable.ic_add)
+            binding.tvTools.text = getString(R.string.label_herramientas)
         }
     }
     

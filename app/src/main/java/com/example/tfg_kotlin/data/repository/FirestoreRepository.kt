@@ -28,8 +28,24 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
         if (snapshot.isEmpty) return null
         
         val empresaRef = snapshot.documents[0].reference.parent.parent ?: return null
-        val empresaDoc = empresaRef.get().await()
-        return empresaDoc.toObject(Empresa::class.java)?.apply { nombre = empresaDoc.id }
+        val doc = empresaRef.get().await()
+        if (!doc.exists()) return null
+        
+        return try {
+            doc.toObject(Empresa::class.java)?.apply { this.nombre = doc.id }
+        } catch (e: Exception) {
+            Empresa(
+                cif = doc.getString("cif") ?: "",
+                dominio = doc.getString("dominio") ?: "",
+                nombre = doc.id,
+                apertura = doc.getString("apertura") ?: "08:00",
+                cierre = doc.getString("cierre") ?: "20:00",
+                diasApertura = (doc.get("diasApertura") as? List<Number>)?.map { it.toInt() } ?: listOf(1, 2, 3, 4, 5),
+                diasBloqueados = (doc.get("diasBloqueados") as? List<String>) ?: emptyList(),
+                stepSize = doc.getDouble("stepSize")?.toFloat() ?: 0.5f,
+                maxDuration = doc.getLong("maxDuration")?.toInt() ?: 2
+            )
+        }
     }
 
     suspend fun getPisosByEmpresa(nombreEmpresa: String): List<Piso> {
@@ -71,7 +87,23 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
 
     suspend fun getEmpresaByNombre(nombre: String): Empresa? {
         val doc = db.collection("empresas").document(nombre).get().await()
-        return if (doc.exists()) doc.toObject(Empresa::class.java)?.apply { this.nombre = doc.id } else null
+        if (!doc.exists()) return null
+        
+        return try {
+            doc.toObject(Empresa::class.java)?.apply { this.nombre = doc.id }
+        } catch (e: Exception) {
+            Empresa(
+                cif = doc.getString("cif") ?: "",
+                dominio = doc.getString("dominio") ?: "",
+                nombre = doc.id,
+                apertura = doc.getString("apertura") ?: "08:00",
+                cierre = doc.getString("cierre") ?: "20:00",
+                diasApertura = (doc.get("diasApertura") as? List<Number>)?.map { it.toInt() } ?: listOf(1, 2, 3, 4, 5),
+                diasBloqueados = (doc.get("diasBloqueados") as? List<String>) ?: emptyList(),
+                stepSize = doc.getDouble("stepSize")?.toFloat() ?: 0.5f,
+                maxDuration = doc.getLong("maxDuration")?.toInt() ?: 2
+            )
+        }
     }
 
     suspend fun addFranja(empresaId: String, franjaId: String): Boolean {
@@ -145,6 +177,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
     suspend fun saveSala(empresaId: String, pisoId: String, sala: Sala): Boolean {
         return try {
             val docId = sala.id ?: db.collection("empresas").document(empresaId).collection("pisos").document(pisoId).collection("salas").document().id
+            sala.id = docId
             db.collection("empresas")
                 .document(empresaId)
                 .collection("pisos")
