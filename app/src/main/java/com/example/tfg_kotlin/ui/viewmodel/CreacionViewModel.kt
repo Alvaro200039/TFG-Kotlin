@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -17,6 +18,13 @@ class CreacionViewModel(
     private val reservationRepo: ReservationRepository = ReservationRepository(),
     private val storageRepo: StorageRepository = StorageRepository()
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "CreacionViewModel"
+    }
+
+    private val empresaId: String?
+        get() = Sesion.datos?.empresa?.nombre
 
     private val salasBorradas = mutableListOf<Sala>()
 
@@ -37,10 +45,10 @@ class CreacionViewModel(
 
 
     fun loadPisos(action: String? = null, selectedPisoId: String? = null) {
-        val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                val listaPisos = repository.getPisosByEmpresa(nombreEmpresa)
+                val listaPisos = repository.getPisosByEmpresa(eId)
                 _pisos.value = listaPisos
                 
                 // Si no hay acción específica, creamos un piso nuevo por defecto al entrar
@@ -82,11 +90,11 @@ class CreacionViewModel(
     }
 
     private fun loadSalas(piso: Piso) {
-        val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         val pisoId = piso.id ?: return
         viewModelScope.launch {
             try {
-                val listaSalas = repository.getSalasByPiso(nombreEmpresa, pisoId)
+                val listaSalas = repository.getSalasByPiso(eId, pisoId)
                 _salas.value = listaSalas
             } catch (e: Exception) {
                 _error.value = "Error al cargar salas"
@@ -140,7 +148,7 @@ class CreacionViewModel(
 
     fun verificarReservasYGuardar(imageBytes: ByteArray? = null) {
         val pisoId = _pisoActual.value?.id
-        val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         
         if (pisoId == null) {
             guardarDistribucion(imageBytes)
@@ -149,7 +157,7 @@ class CreacionViewModel(
 
         viewModelScope.launch {
             try {
-                val reservas = reservationRepo.getReservationsByEmpresa(nombreEmpresa)
+                val reservas = reservationRepo.getReservationsByEmpresa(eId)
                 val activeIds = _salas.value?.mapNotNull { it.id } ?: emptyList()
                 val affectedRooms = activeIds + salasBorradas.mapNotNull { it.id }
                 
@@ -168,7 +176,7 @@ class CreacionViewModel(
 
     fun guardarDistribucion(imageBytes: ByteArray? = null) {
         var piso = _pisoActual.value
-        val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         
         if (piso == null) {
             val cif = Sesion.datos?.empresa?.cif ?: ""
@@ -184,33 +192,33 @@ class CreacionViewModel(
                 // Invocando a repository.savePiso y repository.saveSala
                 // Por ahora simplificamos a una sola llamada si el repo lo permite o varias
                 
-                val pisoId = repository.savePiso(nombreEmpresa, piso)
+                val pisoId = repository.savePiso(eId, piso)
                 if (pisoId != null) {
                     piso.id = pisoId
 
                     // Subir imagen si existe
                     if (imageBytes != null) {
-                        val imageUrl = storageRepo.uploadPisoImagen(nombreEmpresa, pisoId, imageBytes)
+                        val imageUrl = storageRepo.uploadPisoImagen(eId, pisoId, imageBytes)
                         if (imageUrl != null) {
                             piso.imagenUrl = imageUrl
-                            repository.savePiso(nombreEmpresa, piso) // Actualizar con URL
+                            repository.savePiso(eId, piso) // Actualizar con URL
                         }
                     }
 
                     // Guardar cada sala activa
                     salas.forEach { sala ->
                         sala.idPiso = pisoId
-                        repository.saveSala(nombreEmpresa, pisoId, sala)
+                        repository.saveSala(eId, pisoId, sala)
                         if (sala.id != null) {
-                            reservationRepo.cascadeUpdateSala(nombreEmpresa, sala.id!!, sala.nombre, piso.nombre)
+                            reservationRepo.cascadeUpdateSala(eId, sala.id!!, sala.nombre, piso.nombre)
                         }
                     }
                     
                     // Borrar las salas que el usuario ha quitado, y marcar las reservas asociadas como huérfanas
                     salasBorradas.toList().forEach { borrada ->
                         val borradaId = borrada.id ?: return@forEach
-                        repository.deleteSala(nombreEmpresa, pisoId, borradaId)
-                        reservationRepo.markReservationsAsOrphanedBySala(nombreEmpresa, borradaId, borrada.nombre, piso.nombre)
+                        repository.deleteSala(eId, pisoId, borradaId)
+                        reservationRepo.markReservationsAsOrphanedBySala(eId, borradaId, borrada.nombre, piso.nombre)
                     }
                     salasBorradas.clear()
                     
@@ -220,17 +228,18 @@ class CreacionViewModel(
                     _saveStatus.value = false
                 }
             } catch (e: Exception) {
-                _error.value = "Error al guardar: ${e.message}"
+                Log.e(TAG, "Error saving distribution", e)
+                _error.value = "Error al guardar distribución"
                 _saveStatus.value = false
             }
         }
     }
 
     fun verificarReservasYEliminarPiso(piso: Piso) {
-        val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                val reservas = reservationRepo.getReservationsByFloor(nombreEmpresa, piso.nombre)
+                val reservas = reservationRepo.getReservationsByFloor(eId, piso.nombre)
                 if (reservas.isNotEmpty()) {
                     _confirmacionRequeridaEliminar.value = piso
                 } else {
@@ -243,7 +252,7 @@ class CreacionViewModel(
     }
 
     fun eliminarPiso(piso: Piso) {
-        val nombreEmpresa = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         val pisoId = piso.id ?: return
         viewModelScope.launch {
             try {
@@ -252,9 +261,9 @@ class CreacionViewModel(
                     storageRepo.deletePisoImagen(piso.imagenUrl!!)
                 }
 
-                if (repository.deletePiso(nombreEmpresa, pisoId)) {
+                if (repository.deletePiso(eId, pisoId)) {
                     // Marcar reservas como huérfanas
-                    reservationRepo.markReservationsAsOrphanedByFloor(nombreEmpresa, piso.nombre)
+                    reservationRepo.markReservationsAsOrphanedByFloor(eId, piso.nombre)
                     _confirmacionRequeridaEliminar.value = null
                     loadPisos()
                 }

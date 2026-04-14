@@ -1,6 +1,7 @@
 package com.example.tfg_kotlin
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -12,6 +13,10 @@ class GestionExtrasActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityGestionExtrasBinding
     private val viewModel: MenuViewModel by viewModels()
+    
+    companion object {
+        private const val TAG = "GestionExtrasActivity"
+    }
     
     private val extrasSalas = mutableListOf<String>()
     private val extrasPuestos = mutableListOf<String>()
@@ -55,7 +60,10 @@ class GestionExtrasActivity : AppCompatActivity() {
         }
 
         viewModel.error.observe(this) { msg ->
-            if (msg.isNotEmpty()) Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            if (msg.isNotEmpty()) {
+                Log.e(TAG, "Error from ViewModel: $msg")
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -89,7 +97,7 @@ class GestionExtrasActivity : AppCompatActivity() {
                 extrasSalas = extrasSalas.toList(),
                 extrasPuestos = extrasPuestos.toList()
             )
-            Toast.makeText(this, "Amenidades actualizadas", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_amenidades_actualizadas), Toast.LENGTH_SHORT).show()
             finish()
         }
     }

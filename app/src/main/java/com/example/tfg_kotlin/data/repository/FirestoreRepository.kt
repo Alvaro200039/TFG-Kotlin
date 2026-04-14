@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin.data.repository
 
+import android.util.Log
 import com.example.tfg_kotlin.data.model.Empresa
 import com.example.tfg_kotlin.data.model.FranjaHoraria
 import com.example.tfg_kotlin.data.model.Piso
@@ -9,6 +10,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
+    companion object {
+        private const val TAG = "FirestoreRepository"
+    }
 
     suspend fun getUsuarioByEmail(email: String): Usuario? {
         val snapshot = db.collectionGroup("usuarios")
@@ -34,6 +38,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
         return try {
             doc.toObject(Empresa::class.java)?.apply { this.nombre = doc.id }
         } catch (e: Exception) {
+            Log.e(TAG, "Error parsing Empresa ${doc.id}", e)
             Empresa(
                 cif = doc.getString("cif") ?: "",
                 dominio = doc.getString("dominio") ?: "",
@@ -92,6 +97,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
         return try {
             doc.toObject(Empresa::class.java)?.apply { this.nombre = doc.id }
         } catch (e: Exception) {
+            Log.e(TAG, "Error parsing Empresa ${doc.id}", e)
             Empresa(
                 cif = doc.getString("cif") ?: "",
                 dominio = doc.getString("dominio") ?: "",
@@ -115,7 +121,8 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(mapOf("activo" to true))
                 .await()
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(TAG, "Error adding franja $franjaId", e)
             false
         }
     }
@@ -129,7 +136,8 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .delete()
                 .await()
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting franja $franjaId", e)
             false
         }
     }
@@ -155,7 +163,7 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 ref.id
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error saving piso", e)
             null
         }
     }
@@ -187,7 +195,8 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(sala)
                 .await()
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in saveSala", e)
             false
         }
     }
@@ -203,7 +212,8 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .delete()
                 .await()
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in deleteSala", e)
             false
         }
     }
@@ -237,7 +247,8 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(empresa)
                 .await()
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in saveEmpresa", e)
             false
         }
     }
@@ -251,7 +262,8 @@ class FirestoreRepository(private val db: FirebaseFirestore = FirebaseFirestore.
                 .set(usuario)
                 .await()
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in createUsuario", e)
             false
         }
     }

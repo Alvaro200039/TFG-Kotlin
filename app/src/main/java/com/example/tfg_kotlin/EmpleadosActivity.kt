@@ -3,6 +3,7 @@ package com.example.tfg_kotlin
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
@@ -27,13 +28,20 @@ import com.example.tfg_kotlin.data.model.Sala
 import com.example.tfg_kotlin.data.model.Piso
 import com.example.tfg_kotlin.data.model.Reserva
 import com.example.tfg_kotlin.data.model.Sesion
+import com.example.tfg_kotlin.data.model.TipoElemento
 import com.example.tfg_kotlin.databinding.ActivityEmpleadosBinding
 import com.example.tfg_kotlin.ui.viewmodel.EmpleadosViewModel
+import com.example.tfg_kotlin.util.DateFormats
 import com.google.android.material.snackbar.Snackbar
 import androidx.activity.addCallback
 import java.util.*
 
+
 class EmpleadosActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "EmpleadosActivity"
+    }
 
     private lateinit var binding: ActivityEmpleadosBinding
     private val viewModel: EmpleadosViewModel by viewModels()
@@ -44,6 +52,7 @@ class EmpleadosActivity : AppCompatActivity() {
     private var editReservaId: String? = null
     private var editOriginalTime: String? = null
     private var editFocusedSalaId: String? = null
+    private var cachedSelectedPiso: Piso? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,9 +135,9 @@ class EmpleadosActivity : AppCompatActivity() {
                         val currentTime = nowCal.get(Calendar.HOUR_OF_DAY) + nowCal.get(Calendar.MINUTE)/60f
                         val tDate = if (currentTime >= closureTime) {
                             nowCal.add(Calendar.DAY_OF_YEAR, 1)
-                            java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(nowCal.time)
+                            DateFormats.dayFormat.format(nowCal.time)
                         } else {
-                            java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(nowCal.time)
+                            DateFormats.dayFormat.format(nowCal.time)
                         }
                         viewModel.updateFecha(tDate)
                         tDate
@@ -176,7 +185,7 @@ class EmpleadosActivity : AppCompatActivity() {
                         viewModel.updateRange(sVal, defaultEnd)
                     }
                 } else {
-                    val hoyStr = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                    val hoyStr = DateFormats.dayFormat.format(Date())
                     
                     val initialStart = if (dateToUse == hoyStr) maxOf(start, nextSlot) else start
                     val initialEnd = minOf(initialStart + currentMaxDuration, end)
@@ -249,6 +258,35 @@ class EmpleadosActivity : AppCompatActivity() {
         viewModel.fechaSeleccionada.observe(this) { fecha ->
             binding.btnFecha.text = if (fecha.isEmpty()) getString(R.string.btn_seleccionar_fecha) else getString(R.string.label_fecha_con_valor, fecha)
             actualizarColoresSalas()
+
+            // --- Ajuste de slider según fecha (fusión de observers duplicados) ---
+            val hoyStr = DateFormats.dayFormat.format(Date())
+            val empresa = viewModel.empresa.value ?: return@observe
+            
+            val currentVals = binding.rangeSliderHoras.values
+            if (currentVals.size < 2) return@observe
+            
+            val opening = viewModel.timeToFloat(empresa.apertura)
+            val closing = viewModel.timeToFloat(empresa.cierre)
+            
+            binding.rangeSliderHoras.valueFrom = 0f
+            binding.rangeSliderHoras.valueTo = 24f
+            binding.rangeSliderHoras.valueFrom = opening
+            binding.rangeSliderHoras.valueTo = closing
+            
+            if (fecha == hoyStr) {
+                val now = Calendar.getInstance()
+                val currentTime = now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE)/60f
+                val nextSlot = (Math.ceil(currentTime / empresa.stepSize.toDouble()) * empresa.stepSize).toFloat()
+                
+                if (currentVals[0] < nextSlot) {
+                    val duration = currentVals[1] - currentVals[0]
+                    val nS = nextSlot.coerceAtMost(closing - empresa.stepSize)
+                    val nE = (nS + duration).coerceAtMost(closing)
+                    binding.rangeSliderHoras.values = listOf(nS, nE)
+                    viewModel.updateRange(nS, nE)
+                }
+            }
         }
 
         viewModel.horaSeleccionada.observe(this) { hora ->
@@ -258,7 +296,6 @@ class EmpleadosActivity : AppCompatActivity() {
                 else -> getString(R.string.label_hora_con_valor, hora)
             }
             if (hora != EmpleadosViewModel.SLOT_PUESTO && hora.isNotEmpty()) {
-                // Convertir labels de HH:mm a h:mm a para que se parezca a la imagen del usuario
                 val labels = hora.split(" - ")
                 if (labels.size == 2) {
                     binding.tvRangeLabel.text = "${formatTo12h(labels[0])} - ${formatTo12h(labels[1])}"
@@ -266,7 +303,6 @@ class EmpleadosActivity : AppCompatActivity() {
                     binding.tvRangeLabel.text = hora
                 }
             }
-            // Repintar salas siempre que cambie la hora seleccionada o se abra el slider
             actualizarColoresSalas()
         }
 
@@ -291,38 +327,6 @@ class EmpleadosActivity : AppCompatActivity() {
             binding.planoReservasView.setOverlaps(overlaps)
             actualizarColoresSalas()
         }
-
-        viewModel.fechaSeleccionada.observe(this) { fecha ->
-            val hoyStr = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-            val empresa = viewModel.empresa.value ?: return@observe
-            
-            val currentVals = binding.rangeSliderHoras.values
-            if (currentVals.size < 2) return@observe // Aún no inicializado por completo
-            
-            val opening = viewModel.timeToFloat(empresa.apertura)
-            val closing = viewModel.timeToFloat(empresa.cierre)
-            
-            // Siempre restaurar el rango completo visualmente (de forma segura)
-            binding.rangeSliderHoras.valueFrom = 0f
-            binding.rangeSliderHoras.valueTo = 24f
-            binding.rangeSliderHoras.valueFrom = opening
-            binding.rangeSliderHoras.valueTo = closing
-            
-            if (fecha == hoyStr) {
-                val now = Calendar.getInstance()
-                val currentTime = now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE)/60f
-                val nextSlot = (Math.ceil(currentTime / empresa.stepSize.toDouble()) * empresa.stepSize).toFloat()
-                
-                // Ajustar selección actual para que no esté en el pasado
-                if (currentVals[0] < nextSlot) {
-                    val duration = currentVals[1] - currentVals[0]
-                    val nS = nextSlot.coerceAtMost(closing - empresa.stepSize)
-                    val nE = (nS + duration).coerceAtMost(closing)
-                    binding.rangeSliderHoras.values = listOf(nS, nE)
-                    viewModel.updateRange(nS, nE)
-                }
-            }
-        }
     }
 
     private var currentMaxDuration = 2f
@@ -330,7 +334,10 @@ class EmpleadosActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         binding.spinnerPisos.setOnItemClickListener { _, _, position, _ ->
-            viewModel.pisos.value?.getOrNull(position)?.let { cargarPiso(it) }
+            viewModel.pisos.value?.getOrNull(position)?.let {
+                cachedSelectedPiso = it
+                cargarPiso(it)
+            }
         }
 
         binding.btnReservas.setOnClickListener { mostrarDialogoFecha() }
@@ -367,7 +374,7 @@ class EmpleadosActivity : AppCompatActivity() {
                 var e = slider.values[1]
                 
                 // Restringir a futuro si es hoy
-                val hoyStr = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                val hoyStr = DateFormats.dayFormat.format(Date())
                 if (viewModel.fechaSeleccionada.value == hoyStr) {
                     val empresa = viewModel.empresa.value
                     if (empresa != null) {
@@ -396,7 +403,7 @@ class EmpleadosActivity : AppCompatActivity() {
                 slider.haloTintList = android.content.res.ColorStateList.valueOf(if (isInvalid) 0x1AEE0000 else 0x26888888)
                 
                 if (isInvalid) {
-                    binding.tvLimitWarning.text = "Límite de reserva: ${currentMaxDuration.toInt()}h"
+                    binding.tvLimitWarning.text = getString(R.string.msg_limite_reserva_horas, currentMaxDuration.toInt())
                     binding.tvLimitWarning.visibility = View.VISIBLE
                     binding.tvRangeLabel.setTextColor(Color.RED)
                 } else {
@@ -433,7 +440,7 @@ class EmpleadosActivity : AppCompatActivity() {
         // Pre-rellenar con valores actuales
         val currentVals = binding.rangeSliderHoras.values
         if (currentVals.size < 2) {
-            Toast.makeText(this, "Horario no disponible", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_horario_no_disponible), Toast.LENGTH_SHORT).show()
             return
         }
         val sVal = currentVals[0]
@@ -462,30 +469,30 @@ class EmpleadosActivity : AppCompatActivity() {
                 val limitOpen = viewModel.timeToFloat(opener)
                 val limitClose = viewModel.timeToFloat(closer)
                 
-                val hoyStr = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                val hoyStr = DateFormats.dayFormat.format(Date())
                 val isToday = viewModel.fechaSeleccionada.value == hoyStr
                 val now = Calendar.getInstance()
                 val currentTime = now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE)/60f
 
                 when {
                     f1 < limitOpen || f2 > limitClose -> {
-                        tvError.text = "Fuera del horario de oficina ($opener - $closer)"
+                        tvError.text = getString(R.string.err_fuera_horario_oficina, opener, closer)
                         tvError.visibility = View.VISIBLE
                     }
                     isToday && f1 < currentTime -> {
-                        tvError.text = "La hora de inicio ya ha pasado"
+                        tvError.text = getString(R.string.err_hora_inicio_pasada)
                         tvError.visibility = View.VISIBLE
                     }
                     f2 - f1 > maxDuration -> {
-                        tvError.text = "Excede la duración máxima de $maxDuration horas"
+                        tvError.text = getString(R.string.err_excede_duracion_maxima, maxDuration)
                         tvError.visibility = View.VISIBLE
                     }
                     f2 <= f1 -> {
-                        tvError.text = "La hora de fin debe ser posterior a la de inicio"
+                        tvError.text = getString(R.string.err_hora_fin_posterior)
                         tvError.visibility = View.VISIBLE
                     }
                     f2 - f1 < 0.25f - 0.01f -> {
-                        tvError.text = "La duración mínima es de 15 minutos"
+                        tvError.text = getString(R.string.err_duracion_minima_15)
                         tvError.visibility = View.VISIBLE
                     }
                     else -> {
@@ -611,7 +618,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     .start()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error in toggleSliderHorario", e)
             // Si hay un error, al menos asegurar visibilidad para no bloquear al usuario
             binding.cardSliderHorario.visibility = View.VISIBLE
             binding.cardHoraInfo.visibility = View.VISIBLE
@@ -629,6 +636,7 @@ class EmpleadosActivity : AppCompatActivity() {
     }
 
     private fun getSelectedPiso(): Piso? {
+        if (cachedSelectedPiso != null) return cachedSelectedPiso
         val currentText = binding.spinnerPisos.text.toString()
         return viewModel.pisos.value?.find { it.nombre == currentText }
     }
@@ -660,17 +668,17 @@ class EmpleadosActivity : AppCompatActivity() {
                         currentSelection == editOriginalTime -> {
                             // Opción de confirmar lo mismo o ELIMINAR (User request)
                             MaterialAlertDialogBuilder(this)
-                                .setTitle("Reserva Original")
-                                .setMessage("Estás en el horario original de la reserva. ¿Qué deseas hacer?")
-                                .setPositiveButton("Mantener") { _, _ -> finish() }
-                                .setNegativeButton("Eliminar Reserva") { _, _ ->
+                                .setTitle(R.string.title_reserva_original)
+                                .setMessage(R.string.msg_reserva_original_opciones)
+                                .setPositiveButton(R.string.btn_mantener) { _, _ -> finish() }
+                                .setNegativeButton(R.string.btn_eliminar_reserva) { _, _ ->
                                     viewModel.cancelarReservaDirecto(editReservaId!!)
                                     finish()
                                 }
                                 .show()
                         }
                         hasOverlap -> {
-                            Toast.makeText(this, "Ya tienes una sala reservada en este horario, cancela la otra reserva o elige otro horario", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, getString(R.string.msg_ya_tienes_sala_reservada), Toast.LENGTH_SHORT).show()
                         }
                         else -> {
                             // VERDE: Confirmar cambios
@@ -683,7 +691,7 @@ class EmpleadosActivity : AppCompatActivity() {
 
             if (viewModel.fechaSeleccionada.value.isNullOrEmpty()) {
                 mostrarSnackbarFecha()
-            } else if (sala.tipo == "SALA") {
+            } else if (sala.tipo == TipoElemento.SALA.valor) {
                 val horaActual = viewModel.horaSeleccionada.value ?: ""
                 val noHayHoraValida = horaActual.isNullOrEmpty() || horaActual == EmpleadosViewModel.SLOT_PUESTO
                 
@@ -697,7 +705,7 @@ class EmpleadosActivity : AppCompatActivity() {
                         }
                     } else {
                         // Si no hay horario de empresa cargado todavía
-                        Toast.makeText(this, "Cargando horario de oficina...", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_cargando_horario), Toast.LENGTH_SHORT).show()
                         if (binding.cardSliderHorario.visibility == View.GONE) {
                             toggleSliderHorario()
                         }
@@ -709,7 +717,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     }
                     mostrarDialogoDetallesSala(sala)
                 }
-            } else if (sala.tipo == "PUESTO") {
+            } else if (sala.tipo == TipoElemento.PUESTO.valor) {
                 if (binding.cardSliderHorario.visibility == View.VISIBLE) {
                     toggleSliderHorario()
                 }
@@ -737,7 +745,7 @@ class EmpleadosActivity : AppCompatActivity() {
         binding.planoReservasView.setFocusedSala(editFocusedSalaId)
 
         salas.forEach { sala ->
-            val isPuesto = sala.tipo == "PUESTO"
+            val isPuesto = sala.tipo == TipoElemento.PUESTO.valor
             val salaId = sala.id ?: return@forEach
             
             val colorId = when {
@@ -866,13 +874,13 @@ class EmpleadosActivity : AppCompatActivity() {
                         val dayIndex = if (firstDayOfWeekDate == Calendar.SUNDAY) 6 else firstDayOfWeekDate - 2
                         
                         val isNonLaborable = !currentWeekly.contains(dayIndex)
-                        val dateKey = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date.time)
+                        val dateKey = DateFormats.dayFormat.format(date.time)
                         val isFestivo = currentBlocked.contains(dateKey)
                         
                         val isPast = date.before(today)
                         val isTooFuture = date.after(oneMonthAhead)
                         
-                        val isTodayClosed = dateKey == java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()) && 
+                        val isTodayClosed = dateKey == DateFormats.dayFormat.format(Date()) && 
                                           (Calendar.getInstance().get(Calendar.HOUR_OF_DAY) + Calendar.getInstance().get(Calendar.MINUTE)/60f) >= viewModel.timeToFloat(empresa.cierre)
 
                         val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == 
@@ -986,7 +994,7 @@ class EmpleadosActivity : AppCompatActivity() {
         }
 
         if (finalSlots.isEmpty()) {
-            Toast.makeText(this, "No quedan huecos disponibles para hoy.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_no_quedan_huecos), Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -1032,7 +1040,7 @@ class EmpleadosActivity : AppCompatActivity() {
             tvTituloHora.visibility = View.VISIBLE
         }
         
-        val isPuesto = sala.tipo == "PUESTO"
+        val isPuesto = sala.tipo == TipoElemento.PUESTO.valor
         val fecha = viewModel.fechaSeleccionada.value ?: ""
         val hora = viewModel.horaSeleccionada.value ?: ""
         
@@ -1063,7 +1071,7 @@ class EmpleadosActivity : AppCompatActivity() {
             if (duration > currentMaxDuration) {
                 btnAccion.isEnabled = false
                 btnAccion.alpha = 0.5f
-                tvEstado.text = "Límite de duración excedido"
+                tvEstado.text = getString(R.string.msg_limite_duracion_excedido)
                 tvEstado.setTextColor(Color.RED)
             } else {
                 btnAccion.isEnabled = true
@@ -1073,28 +1081,47 @@ class EmpleadosActivity : AppCompatActivity() {
                 }
             }
         } else if (solapadas.isNotEmpty()) {
-            val nombres = solapadas.joinToString("\n") { 
-                val rRange = viewModel.parseReservaRange(it.fechaHora)
-                val horario = if (rRange != null) " (${viewModel.formatTime(rRange.first)} - ${viewModel.formatTime(rRange.second)})" else ""
-                "${it.nombreUsuario}$horario"
+            if (isPuesto) {
+                if (miReserva != null) {
+                    tvEstado.text = miReserva.nombreUsuario
+                    tvEstado.setTextColor(Color.parseColor("#FFA500")) // Naranja
+                } else {
+                    // "Puesto ocupado" y debajo el nombre
+                    tvEstado.text = getString(R.string.label_puesto_ocupado) + "\n" + solapadas[0].nombreUsuario
+                    tvEstado.setTextColor(Color.RED)
+                }
+            } else {
+                val exactMatch = solapadas.find {
+                    val rRange = viewModel.parseReservaRange(it.fechaHora)
+                    rRange != null && Math.abs(rRange.first - uStart) < 0.01f && Math.abs(rRange.second - uEnd) < 0.01f
+                }
+
+                if (exactMatch != null && solapadas.size == 1) {
+                    if (exactMatch.idUsuario == uid) {
+                        tvEstado.text = exactMatch.nombreUsuario + " (${viewModel.formatTime(uStart)} - ${viewModel.formatTime(uEnd)})"
+                        tvEstado.setTextColor(Color.parseColor("#FFA500")) // Naranja
+                    } else {
+                        tvEstado.text = getString(R.string.label_sala_ocupada) + "\n" + exactMatch.nombreUsuario
+                        tvEstado.setTextColor(Color.RED)
+                    }
+                } else {
+                    val nombres = solapadas.joinToString("\n") {
+                        val rRange = viewModel.parseReservaRange(it.fechaHora)
+                        val horario = if (rRange != null) " (${viewModel.formatTime(rRange.first)} - ${viewModel.formatTime(rRange.second)})" else ""
+                        "${it.nombreUsuario}$horario"
+                    }
+                    tvEstado.text = getString(R.string.msg_solapamientos_detectados) + "\n" + nombres
+                    tvEstado.setTextColor(Color.parseColor("#FFA500"))
+                }
             }
-            tvEstado.text = getString(R.string.msg_solapamientos_detectados) + "\n" + nombres
-            tvEstado.setTextColor(Color.parseColor("#FFA500")) // Naranja para solapamiento parcial
-            
+
             if (miReserva != null) {
                 btnAccion.visibility = View.VISIBLE
                 btnAccion.text = getString(R.string.btn_cancelar_mi_reserva)
                 btnAccion.setOnClickListener {
                     viewModel.cancelReserva(miReserva.id ?: "")
                 }
-            } else if (solapadas.all { it.idUsuario != uid } && !isPuesto) {
-                // Si hay huecos pero hay solapamientos, a lo mejor no dejamos reservar directo o avisamos
-                // Por simplicidad, si hay SOLAPAMIENTO PARCIAL, el botón de reservar podría estar oculto o ser "Intentar reservar"
-                // Pero el usuario pidió ver quién ocupa qué hora.
-                btnAccion.visibility = View.GONE 
-            } else if (isPuesto) {
-                tvEstado.text = getString(R.string.label_ocupada_por, solapadas[0].nombreUsuario)
-                tvEstado.setTextColor(Color.RED)
+            } else {
                 btnAccion.visibility = View.GONE
             }
         } else {
@@ -1108,7 +1135,7 @@ class EmpleadosActivity : AppCompatActivity() {
                     viewModel.reservarSala(sala, viewModel.pisos.value?.find { p -> p.id == sala.idPiso }?.nombre ?: "")
                 }
             } else {
-                tvEstado.text = "Selecciona un horario para ver disponibilidad"
+                tvEstado.text = getString(R.string.msg_selecciona_horario_ver)
                 tvEstado.setTextColor(Color.GRAY)
                 btnAccion.visibility = View.GONE
             }
@@ -1178,9 +1205,5 @@ class EmpleadosActivity : AppCompatActivity() {
             }
             binding.llSliderLabels.addView(tv)
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 }

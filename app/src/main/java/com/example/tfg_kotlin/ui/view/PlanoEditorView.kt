@@ -11,6 +11,7 @@ import android.view.ScaleGestureDetector
 import android.view.View
 import com.example.tfg_kotlin.data.model.Muro
 import com.example.tfg_kotlin.data.model.Sala
+import com.example.tfg_kotlin.data.model.TipoElemento
 import com.example.tfg_kotlin.data.model.Vertex
 import androidx.core.graphics.withClip
 import androidx.core.graphics.withSave
@@ -178,12 +179,12 @@ class PlanoEditorView @JvmOverloads constructor(
             elementPaint.color = when {
                 isOpen -> Color.argb(120, 255, 0, 0) // Rojo transparente para salas abiertas
                 isSelected -> Color.argb(100, 255, 255, 0)
-                sala.tipo == "PUESTO" -> Color.argb(100, 0, 150, 255)
+                sala.tipo == TipoElemento.PUESTO.valor -> Color.argb(100, 0, 150, 255)
                 else -> Color.argb(80, 200, 200, 200)
             }
             
             canvas.withSave {
-                if (sala.tipo == "SALA") {
+                if (sala.tipo == TipoElemento.SALA.valor) {
                     reusablePath.reset()
                     if (sala.vertices.isNotEmpty()) {
                         reusablePath.moveTo(sala.x + sala.vertices[0].x, sala.y + sala.vertices[0].y)
@@ -489,7 +490,7 @@ class PlanoEditorView @JvmOverloads constructor(
     }
 
     private fun isHittingRotationHandle(wx: Float, wy: Float, element: Sala): Boolean {
-        if (element.tipo != "PUESTO") return false
+        if (element.tipo != TipoElemento.PUESTO.valor) return false
         val rect = RectF(element.x, element.y, element.x + element.ancho, element.y + element.alto)
         val rDist = 60f / zoomScale.coerceAtMost(1f)
         val ptsRotateHandle = floatArrayOf(rect.centerX(), rect.top - rDist)
@@ -566,7 +567,7 @@ class PlanoEditorView @JvmOverloads constructor(
                         it.rotacion = snapPoint
                     } else {
                         // REGLA: Si la sala está cerrada por muros, no se puede MOVER, solo editar (FAB)
-                        if (it.tipo == "SALA" && isSalaEnclosed(it)) {
+                        if (it.tipo == TipoElemento.SALA.valor && isSalaEnclosed(it)) {
                             // No hace nada para arrastrar si es una sala cerrada
                         } else {
                             val nx = (initialElementX + world[0] - initialTouchX).snapToGrid()
@@ -624,22 +625,22 @@ class PlanoEditorView @JvmOverloads constructor(
             val element = if (mode == EditorMode.ADD_SALA) {
                 val poly = findClosedSpace(world[0], world[1])
                 if (poly == null) {
-                    Toast.makeText(context, "Pulsa dentro de un recinto cerrado por muros", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.msg_pulsa_recinto_cerrado), Toast.LENGTH_SHORT).show()
                     return
                 }
 
                 // REGLA: No se puede crear una SALA si ya hay PUESTOS en ese recinto
                 val hayPuestos = elementos.any { 
-                    it.tipo == "PUESTO" && isPointInPolygon(it.x + it.ancho/2f, it.y + it.alto/2f, poly) 
+                    it.tipo == TipoElemento.PUESTO.valor && isPointInPolygon(it.x + it.ancho/2f, it.y + it.alto/2f, poly) 
                 }
                 if (hayPuestos) {
-                    Toast.makeText(context, "No se puede crear una sala en un área con puestos de trabajo", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.msg_no_sala_en_area_puestos), Toast.LENGTH_SHORT).show()
                     return
                 }
                 val minX = poly.minOf { it.x }; val minY = poly.minOf { it.y }
                 val maxX = poly.maxOf { it.x }; val maxY = poly.maxOf { it.y }
 
-                val nextSalaNum = (elementos.filter { it.tipo == "SALA" }
+                val nextSalaNum = (elementos.filter { it.tipo == TipoElemento.SALA.valor }
                     .mapNotNull { it.nombre.substringAfter("Sala ", "").toIntOrNull() }
                     .maxOrNull() ?: 0) + 1
 
@@ -648,13 +649,13 @@ class PlanoEditorView @JvmOverloads constructor(
                     x = minX, y = minY,
                     ancho = maxX - minX, alto = maxY - minY,
                     vertices = poly.map { Vertex(it.x - minX, it.y - minY) }.toMutableList(),
-                    tipo = "SALA"
+                    tipo = TipoElemento.SALA.valor
                 )
             } else {
-                val nextPuestoNum = (elementos.filter { it.tipo == "PUESTO" }
+                val nextPuestoNum = (elementos.filter { it.tipo == TipoElemento.PUESTO.valor }
                     .mapNotNull { it.nombre.toIntOrNull() }
                     .maxOrNull() ?: 0) + 1
-                Sala(nombre = "$nextPuestoNum", x = world[0].snapToGrid()-50, y = world[1].snapToGrid()-50, ancho = 100f, alto = 100f, tipo = "PUESTO")
+                Sala(nombre = "$nextPuestoNum", x = world[0].snapToGrid()-50, y = world[1].snapToGrid()-50, ancho = 100f, alto = 100f, tipo = TipoElemento.PUESTO.valor)
             }
             addElement(element)
             onElementMovedOrResized?.invoke(element)
@@ -839,10 +840,10 @@ class PlanoEditorView @JvmOverloads constructor(
         }
     }
 
-    fun hasOpenSalas(): Boolean = elementos.any { it.tipo == "SALA" && !isSalaEnclosed(it) }
+    fun hasOpenSalas(): Boolean = elementos.any { it.tipo == TipoElemento.SALA.valor && !isSalaEnclosed(it) }
 
     private fun isSalaEnclosed(sala: Sala): Boolean {
-        if (sala.tipo == "PUESTO") return true
+        if (sala.tipo == TipoElemento.PUESTO.valor) return true
         if (sala.vertices.isEmpty()) return true 
         
         for (i in sala.vertices.indices) {

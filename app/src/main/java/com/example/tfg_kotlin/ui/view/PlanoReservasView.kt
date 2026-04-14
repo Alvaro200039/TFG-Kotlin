@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import com.example.tfg_kotlin.R
 import com.example.tfg_kotlin.data.model.Muro
 import com.example.tfg_kotlin.data.model.Sala
+import com.example.tfg_kotlin.data.model.TipoElemento
 import kotlin.math.*
 import androidx.core.graphics.withMatrix
 import androidx.core.graphics.withSave
@@ -143,7 +144,7 @@ class PlanoReservasView @JvmOverloads constructor(
 
     private fun drawElement(canvas: Canvas, sala: Sala, color: Int, isGreyed: Boolean = false) {
         canvas.withSave {
-            if (sala.tipo == "PUESTO") {
+            if (sala.tipo == TipoElemento.PUESTO.valor) {
                 canvas.rotate(sala.rotacion, sala.x + sala.ancho / 2f, sala.y + sala.alto / 2f)
                 drawPuesto(canvas, sala, color, isGreyed)
             } else if (sala.vertices.isNotEmpty()) {
@@ -158,7 +159,7 @@ class PlanoReservasView @JvmOverloads constructor(
         reusableRect.set(sala.x, sala.y, sala.x + sala.ancho, sala.y + sala.alto)
         
         val overlaps = itemOverlaps[sala.id]
-        if (sala.tipo == "SALA" && !overlaps.isNullOrEmpty()) {
+        if (sala.tipo == TipoElemento.SALA.valor && !overlaps.isNullOrEmpty()) {
             val baseColor = if (isGreyed) color else ContextCompat.getColor(context, android.R.color.holo_green_light)
             drawOverlapsInRect(canvas, reusableRect, overlaps, baseColor)
         } else {
@@ -211,7 +212,7 @@ class PlanoReservasView @JvmOverloads constructor(
         reusablePath.close()
 
         val overlaps = itemOverlaps[sala.id]
-        if (sala.tipo == "SALA" && !overlaps.isNullOrEmpty()) {
+        if (sala.tipo == TipoElemento.SALA.valor && !overlaps.isNullOrEmpty()) {
             val baseColor = if (isGreyed) color else ContextCompat.getColor(context, android.R.color.holo_green_light)
             drawOverlapsInPath(canvas, reusablePath, overlaps, baseColor)
         } else {

@@ -96,7 +96,7 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        if (!correo.contains("@") || !correo.contains(".")) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
             Toast.makeText(this, getString(R.string.err_correo_invalido), Toast.LENGTH_SHORT).show()
             return
         }

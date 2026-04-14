@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,6 +9,7 @@ import com.example.tfg_kotlin.data.model.Piso
 import com.example.tfg_kotlin.data.model.Reserva
 import com.example.tfg_kotlin.data.model.Sala
 import com.example.tfg_kotlin.data.model.Sesion
+import com.example.tfg_kotlin.data.model.TipoElemento
 import com.example.tfg_kotlin.data.repository.FirestoreRepository
 import com.example.tfg_kotlin.data.repository.ReservationRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -15,8 +17,13 @@ import kotlinx.coroutines.launch
 
 class EmpleadosViewModel : ViewModel() {
     companion object {
+        private const val TAG = "EmpleadosViewModel"
         const val SLOT_PUESTO = "Día completo"
     }
+
+    /** Acceso centralizado al ID de empresa para evitar cadenas de null-safety repetidas. */
+    private val empresaId: String?
+        get() = Sesion.datos?.empresa?.nombre
 
     private val firestore = FirebaseFirestore.getInstance()
     private val firestoreRepo = FirestoreRepository(firestore)
@@ -70,7 +77,7 @@ class EmpleadosViewModel : ViewModel() {
     private var tempBackupReserva: Reserva? = null
 
     fun loadPisos() {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: run {
+        val eId = empresaId ?: run {
             _error.value = "Sesión no válida"
             return
         }
@@ -78,14 +85,14 @@ class EmpleadosViewModel : ViewModel() {
         viewModelScope.launch {
             _loading.value = true
             try {
-                val pisosList = firestoreRepo.getPisosByEmpresa(empresaId)
+                val pisosList = firestoreRepo.getPisosByEmpresa(eId)
                 _pisos.value = pisosList
                 
-                val emp = firestoreRepo.getEmpresaByNombre(empresaId)
+                val emp = firestoreRepo.getEmpresaByNombre(eId)
                 _empresa.value = emp
                 
                 val franjasList = try {
-                    firestoreRepo.getFranjasByEmpresa(empresaId).map { it.hora }.sorted()
+                    firestoreRepo.getFranjasByEmpresa(eId).map { it.hora }.sorted()
                 } catch (_: Exception) {
                     emptyList<String>()
                 }
@@ -95,7 +102,7 @@ class EmpleadosViewModel : ViewModel() {
                 if (_pisos.value.isNullOrEmpty() || _empresa.value == null) {
                     _error.value = "Error al conectar con el servidor"
                 }
-                e.printStackTrace()
+                Log.e(TAG, "Error loading pisos", e)
             } finally {
                 _loading.value = false
             }
@@ -103,10 +110,10 @@ class EmpleadosViewModel : ViewModel() {
     }
 
     fun loadSalas(pisoId: String) {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                _salas.value = firestoreRepo.getSalasByPiso(empresaId, pisoId)
+                _salas.value = firestoreRepo.getSalasByPiso(eId, pisoId)
                 checkAvailability()
             } catch (_: Exception) {
                 _error.value = "Error al cargar salas"
@@ -131,11 +138,11 @@ class EmpleadosViewModel : ViewModel() {
         val fecha = _fechaSeleccionada.value ?: ""
         if (fecha.isEmpty()) return
 
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         
         viewModelScope.launch {
             try {
-                val list = reservationRepo.getReservationsByDay(empresaId, fecha)
+                val list = reservationRepo.getReservationsByDay(eId, fecha)
                 _reservas.value = list
                 calculatePartialOverlaps(list)
             } catch (_: Exception) {
@@ -238,7 +245,7 @@ class EmpleadosViewModel : ViewModel() {
     }
 
     fun reservarSala(sala: Sala, pisoNombre: String) {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         val usuario = Sesion.datos?.usuario ?: return
         val fecha = _fechaSeleccionada.value ?: return
         val hora = _horaSeleccionada.value ?: return
@@ -258,7 +265,7 @@ class EmpleadosViewModel : ViewModel() {
             _loading.value = true
             try {
                 // Obtener todas las reservas del día para verificar solapamientos del usuario
-                val allDayReservations = reservationRepo.getReservationsByDay(empresaId, fecha)
+                val allDayReservations = reservationRepo.getReservationsByDay(eId, fecha)
                 val editId = _editingReservaId.value
                 val myReservations = allDayReservations.filter { 
                     it.idUsuario == usuario.uid && it.tipo == sala.tipo && it.id != editId
@@ -310,12 +317,16 @@ class EmpleadosViewModel : ViewModel() {
                 }
 
                 val totalDuration = finalEnd - finalStart
-                if (totalDuration > (empresa.maxDuration ?: 24) + 0.01f) {
+                if (sala.tipo == TipoElemento.SALA.valor && totalDuration > (empresa.maxDuration ?: 24) + 0.01f) {
                     _error.value = "El límite de tiempo para esta sala ha sido superado. Reduce el tiempo de la reunión o modifica la reserva actual."
                     return@launch
                 }
 
-                val finalFechaHora = "$fecha ${formatTime(finalStart)} - ${formatTime(finalEnd)}"
+                val finalFechaHora = if (sala.tipo == TipoElemento.PUESTO.valor) {
+                    "$fecha $SLOT_PUESTO"
+                } else {
+                    "$fecha ${formatTime(finalStart)} - ${formatTime(finalEnd)}"
+                }
                 
                 val reserva = Reserva(
                     nombreSala = sala.nombre,
@@ -327,15 +338,15 @@ class EmpleadosViewModel : ViewModel() {
                     tipo = sala.tipo
                 )
 
-                val success = reservationRepo.addReservation(empresaId, reserva)
+                val success = reservationRepo.addReservation(eId, reserva)
                 if (success) {
                     // Borrar todas las reservas que han sido absorbidas por la nueva gran reserva
                     for (id in idsToMergeAndDelete) {
-                        reservationRepo.cancelReservation(empresaId, id)
+                        reservationRepo.cancelReservation(eId, id)
                     }
                     // Borrar también la original si veníamos de edición y no estaba ya en la lista
                     editId?.let { 
-                        if (it !in idsToMergeAndDelete) reservationRepo.cancelReservation(empresaId, it) 
+                        if (it !in idsToMergeAndDelete) reservationRepo.cancelReservation(eId, it) 
                     }
 
                     _editingReservaId.value = null
@@ -346,7 +357,8 @@ class EmpleadosViewModel : ViewModel() {
                     _error.value = "No se pudo realizar la reserva"
                 }
             } catch (e: Exception) {
-                _error.value = "Error al reservar: ${e.message}"
+                Log.e(TAG, "Error reserving sala", e)
+                _error.value = "Ha ocurrido un error al reservar. Inténtalo de nuevo."
             } finally {
                 _loading.value = false
             }
@@ -354,10 +366,10 @@ class EmpleadosViewModel : ViewModel() {
     }
 
     fun cancelReserva(reservaId: String) {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                val success = reservationRepo.cancelReservation(empresaId, reservaId)
+                val success = reservationRepo.cancelReservation(eId, reservaId)
                 if (success) {
                     _reservaStatus.value = true
                     checkAvailability()
@@ -365,7 +377,8 @@ class EmpleadosViewModel : ViewModel() {
                     _error.value = "No se pudo cancelar la reserva"
                 }
             } catch (e: Exception) {
-                _error.value = "Error al cancelar: ${e.message}"
+                Log.e(TAG, "Error cancelling reservation", e)
+                _error.value = "Ha ocurrido un error al cancelar. Inténtalo de nuevo."
             }
         }
     }
@@ -396,22 +409,19 @@ class EmpleadosViewModel : ViewModel() {
         _editingReservaId.value = id
     }
 
-    fun clearEditingReservaId() {
-        _editingReservaId.value = null
-    }
-
     fun setFocusedSalaId(id: String?) {
         _focusedSalaId.value = id
     }
 
     fun cancelarReservaDirecto(reservaId: String) {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             _loading.value = true
             try {
-                reservationRepo.cancelReservation(empresaId, reservaId)
+                reservationRepo.cancelReservation(eId, reservaId)
             } catch (e: Exception) {
-                _error.value = "Error al eliminar: ${e.message}"
+                Log.e(TAG, "Error deleting reservation", e)
+                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
             } finally {
                 _loading.value = false
             }

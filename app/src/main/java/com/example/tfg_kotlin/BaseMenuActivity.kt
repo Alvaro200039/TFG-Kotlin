@@ -1,7 +1,9 @@
 package com.example.tfg_kotlin
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.Menu
@@ -13,15 +15,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
 import com.example.tfg_kotlin.data.model.Reserva
+import com.example.tfg_kotlin.data.model.Sesion
+import com.example.tfg_kotlin.data.model.TipoElemento
 import com.example.tfg_kotlin.data.repository.FirestoreRepository
 import com.example.tfg_kotlin.ui.viewmodel.MenuViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 abstract class BaseMenuActivity : AppCompatActivity() {
+
     companion object {
+        private const val TAG = "BaseMenuActivity"
         const val EXTRA_EDIT_RESERVA_ID = "edit_reserva_id"
         const val EXTRA_EDIT_DATE = "edit_date"
         const val EXTRA_EDIT_ROOM_ID = "edit_room_id"
@@ -222,7 +230,7 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                     if (reserva.lugarEliminado) {
                         mostrarConfirmacionEliminarReservaEliminada(reserva)
                     } else {
-                        mostrarDialogoCancelarPuesto(reserva)
+                        mostrarDialogoCancelarReservaSimple(reserva)
                     }
                 }
             } else {
@@ -272,9 +280,7 @@ abstract class BaseMenuActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun mostrarDialogoCancelarPuesto(reserva: Reserva) {
-        mostrarDialogoCancelarReservaSimple(reserva)
-    }
+
 
     private fun mostrarDialogoCancelarReservaSimple(reserva: Reserva) {
         val fhFormateada = formatearFechaHora(reserva.fechaHora)
@@ -327,12 +333,12 @@ abstract class BaseMenuActivity : AppCompatActivity() {
                 return@Observer
             }
 
-            val types = listOf("SALA", "PUESTO")
+            val types = listOf(TipoElemento.SALA, TipoElemento.PUESTO)
             types.forEach { type ->
-                val resInType = reservas.filter { it.tipo == type }
+                val resInType = reservas.filter { it.tipo == type.valor }
                 if (resInType.isNotEmpty()) {
                     layoutReservas.addView(TextView(this).apply {
-                        text = if (type == "SALA") getString(R.string.label_salas_reunion) else getString(R.string.label_puestos_trabajo)
+                        text = if (type == TipoElemento.SALA) getString(R.string.label_salas_reunion) else getString(R.string.label_puestos_trabajo)
                         textSize = 20f
                         setPadding(0, 32, 0, 8)
                         setTextColor(ContextCompat.getColor(context, R.color.enlace))
@@ -391,7 +397,38 @@ abstract class BaseMenuActivity : AppCompatActivity() {
     }
 
     protected fun cargarFranjas() {
-        val intent = android.content.Intent(this, GestionHorariosActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, GestionHorariosActivity::class.java))
+    }
+
+    protected fun handleNuevaReserva() {
+        lifecycleScope.launch {
+            try {
+                val sesion = Sesion.datos ?: return@launch
+                val empresaId = sesion.empresa.nombre
+
+                if (empresaId.isEmpty()) {
+                    Toast.makeText(this@BaseMenuActivity, getString(R.string.err_empresa_no_definida), Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val empresaActualizada = firestoreRepo.getEmpresaByNombre(empresaId)
+                if (empresaActualizada == null) {
+                    Toast.makeText(this@BaseMenuActivity, getString(R.string.err_empresa_no_encontrada), Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                sesion.empresa = empresaActualizada
+
+                val pisos = firestoreRepo.getPisosByEmpresa(empresaId)
+                if (pisos.isNotEmpty()) {
+                    sesion.pisos = listOf(pisos.last())
+                    startActivity(Intent(this@BaseMenuActivity, EmpleadosActivity::class.java))
+                } else {
+                    Toast.makeText(this@BaseMenuActivity, getString(R.string.msg_no_piso_creado), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading pisos for new reservation", e)
+                Toast.makeText(this@BaseMenuActivity, getString(R.string.err_cargar_pisos), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

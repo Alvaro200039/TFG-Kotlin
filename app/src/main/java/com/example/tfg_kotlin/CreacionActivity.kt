@@ -16,6 +16,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.example.tfg_kotlin.data.model.Sesion
 import com.example.tfg_kotlin.data.model.Sala
+import com.example.tfg_kotlin.data.model.TamanoSala
+import com.example.tfg_kotlin.data.model.TipoElemento
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -99,9 +101,9 @@ class CreacionActivity : AppCompatActivity() {
                 
                 // Actualizar etiqueta del botón de eliminación/reset
                 if (it.id != null) {
-                    binding.tvLabelEliminar.text = "Borrar Piso"
+                    binding.tvLabelEliminar.text = getString(R.string.label_borrar_piso)
                 } else {
-                    binding.tvLabelEliminar.text = "Reset"
+                    binding.tvLabelEliminar.text = getString(R.string.btn_reset)
                 }
             }
         }
@@ -151,9 +153,9 @@ class CreacionActivity : AppCompatActivity() {
         viewModel.confirmacionRequerida.observe(this) { requiresConfirmation ->
             if (requiresConfirmation) {
                 MaterialAlertDialogBuilder(this)
-                    .setTitle("¡Aviso Importante!")
-                    .setMessage("Existen empleados con reservas activas en estas salas.\n\nSi continúas, las reservas de las salas eliminadas se marcarán como inválidas en el perfil del usuario, y las de las salas modificadas se actualizarán automáticamente.\n\n¿Estás completamente seguro de aplicar los cambios?")
-                    .setPositiveButton("Sí, aplicar cambios") { _, _ -> viewModel.confirmarGuardado(imagen) }
+                    .setTitle(R.string.title_aviso_importante)
+                    .setMessage(R.string.msg_aviso_reservas_activas)
+                    .setPositiveButton(R.string.btn_si_aplicar_cambios) { _, _ -> viewModel.confirmarGuardado(imagen) }
                     .setNegativeButton(getString(R.string.btn_cancelar), null)
                     .show()
             }
@@ -162,9 +164,9 @@ class CreacionActivity : AppCompatActivity() {
         viewModel.confirmacionRequeridaEliminar.observe(this) { piso ->
             piso?.let {
                 MaterialAlertDialogBuilder(this)
-                    .setTitle("Eliminar Piso con Reservas")
-                    .setMessage("El piso '${it.nombre}' tiene reservas activas.\n\nSi lo eliminas, los usuarios que reservaron verán sus reservas como 'Sitio inexistente' pero se mantendrá el registro de que tenían una reserva.\n\n¿Deseas eliminar el piso de todos modos?")
-                    .setPositiveButton("Sí, eliminar") { _, _ -> viewModel.eliminarPiso(it) }
+                    .setTitle(R.string.title_eliminar_piso_reservas)
+                    .setMessage(getString(R.string.msg_eliminar_piso_reservas, it.nombre))
+                    .setPositiveButton(R.string.btn_si_eliminar) { _, _ -> viewModel.eliminarPiso(it) }
                     .setNegativeButton(getString(R.string.btn_cancelar)) { _, _ -> 
                         // Limpiar el estado de confirmación en el ViewModel si es necesario
                     }
@@ -253,7 +255,7 @@ class CreacionActivity : AppCompatActivity() {
                 val current = viewModel.pisoActual.value
                 if (current?.id != null) {
                     val count = pisos.size + 1
-                    viewModel.crearNuevoPiso("Piso nº $count")
+                    viewModel.crearNuevoPiso(getString(R.string.label_piso_numero, count))
                 }
             }
         }
@@ -345,9 +347,9 @@ class CreacionActivity : AppCompatActivity() {
         } else {
             // Piso nuevo -> Resetear al punto inicial
             val count = (viewModel.pisos.value?.size ?: 0) + 1
-            viewModel.crearNuevoPiso("Piso nº $count")
+            viewModel.crearNuevoPiso(getString(R.string.label_piso_numero, count))
             imagen = null
-            Toast.makeText(this, "Creación reseteada", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_creacion_reseteada), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -386,7 +388,7 @@ class CreacionActivity : AppCompatActivity() {
         // Dynamic Extras based on type
         val checkBoxList = mutableListOf<CheckBox>()
         val sesion = Sesion.datos
-        val configExtras = if (sala.tipo == "SALA") {
+        val configExtras = if (sala.tipo == TipoElemento.SALA.valor) {
             sesion?.empresa?.extrasSalas ?: listOf("WiFi", "Proyector", "Pizarra")
         } else {
             sesion?.empresa?.extrasPuestos ?: listOf("Monitor Dual", "Teclado", "Ratón")
@@ -401,7 +403,7 @@ class CreacionActivity : AppCompatActivity() {
             checkBoxList.add(cb)
         }
 
-        val tamanos = arrayOf("Pequeña", "Mediana", "Grande")
+        val tamanos = TamanoSala.etiquetas()
         spinnerTamano.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, tamanos)
         spinnerTamano.setSelection(tamanos.indexOf(sala.tamano).coerceAtLeast(0))
 

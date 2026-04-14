@@ -2,6 +2,7 @@ package com.example.tfg_kotlin
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,13 +19,19 @@ import androidx.core.view.children
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tfg_kotlin.ui.viewmodel.MenuViewModel
+import com.example.tfg_kotlin.util.DateFormats
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Calendar
 import java.util.Locale
 
+
 class GestionHorariosActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "GestionHorariosActivity"
+    }
 
     private lateinit var menuViewModel: MenuViewModel
     private val blockedDates = mutableSetOf<String>()
@@ -54,8 +61,8 @@ class GestionHorariosActivity : AppCompatActivity() {
 
             menuViewModel.loadEmpresaSettings()
         } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Error al abrir gestión de horarios: ${e.message}", Toast.LENGTH_LONG).show()
+            Log.e(TAG, "Error initializing GestionHorarios", e)
+            Toast.makeText(this, getString(R.string.err_gestion_horarios), Toast.LENGTH_LONG).show()
             finish()
         }
     }
@@ -119,7 +126,7 @@ class GestionHorariosActivity : AppCompatActivity() {
 
         menuViewModel.settingsSaveStatus.observe(this) { success ->
             if (success) {
-                Toast.makeText(this, "Configuración guardada", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_configuracion_guardada), Toast.LENGTH_SHORT).show()
                 menuViewModel.clearSettingsSaveStatus()
                 finish()
             }
@@ -251,7 +258,7 @@ class GestionHorariosActivity : AppCompatActivity() {
                     val dayIndex = if (firstDayOfWeek == Calendar.SUNDAY) 6 else firstDayOfWeek - 2
                     
                     val isNonLaborable = !selectedWeeklyDays.contains(dayIndex)
-                    val dateKey = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date.time)
+                    val dateKey = DateFormats.dayFormat.format(date.time)
                     val isFestivo = blockedDates.contains(dateKey)
 
                     when {
@@ -324,7 +331,7 @@ class GestionHorariosActivity : AppCompatActivity() {
         val btnToggle = findViewById<MaterialButton>(R.id.btnToggleBlocked)
         
         val sortedList = blockedDates.sortedBy { 
-            java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(it)?.time ?: 0L 
+            DateFormats.dayFormat.parse(it)?.time ?: 0L 
         }
 
         val displayList = if (isBlockedExpanded) sortedList else sortedList.take(4)
@@ -336,7 +343,7 @@ class GestionHorariosActivity : AppCompatActivity() {
                 setOnCloseIconClickListener {
                     blockedDates.remove(date)
                     val index = calendarDates.indexOfFirst { 
-                        it != null && java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it.time) == date 
+                        it != null && DateFormats.dayFormat.format(it.time) == date 
                     }
                     if (index != -1) calendarAdapter.notifyItemChanged(index)
                     updateBlockedDatesList(container)

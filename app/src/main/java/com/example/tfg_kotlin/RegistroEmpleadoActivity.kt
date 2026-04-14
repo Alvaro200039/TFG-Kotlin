@@ -82,7 +82,7 @@ class RegistroEmpleadoActivity : AppCompatActivity() {
             return
         }
 
-        if (!correo.contains("@") || !correo.contains(".")) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
             mostrarToast(getString(R.string.err_correo_invalido))
             return
         }

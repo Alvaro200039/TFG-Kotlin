@@ -1,5 +1,6 @@
 package com.example.tfg_kotlin.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -7,18 +8,25 @@ import androidx.lifecycle.viewModelScope
 import com.example.tfg_kotlin.data.model.Empresa
 import com.example.tfg_kotlin.data.model.Reserva
 import com.example.tfg_kotlin.data.model.Sesion
+import com.example.tfg_kotlin.data.model.TipoElemento
 import com.example.tfg_kotlin.data.model.Usuario
 import com.example.tfg_kotlin.data.repository.FirestoreRepository
 import com.example.tfg_kotlin.data.repository.ReservationRepository
+import com.example.tfg_kotlin.util.DateFormats
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
-import java.util.Locale
+
 
 class MenuViewModel : ViewModel() {
+
+    companion object {
+        private const val TAG = "MenuViewModel"
+    }
+
+    private val empresaId: String?
+        get() = Sesion.datos?.empresa?.nombre
 
     private val firestore = FirebaseFirestore.getInstance()
     private val firestoreRepo = FirestoreRepository(firestore)
@@ -72,7 +80,8 @@ class MenuViewModel : ViewModel() {
                         _error.value = "Usuario no encontrado"
                     }
                 } catch (e: Exception) {
-                    _error.value = "Error al cargar usuario: ${e.message}"
+                    Log.e(TAG, "Error loading user data", e)
+                    _error.value = "Error al cargar datos de usuario"
                 } finally {
                     _loading.value = false
                 }
@@ -90,21 +99,21 @@ class MenuViewModel : ViewModel() {
     fun loadNextReserva() {
         val sesion = Sesion.datos ?: return
         val uid = auth.currentUser?.uid ?: return
-        val empresaId = sesion.empresa.nombre
+        val eId = empresaId ?: return
 
         viewModelScope.launch {
             try {
-                reservationRepo.deletePastReservations(empresaId)
-                val status = reservationRepo.getReservationsByUser(empresaId, uid)
+                reservationRepo.deletePastReservations(eId)
+                val status = reservationRepo.getReservationsByUser(eId, uid)
                 
                 val now = Date()
-                val fullSdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-                val daySdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val fullSdf = DateFormats.fullFormat
+                val daySdf = DateFormats.dayFormat
                 
                 val cierreStr = sesion.empresa.cierre.ifEmpty { "23:59" }
                 val futureOnes = status.filter {
                     try {
-                        if (it.tipo == "PUESTO") {
+                        if (it.tipo == TipoElemento.PUESTO.valor) {
                             val datePart = it.fechaHora.split(" ")[0]
                             val rEnd = fullSdf.parse("$datePart $cierreStr")
                             rEnd != null && rEnd.time >= now.time
@@ -123,11 +132,11 @@ class MenuViewModel : ViewModel() {
                     } catch (_: Exception) { false }
                 }
 
-                _nextSalaReserva.value = futureOnes.filter { it.tipo == "SALA" }.minByOrNull {
+                _nextSalaReserva.value = futureOnes.filter { it.tipo == TipoElemento.SALA.valor }.minByOrNull {
                     fullSdf.parse(it.fechaHora)?.time ?: Long.MAX_VALUE
                 }
                 
-                _nextPuestoReserva.value = futureOnes.filter { it.tipo == "PUESTO" }.minByOrNull {
+                _nextPuestoReserva.value = futureOnes.filter { it.tipo == TipoElemento.PUESTO.valor }.minByOrNull {
                     val dateStr = it.fechaHora.split(" ")[0]
                     daySdf.parse(dateStr)?.time ?: Long.MAX_VALUE
                 }
@@ -140,10 +149,10 @@ class MenuViewModel : ViewModel() {
     }
 
     fun cancelReserva(reservaId: String) {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                val success = reservationRepo.cancelReservation(empresaId, reservaId)
+                val success = reservationRepo.cancelReservation(eId, reservaId)
                 if (success) {
                     loadNextReserva()
                 } else {
@@ -156,46 +165,49 @@ class MenuViewModel : ViewModel() {
     }
 
     fun loadFranjas() {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                val franjas = firestoreRepo.getFranjasByEmpresa(empresaId)
+                val franjas = firestoreRepo.getFranjasByEmpresa(eId)
                 _franjas.value = franjas.map { it.hora }.sorted()
             } catch (e: Exception) {
-                _error.value = "Error al cargar franjas: ${e.message}"
+                Log.e(TAG, "Error loading franjas", e)
+                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
             }
         }
     }
 
     fun addFranja(franja: String) {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                firestoreRepo.addFranja(empresaId, franja)
+                firestoreRepo.addFranja(eId, franja)
                 loadFranjas()
             } catch (e: Exception) {
-                _error.value = "Error al añadir franja: ${e.message}"
+                Log.e(TAG, "Error adding franja", e)
+                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
             }
         }
     }
 
     fun removeFranja(franja: String) {
-        val empresaId = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                firestoreRepo.deleteFranja(empresaId, franja)
+                firestoreRepo.deleteFranja(eId, franja)
                 loadFranjas()
             } catch (e: Exception) {
-                _error.value = "Error al eliminar franja: ${e.message}"
+                Log.e(TAG, "Error removing franja", e)
+                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
             }
         }
     }
 
     fun loadEmpresaSettings() {
-        val empresaNombre = Sesion.datos?.empresa?.nombre ?: return
+        val eId = empresaId ?: return
         viewModelScope.launch {
             try {
-                val emp = firestoreRepo.getEmpresaByNombre(empresaNombre)
+                val emp = firestoreRepo.getEmpresaByNombre(eId)
                 if (emp != null) {
                     _empresa.value = emp
                     // Update session
@@ -239,7 +251,8 @@ class MenuViewModel : ViewModel() {
                     _error.value = "Error al guardar configuración"
                 }
             } catch (e: Exception) {
-                _error.value = "Error: ${e.message}"
+                Log.e(TAG, "Error saving schedule settings", e)
+                _error.value = "Ha ocurrido un error. Inténtalo de nuevo."
             } finally {
                 _loading.value = false
             }
