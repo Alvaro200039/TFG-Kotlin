@@ -59,8 +59,8 @@ class ReservationsUpdateWorker(
                 }
             }.sortedBy { it.fechaHora }
 
-            val nextSala = upcoming.firstOrNull { it.tipo == TipoElemento.SALA.valor }
-            val nextPuesto = upcoming.firstOrNull { it.tipo == TipoElemento.PUESTO.valor }
+            val nextSala = upcoming.firstOrNull { it.tipo.uppercase() == "SALA" }
+            val nextPuesto = upcoming.firstOrNull { it.tipo.uppercase() == "PUESTO" }
 
             // Actualizar cada instancia del widget con los datos obtenidos
             for (appWidgetId in appWidgetIds) {
@@ -68,7 +68,7 @@ class ReservationsUpdateWorker(
             }
 
         } catch (e: Exception) {
-            return Result.retry()
+            return Result.failure()
         }
 
         return Result.success()
@@ -85,20 +85,29 @@ class ReservationsUpdateWorker(
         // Setup Estático (Botones, Click Intents)
         UpcomingReservationsWidget.updateStaticUI(applicationContext, views)
 
+        val prefs = applicationContext.getSharedPreferences("widget_data", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+
         // Actualizar datos de Sala
-        if (sala != null) {
+        val salaText = if (sala != null) {
             val timeRange = sala.fechaHora.substringAfter(" ")
-            views.setTextViewText(R.id.text_proxima_sala, "${sala.nombreSala} - $timeRange")
+            "${sala.nombreSala} - $timeRange"
         } else {
-            views.setTextViewText(R.id.text_proxima_sala, applicationContext.getString(R.string.widget_no_reservations))
+            applicationContext.getString(R.string.widget_no_reservations)
         }
+        views.setTextViewText(R.id.text_proxima_sala, salaText)
+        editor.putString("last_sala", salaText)
 
         // Actualizar datos de Puesto
-        if (puesto != null) {
-            views.setTextViewText(R.id.text_proximo_puesto, "${puesto.piso} - Puesto ${puesto.nombreSala}")
+        val puestoText = if (puesto != null) {
+            "${puesto.piso} - Puesto ${puesto.nombreSala}"
         } else {
-            views.setTextViewText(R.id.text_proximo_puesto, applicationContext.getString(R.string.widget_no_reservations))
+            applicationContext.getString(R.string.widget_no_reservations)
         }
+        views.setTextViewText(R.id.text_proximo_puesto, puestoText)
+        editor.putString("last_puesto", puestoText)
+        
+        editor.apply()
 
         // Asegurar que las secciones son visibles y ocultar error
         views.setViewVisibility(R.id.section_proxima_sala, View.VISIBLE)

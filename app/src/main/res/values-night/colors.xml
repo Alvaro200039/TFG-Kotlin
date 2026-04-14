@@ -17,4 +17,11 @@
     <color name="aura_outline">#48484A</color>
     <color name="aura_error">#F0705F</color>
     <color name="aura_success">#6DB04A</color>
+
+    <!-- Widget Dynamic Colors (REACTIVE TO DARK MODE) -->
+    <color name="widget_surface">#1C1C1E</color>
+    <color name="widget_text_main">#FFFFFF</color>
+    <color name="widget_text_sub">#8E8E93</color>
+    <color name="widget_blue">#5C7CFF</color>
+    <color name="widget_border">#38383A</color>
 </resources>

@@ -21,8 +21,15 @@
     <color name="aura_error">#F0705F</color>
     <color name="aura_success" tools:ignore="UnusedResources">#6DB04A</color>
 
+    <!-- Widget Dynamic Colors (Reactive to Theme) -->
+    <color name="widget_surface">#FFFFFF</color>
+    <color name="widget_text_main">#000000</color>
+    <color name="widget_text_sub">#666666</color>
+    <color name="widget_blue">#3E61FE</color>
+    <color name="widget_border">#E5E5EA</color>
+
     
-    <color name="ic_launcher_background">#3DDC84</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
     
     <!-- Ad Agora Legacy/Specific -->
     <color name="enlace">#007AFF</color>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Usamos el color Surface Variant para coincidir con las tarjetas del dashboard -->
-    <solid android:color="@color/aura_surface_variant" />
+    <solid android:color="@color/widget_surface" />
     <!-- Esquinas de 32dp como se solicitó y como están en el dashboard -->
     <corners android:radius="32dp" />
     <!-- Borde sutil para definir la forma -->
